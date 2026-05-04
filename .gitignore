@@ -1,0 +1,28 @@
+# testbed files:
+contrib/test_bed/land*
+contrib/test_bed/plant*
+contrib/test_bed/soil*
+contrib/test_bed/canopy*
+contrib/test_bed/test_canopy*
+contrib/test_bed/test_radiation*
+contrib/test_bed/climate.dat
+
+# build stage files:
+build/src_dsl4jsb/
+build/Make.inc*
+build/make_compile-options.incl
+build/*.o
+x86_64-gfortran
+x86_64-intel
+
+# temporary build info files
+build/binary_git_info.txt
+
+# OS specific (meta) files
+.DS_Store
+./*/.DS_Store
+./*/*/.DS_Store
+
+# temporary IDE folders
+# clion IDE:
+.idea/

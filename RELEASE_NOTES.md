@@ -1,0 +1,82 @@
+# Release notes for 2026.04
+### model infrastructure
+* Change default configuration from SPQ_ process to jsbach-physics processes, modify and rename usecases accordingly
+* Syncronize against ICON-Land: add new routine to read soil data bc files
+* Move the directory `./contrib/compile_hlp/` into the `./build/` directory
+* Set the default number of soil layers to 5 (quincy_nsoil_e, quincy_nsoil_w) for only QUINCY standalone (differs from ICON-Land default)
+* Disable `finish()` for failed checks of consistency between start/end year in forcing file and namelist, if output is ascii txt
+
+### scripting environment
+* Move `data/basic_output_variables.txt` to `contrib/netcdf_output/basic_output_variables.txt`, rename associated config variable to `netcdf_output_var_list`
+
+
+# Release notes for 2025.10-2--QS3
+### scientific changes
+* improvement of temperture acclimation on BNF and N uptake to avoid cold system dying
+* bugfix in the calculation of nutrient vertical transport with jsbach physics
+* bugfix in the calculation of relative plant available water in the presence of supercooled water
+* bugfix in the calculation of fractional water leaching in the presence of ice 
+* bugfix in the calculation of asymbiotic N fixation and litter decomposition in simple soil-model (SSM), Carbon-only configuration
+* add interactive nitrogen and phosphorus flags in soil biogeochemistry
+* remove the code specific to the SPP 1685 project
+* refactor calc_langmuir_kinetics subroutine in SB process to avoid devision by zero
+
+### changes only relevant for ICON-Land
+* copied changes in shared files resulting in ICON-Land from a global diagnostics refactoring
+* copied changes in shared files resulting in ICON-Land from updates in code not used with QS (tmx, jsbach-only HYDRO parts, l_snow switch)
+
+### model infrastructure
+* refactoring to simplify the spinup accelerator, suppress carbon-conservation test after accelerator execution
+* Split-off mo_quincy_output_class parts only required in QS (and only when using netcdf)
+* Clean up use of mo util: remove duplicated routines and better adhere to the adaptor concept
+
+### scripting environment
+* Add new documentation `code_development_guidelines.md` providing a brief overview about how to contribute to QS code development
+* bugfix model-data comparison scripts for postprocessing fluxnet and cruncep simulations (correction of model output filenames)
+* improve and correct postprocessing, comparison against reference runs, add test for simulation errors (`ERROR.txt`)
+
+
+# Release notes for 2025.10-2--QS2
+### scientific changes
+* /
+
+### model infrastructure
+* minor adaptations due to changes in modules shared with IQJ - resulting from enabling anthropogenic land use change (ALCC) with IQJ
+* update netcdf output for runs with jsb physics
+* update the time range of the BSD-3C licence Copyright to 2026
+* refactor vegetation memory structure (add seed-bed bgcm) to reduce code complexity and facilitate land-use change calculations
+* rename binary and namelist to match the model name: quincy standalone (QS)
+
+### scripting environment
+* fix and update scripts used at Trinity College Dublin with missing flags and options
+* change default compile settings of long-running reference runs from "debug -O0" to "standard -O2"
+* update and improve gitlab templates for merge requests and issues
+
+
+# Release notes for 2025.10-1--QS1
+### scientific changes
+* enable running the Jena-Soil-Model (JSM) in ICON-Land
+* improve tuning of vmax of vegetation Phosphorous uptake `vmax_uptake_p` lctlib parameter
+* change the lctlib parameter of the vmax of vegetation Nitrogen uptake `vmax_uptake_n` to have more reasonable global Carbon and Nitrogen budgets
+* improve the calculation of plant water stress with frozen soil
+* update of default 13C and 14C values to 1850 values reported by Graven, H (2025)  doi: `10.25981/ESGF.input4MIPs.CMIP7/2583902`
+
+### model infrastructure
+* re-write QS ascii text output module adding selectable groups of output files
+* improve namelist names, applying uniform ICON-Land names of namelists (lnd_[process]_nml) across QS and IQ
+* correction of timing and counting of running the SB_ slow pool spinup accelerator
+* correction of aggregation of area-dependend variables in ICON-Land
+* add missing and correct wrongly calculated output variables in ICON-Land to write-out all required output variables for diagnostics and global budget calculations
+
+### scripting environment
+* improve script for creating QS releases: `create_qs_release.sh`
+* add new gitlab templates for merge requests and issues
+* modify usecase 36, add new u37,38,39, medium-long test simulations with SPQ_, jsbach soil-physics, simple soil model and jsm, land model-model
+* add a new site list TIBETP for the Tibetan Plateau, with transient and static forcing, and daily time-steps, 9 sites, permafrost-affected and mountainous
+* modify `prepare_sim_quincy.sh` runscript, add new slurm partition (MPI-BGC, Jena), increase max runtime of jobs to minimize the risk of jobs being finished at 'maxtime' due to high runtime at high i/o load at the HPC
+
+
+# QS version consistent with icon-2025.10 release
+* tag 2025-10-icon-model-release
+  * https://gitlab.dkrz.de/quincy-community/quincy-model-developers/qs-development/-/tags/2025-10-icon-model-release
+
