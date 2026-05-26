@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -22,7 +22,6 @@ MODULE mo_jsb_task_class
   USE mo_jsb_control,     ONLY: debug_on!, l_timer
   USE mo_hsm_class,       ONLY: t_Message   ! , t_jsb_task_msg => t_Message
   USE mo_jsb_tile_class,  ONLY: t_jsb_tile_abstract
-  USE mo_jsb_time,        ONLY: t_datetime
 
   IMPLICIT NONE
   PRIVATE
@@ -31,17 +30,18 @@ MODULE mo_jsb_task_class
 
 
   TYPE t_jsb_task_options
-    REAL(wp) :: dtime   = -1._wp                  !< length of one time step
-    REAL(wp) :: alpha   = -1._wp                  !< Implicitness factor (differs between standalone and coupled simulations)
-    TYPE(t_datetime), POINTER :: current_datetime !< stores current date and time information; TODO: use time_config
+    REAL(wp) :: dtime   = -1._wp  !< length of one time step
+    REAL(wp) :: steplen = -1._wp  !< ...
+    REAL(wp) :: alpha   = -1._wp  !< Implicitness factor (differs between standalone and coupled simulations)
     INTEGER  :: iblk    = -1      !< Number of current block (chunk)
     INTEGER  :: nproma  = -1      !< number of points per chunk
     INTEGER  :: ics     = -1      !< first point in the chunk the model currently works on
     INTEGER  :: ice     = -1      !< last  point in the chunk the model currently works on
     INTEGER  :: nc      = -1      !< nc = ice - ics + 1
-    INTEGER  :: nsoil_e = -1      !< Number of soil layers for energy
-    INTEGER  :: nsoil_w = -1      !< Number of soil layers for water
-    INTEGER  :: nsnow_e = -1      !< Number of snow layers for energy
+        !kschufft
+    INTEGER  :: itimestep = -1 ! !kschufft current timestep (for soinup negative)
+    REAL(wp) :: current_day = -1 !kschufft
+    INTEGER  :: current_year = -1 !kschufft
   END TYPE t_jsb_task_options
 
 !!$  TYPE, EXTENDS(t_Message) :: t_jsb_task_msg

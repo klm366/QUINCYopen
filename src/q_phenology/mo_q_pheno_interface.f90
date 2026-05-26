@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -112,6 +112,14 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Get_memory(Q_PHENO_)
     dsl4jsb_Get_memory(VEG_)
+
+    ! Q_PHENO_
+    dsl4jsb_Aggregate_onChunk(Q_PHENO_, growing_season              ,    weighted_by_fract)
+    dsl4jsb_Aggregate_onChunk(Q_PHENO_, gdd                         ,    weighted_by_fract)
+    dsl4jsb_Aggregate_onChunk(Q_PHENO_, nd_dormance                 ,    weighted_by_fract)
+    ! VEG_
+    dsl4jsb_Aggregate_onChunk(VEG_,   growth_req_n_tlabile_mavg   ,    weighted_by_fract)
+    dsl4jsb_Aggregate_onChunk(VEG_,   growth_req_p_tlabile_mavg   ,    weighted_by_fract)
 
     IF (debug_on() .AND. iblk==1) CALL message(TRIM(routine), 'Finished.')
   END SUBROUTINE aggregate_q_phenology

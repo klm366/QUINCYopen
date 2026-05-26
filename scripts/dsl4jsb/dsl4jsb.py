@@ -1,17 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# ICON-Land
-#
-# ---------------------------------------
-# Copyright (C) 2013-2026, MPI-M, MPI-BGC
-#
-# Contact: icon-model.org
-# Authors: AUTHORS.md
-# See LICENSES/ for license information
-# SPDX-License-Identifier: BSD-3-Clause
-# ---------------------------------------
-
 #
 #  dsl4jsb.py
 #
@@ -24,13 +12,13 @@
 #  Nov 10, 2016: Reiner Schnur, MPIM
 #
 
-import fnmatch
-import getopt
-import hashlib
-import io
-import os
-import re
 import sys
+import getopt
+import re
+import os
+import fnmatch
+import io
+import hashlib
 
 # Search pattern to find lines with dsl4jsb macros and extract macro name
 re_function = re.compile(r'dsl4jsb_(.*?) *( *$|,|\)| |\()', re.IGNORECASE)

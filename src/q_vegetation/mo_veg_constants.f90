@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -106,7 +106,6 @@ MODULE mo_veg_constants
       kappa_f_demand_nc    , & !< fraction of maximum labile nitrogen concentration at which uptake is reduced to 50%
       kappa_f_demand_pn    , & !< fraction of maximum labile phosphorus  concentration at which uptake is reduced to 50%
       k_f_demand           , & !< k in nutrient uptake response funktion to labile nutrient concentration
-      omega_nutrient_demand, & !< the safety ratio margin when comparing the targeted and real labile N:C or P:C (unitless)
       k1_temp_bnf          , & !< k1 .. k4 factors in temperature response function of nitrogenase activity
       k2_temp_bnf          , &
       k3_temp_bnf          , &
@@ -116,13 +115,11 @@ MODULE mo_veg_constants
       transform_cost_org   , & !< N transformation costs of converting organic N to organic N (mol C / mol N)
       f_nacq_no3           , & !< fractions of NO3 and NH4 uptake based on transformation costs
       f_nacq_nh4           , &
+      vmax_symb_bnf        , & !< maximum rate of N fixation (micro-mol N / mol C fine root / s )
+      km_symb_bnf          , & !< half_saturating cost of the response of N fixation (mol C / mol N)
       k_cost_symb_bnf      , & !< cost of symbiotic N fixation (mol C / mol N)
       t_opt_symb_bnf       , & !< optimal temperature for BNF (K)
-      k_topt_symb_bnf      , & !< slope of optimal temperature for symb. BNF vs. growth temperature
-      tacclim_nacq_min     , & !< minimum temperature to which N acquisition acclimates (degC)
-      tacclim_nacq_max     , & !< maximum temperature to which N acquisition acclimates (degC)
       ea_symb_bnf          , & !< activation energy for symbiotic N fixation (J mol-1)
-      k_ea_symb_bnf        , & !< slope of activation energy for symb. BNF vs. growth temperature
       ed_symb_bnf          , & !< de-activation energy for symbiotic N fixation (J mol-1)
       eta_nfixation        , & !< fractionation of N15 due to N fixation (per mill), parameter value from Robinson, Tree 2001
       f_myc_exudation_max  , & !< maximum fraction of current growth allocated to mycorrhiza
@@ -141,7 +138,8 @@ MODULE mo_veg_constants
   REAL(wp), SAVE :: &
       min_lai                , & !< minimum LAI beyond which all leaves are shed
       target_lai_max         , & !< maximum LAI target for reserve use calculations
-      max_leaf_shedding_rate     !< maximum rate of leaf shedding (1/days)
+      max_leaf_shedding_rate , & !< maximum rate of leaf shedding (1/days)
+      k_leafon_canopy            !< scaling coefficient for leaf on in CANOPY-only model
 
   ! vegetation dynamics
   REAL(wp), SAVE :: &
@@ -153,6 +151,7 @@ MODULE mo_veg_constants
       k_est_temp                  , & !< parameter in the Weibull function controlling temperature-limited establishment
       lambda_est_moist            , & !< parameter in the Weibull function controlling moisture-limited establishment
       k_est_moist                 , & !< parameter in the Weibull function controlling moisture-limited establishment
+      wood_extraction_rate        , & !< fraction of wood removed from site after harvesting
       min_greff                   , & !< minimum growth efficiency (mol C / m2 (LAI) / yr)
       k2_mort_greff               , & !< scaling coefficient
       k3_mort_greff               , & !< scaling coefficient in growth efficiency mortality below minimum growth efficiency
@@ -179,9 +178,21 @@ MODULE mo_veg_constants
       k3_fruit_alloc              , & !< parameter in the Weibull function controlling fruit growth; ~micro-mol C / m2 / s
       ! minimum fraction of allocation going to fruit (flowers etc.)
       k1_fruit_alloc              , & !< minimum fraction of allocation going to fruit (flowers etc.)
-      k1_root_alloc               , & !< value of relative root zone water below which root allocation starts responding
+      w_root_lim_max              , & !< value of the root water limitation below which root allocation starts responding
       leaf2root_min_ratio         , & !< minimum leaf to root ratio for dynamic allocation
       leaf2root_max_ratio             !< maximum leaf to root ratio for dynamic allocation
+    
+    ! exudation parameter
+    REAL(wp), SAVE :: &
+      beta_exudation_min,   & !< maximum factor for carbon loss through exudation 
+      lambda_exudation,     & !< lambda in exudation response to labile pool size
+      k_exudation,          & !< k in exudation response to labile pool size
+      fact_exudtoresp_min,  & !< factor which estimates basal exudation based on fine root maintenance respiration 
+      fact_exud_mintomax,   &      !< factor which estimates maximum exudation based on basal exudation
+      k_slope_exud,         &
+      slope_exud_min
+
+
 
   ! parameters for changes in canopy N fractions
   REAL(wp), SAVE :: &
@@ -192,7 +203,6 @@ MODULE mo_veg_constants
 
   ! parameters used for product pool decay
   REAL(wp), SAVE :: &
-      tau_pp_crop,       & !< exponential time constants for the decay of the crop harvest product pool
       tau_pp_fuelwood,   & !< exponential time constants for the decay of the fuel product pool
       tau_pp_paper,      & !< exponential time constants for the decay of the paper product pool
       tau_pp_fiberboard, & !< exponential time constants for the decay of the fiberboard product pool
@@ -200,39 +210,14 @@ MODULE mo_veg_constants
       tau_pp_pv,         & !< exponential time constants for the decay of the plywood and veneer product pool
       tau_pp_sawnwood      !< exponential time constants for the decay of the sawnwood product pool
 
-  ! parameters used for herbivory
-  REAL(wp), SAVE :: &
-    & ftroph_loss_herbivory, &            !< carbon respiration associated with herbivory (unitless)
-    & k_herbivory_grass,     &            !< asymptotic daily rate of herbivory in natural grasslands (1/day)
-    & k_herbivory_pasture,   &            !< asymptotic daily rate of herbivory in pasture (1/day)
-    & min_net_growth_herbivory_grass, &   !< minimum long-term average productivity for herbivory to occur in natural grasslands (mol / m2 / yr)
-    & min_net_growth_herbivory_pasture, & !< minimum long-term average productivity for herbivory to occur in pasture (mol / m2 / yr)
-    & min_lai_herbivory                   !< minimum LAI beyond which herbivory can occur
-
-  ! red to far red ratio calculations
-  REAL(wp), SAVE :: &
-    & rfr_ratio_toc, &     !< top of the canopy red:farred ratio  (Kull & Kruij 1998)
-    & k_r2fr_chl           !< extinction of red:farred ratio on leaf chlorophyll (1/mmol N);
-                           !! (Kull & Krujit 1998 for the far red value, tuned to get a R:FR ratio
-                           !! of 0.15 at full canopy closure (a common value)
-
   ! some useful numbers for easy identification of photosynthetic pathways and growth forms
   ! need to be parameters (i.e. constant across model runtime)
   INTEGER, PARAMETER ::    &
       itree         = 1,   &
-      igrass        = 2,   &
-      icrop         = 3
+      igrass        = 2
 
 
   CHARACTER(len=*), PARAMETER, PRIVATE :: modname = 'mo_veg_constants'
-
-  !$ACC DECLARE CREATE(t_maint_k1, t_maint_k2, t_maint_k3, min_height, k_fpc, k_sai2lai)
-  !$ACC DECLARE CREATE(f_resp_acclim, t_acclim_zero, fmaint_rate_base)
-
-  !$ACC DECLARE CREATE(carbon_per_dryweight_leaf, jmax2vcmax_C4, k0_fn_chl_C4, k1_fn_chl_C4, k0_fn_pepc_C4)
-  !$ACC DECLARE CREATE(jmax2vcmax_C3, k0_fn_chl_C3, k1_fn_chl_C3, k0_fn_pepc_C3, kfn_chl)
-
-  !$ACC DECLARE CREATE(rfr_ratio_toc, k_r2fr_chl)
 
 CONTAINS
 
@@ -243,7 +228,7 @@ CONTAINS
   SUBROUTINE init_veg_constants
 
     USE mo_jsb_math_constants,     ONLY: one_day, one_year
-    USE mo_jsb_physical_constants, ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Tzero
+    USE mo_jsb_physical_constants, ONLY: molar_mass_C, molar_mass_N, molar_mass_P
 
     IMPLICIT NONE
     ! ---------------------------
@@ -256,8 +241,8 @@ CONTAINS
 
   ! Respiration parameters
       fresp_growth                = 0.25_wp
-      fmaint_rate_base            = 1._wp
-      fmaint_rate_wood            = 0.25_wp * fmaint_rate_base
+      fmaint_rate_base            = 1.0_wp  ! originally 1.0
+      fmaint_rate_wood            = 0.25_wp * fmaint_rate_base 
       t_maint_k1                  = 308.56_wp
       t_maint_k2                  = 56.02_wp
       t_maint_k3                  = 227.13_wp
@@ -266,10 +251,13 @@ CONTAINS
       k_maint_resp_suppress       = 1.0_wp        ! set to 1.0 on purpose, not reducing maint_respiration; ticket https://projects.bgc-jena.mpg.de/QUINCY/ticket/594
 
   ! Parameters describing the PS ~ An relationship (describing photosynthetic activity )
-      k0_fn_pepc_C3               = 0.0_wp
-      k0_fn_pepc_C4               = 0.045_wp
-      jmax2vcmax_C3               = 1.92_wp / 4._wp
-      jmax2vcmax_C4               = 1.4_wp
+      k0_fn_pepc_C3               = 0.0_wp 
+      k0_fn_pepc_C4               = 0.045_wp 
+      !jmax2vcmax_C3               = 1.92_wp / 4._wp
+      !kschufft
+      !for Eucface simulations: set to 1.6
+      jmax2vcmax_C3               = 1.6_wp / 4._wp
+      jmax2vcmax_C4               = 1.4_wp  
 
   ! Labile pool parameters
       tau_labile                  = 5.0_wp
@@ -288,7 +276,7 @@ CONTAINS
       lambda_phistore             = 2._wp
       k_phistore                  = 3._wp
       knut_labile                 = 1.2_wp
-      lambda_sinklim_ps           = 0.1_wp
+      lambda_sinklim_ps           = 0.05_wp !1.0_wp
       k_sinklim_ps                = 2.0_wp
       k_cnp_sinklim_ps            = 4.0_wp
       beta_sinklim_ps_min         = 0.25_wp
@@ -299,19 +287,22 @@ CONTAINS
 
 
   ! Resorption parameters
-      resorp_fract_leaf           = 0.5_wp
-      resorp_fract_wood           = 0.2_wp
-      root2leaf_cn                = 0.85_wp
-      wood2leaf_cn                = 0.145_wp
-      root2leaf_np                = 1.0_wp
-      wood2leaf_np                = 1.0_wp
+      resorp_fract_leaf           = 0.5_wp  
+      resorp_fract_wood           = 0.2_wp 
+      !root2leaf_cn                = 0.85_wp
+      root2leaf_cn                = 0.62_wp !for EUC under ambient CO2 
+      !wood2leaf_cn                = 0.145_wp 
+      wood2leaf_cn                = 0.32_wp ! for EUC under ambient CO2
+      !wood2leaf_np                = 1.0_wp 
+     ! root2leaf_np                = 1.0_wp
+      root2leaf_np                = 0.8_wp
+      wood2leaf_np                = 0.64_wp ! for EUC under ambient conditions
       tau_nutrient_recycling      = 10._wp
 
-  ! N uptake parameters
+    ! N uptake parameters
       kappa_f_demand_nc           = 0.75_wp
       kappa_f_demand_pn           = 0.9_wp
       k_f_demand                  = 2.0_wp
-      omega_nutrient_demand       = 0.15_wp ! tuned to leave a flexiable space between the targeted and actual labile CN or NP ratios
       k1_temp_bnf                 = 1.25_wp
       k2_temp_bnf                 = -3.62_wp
       k3_temp_bnf                 = 0.27_wp
@@ -321,14 +312,12 @@ CONTAINS
       transform_cost_org          = 1.0_wp    / (molar_mass_C/molar_mass_N)
       f_nacq_nh4                  = transform_cost_no3 / (transform_cost_no3 + transform_cost_nh4)
       f_nacq_no3                  = transform_cost_nh4 / (transform_cost_no3 + transform_cost_nh4)
+      vmax_symb_bnf               = 0.0225_wp / (molar_mass_N/molar_mass_C) / (one_day * one_year) * 1.e6_wp  ! Meyerholt et. al 2016
+      km_symb_bnf                 = 5.0_wp    / (molar_mass_C/molar_Mass_N)                                   ! Meyerholt et. al 2016
       k_cost_symb_bnf             = 12.75_wp  / (molar_mass_C/molar_mass_N)     ! Average value from Kern 2021
-      t_opt_symb_bnf              = 28.15_wp + Tzero ! calibrated from Bytnerowicz et al. 2022, adjusted for acclimation of growth temperature
-      k_topt_symb_bnf             = 0.15_wp          ! calibrated based on Bytnerowicz et al. 2022, mean between measured biomes
-      k_ea_symb_bnf               = 0.04_wp          ! calibrated from Bytnerowicz et al. 2022
-      ea_symb_bnf                 = 72000._wp        ! calibrated from Bytnerowicz et al. 2022
-      ed_symb_bnf                 = 250000._wp       ! calibrated from Bytnerowicz et al. 2022
-      tacclim_nacq_min            = 15.0_wp
-      tacclim_nacq_max            = 30.0_wp
+      t_opt_symb_bnf              = 32.0_wp+273.15_wp  ! calibrated from Bytnerowicz et al. 2022
+      ea_symb_bnf                 = 72000._wp          ! calibrated from Bytnerowicz et al. 2022
+      ed_symb_bnf                 = 250000._wp         ! calibrated from Bytnerowicz et al. 2022
       eta_nfixation               = 3.0_wp                   ! Robinson, Tree 2001
       f_myc_exudation_max         = 0.3_wp
       f_mycorrhization_min        = 0.1_wp
@@ -345,6 +334,7 @@ CONTAINS
       min_lai                     = 0.1_wp
       target_lai_max              = 5.0_wp
       max_leaf_shedding_rate      = 0.05_wp
+      k_leafon_canopy             = 0.2_wp
 
   ! vegetation dynamics
       background_mort_rate_tree   = 0.01_wp
@@ -355,12 +345,13 @@ CONTAINS
       k_est_temp                  = 4.0_wp
       lambda_est_moist            = 10._wp
       k_est_moist                 = 2.0_wp
+      wood_extraction_rate        = 0.8_wp
       k2_mort_greff               = 0.3_wp
       k3_mort_greff               = 25.0_wp
       min_greff                   = 1.0_wp
-      max_crown_area              = 100._wp ! adjusted to conform with observations by Pretsch et al. 2015; but cutting off extremes
+      max_crown_area              = 15._wp
       min_diameter                = 0.01_wp
-      k_crown_area                = 175._wp ! adjusted to medium size trees analysed by Pretch et al. 2015; https://doi.org/10.1016/j.ufug.2015.04.006
+      k_crown_area                = 100._wp
       k_rp                        = 1.6_wp
       k_fpc                       = 0.5_wp
       fpc_max                     = 0.95_wp
@@ -368,15 +359,21 @@ CONTAINS
   ! other
       carbon_per_dryweight_leaf   = 0.48_wp
       min_height                  = 0.1_wp
-      k_sai2lai                   = 0.05_wp ! calibrated to get fapar < 0.2 when no leaves at canopy closure
+      k_sai2lai                   = 0.05_wp ! calibratted to get fapar < 0.2 when no leaves at canopy closure
       sm2lm_grass                 = 0.05_wp
       lambda_fruit_alloc          = 10.0_wp
       k1_fruit_alloc              = 0.01_wp
       k3_fruit_alloc              = 0.1_wp
       k4_fruit_alloc              = 2.0_wp
-      k1_root_alloc               = 0.8_wp
+      w_root_lim_max              = 0.8_wp
       leaf2root_min_ratio         = 0.2_wp
       leaf2root_max_ratio         = 15.0_wp
+
+  ! exudation parameter
+      lambda_exudation            = 0.05
+      k_exudation                 = 2.0_wp
+      k_slope_exud                = 4.0_wp
+      slope_exud_min              = 0.05
 
   ! parameters for changes in canopy N fractions
 !@todo:should this be 1/20days?
@@ -384,34 +381,13 @@ CONTAINS
       delta_n_leaf                = 0.0048_wp       ! 0.0001 (changed to account for multiplication with dtime/one_day in the code)
 
     ! parameters used for product pool decay [years] - these need to be > 0.0_wp
-      tau_pp_crop = 1.0_wp ! made up by SZ
-      ! following values are all taken from Nuetzel (2021, LMU master thesis)
-      tau_pp_fuelwood = 0.53_wp
-      tau_pp_paper = 1.50_wp
-      tau_pp_fiberboard = 13.2_wp
-      tau_pp_oirw = 16.5_wp
-      tau_pp_pv = 24.9_wp
-      tau_pp_sawnwood = 49.9_wp
-
-    ! parameters used for herbivory
-    ! calibrated from data in McNaugton et al. 1989, Nature 341, 142-144, and Cyr and Pace, 1993, Nature 361, 148-150
-      ftroph_loss_herbivory             = 0.9_wp   !< assumuming a typical 90% loss of energy per trophic level
-      k_herbivory_grass                 = 0.01_wp  !< calibrated from Cyr and Pace, Nature 1993, adjusted to daily rate and fraction of accessible NPP
-      k_herbivory_pasture               = 0.015_wp !< calibrated from Cyr and Pace, Nature 1993, adjusted to daily rate and fraction of accessible NPP
-      min_net_growth_herbivory_grass    = 20.8_wp  !< 250 gC/m2/yr converted to mol
-      min_net_growth_herbivory_pasture  = 4.16_wp  !< 50 gC/m2/yr converted to mol
-      min_lai_herbivory                 = 0.1_wp   !< set to min_lai value, needs evaluation
-
-    ! red to far red ratio calculations
-      rfr_ratio_toc           = 1.2_wp                !< Kull & Kruijt 1998
-      k_r2fr_chl              = 0.0012_wp - 0.012_wp  !< Kull & Kruijt 1998
-
-    !$ACC UPDATE DEVICE(t_maint_k1, t_maint_k2, t_maint_k3, min_height) ASYNC(1)
-    !$ACC UPDATE DEVICE(f_resp_acclim, t_acclim_zero, fmaint_rate_base, k_fpc, k_sai2lai) ASYNC(1)
-    !$ACC UPDATE DEVICE(carbon_per_dryweight_leaf, jmax2vcmax_C4, k0_fn_chl_C4, k1_fn_chl_C4, k0_fn_pepc_C4) ASYNC(1)
-    !$ACC UPDATE DEVICE(jmax2vcmax_C3, k0_fn_chl_C3, k1_fn_chl_C3, k0_fn_pepc_C3, kfn_chl) ASYNC(1)
-    !$ACC UPDATE DEVICE(rfr_ratio_toc, k_r2fr_chl) ASYNC(1)
-    !$ACC WAIT(1)
+    ! following values are all taken from Nuetzel (2021, LMU master thesis)
+    tau_pp_fuelwood = 0.53
+    tau_pp_paper = 1.50
+    tau_pp_fiberboard = 13.2
+    tau_pp_oirw = 16.5
+    tau_pp_pv = 24.9
+    tau_pp_sawnwood = 49.9
 
   END SUBROUTINE init_veg_constants
 

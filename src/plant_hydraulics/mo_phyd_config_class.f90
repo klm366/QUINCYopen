@@ -1,15 +1,15 @@
-!> QUINCY plant hydraulics process config
+!> Summary: QUINCY plant hydraulics process config
 !>
-!> ICON-Land
+!>#### ICON-Land
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> ------------------------------------------------------------------------
+!> Copyright (C) 2004-2024, MPI-M, MPI-BGC, DWD, DKRZ, KIT, ETH, MeteoSwiss  
+!> Contact information: <https://icon-model.org>
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
+!> See AUTHORS.TXT for a list of authors  
+!> See LICENSES/ for license information  
 !> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!> ------------------------------------------------------------------------
 !>
 !> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
 !>
@@ -27,12 +27,12 @@ MODULE mo_phyd_config_class
   PRIVATE
 
   PUBLIC :: t_phyd_config
-
+  
   ! ======================================================================================================= !
   !> PHYD_ configuration parameters
   !>
   TYPE, EXTENDS(t_jsb_config) :: t_phyd_config
-    LOGICAL            :: use_plant_hydraulics           !< on/off whether using plant hydraulics
+    LOGICAL            :: use_plant_hydraulics           !< on/off whether using plant hydraulics 
   CONTAINS
       PROCEDURE :: Init => Init_phyd_config
   END type t_phyd_config
@@ -45,7 +45,7 @@ CONTAINS
   !> read P_HYDRO_ namelist and init configuration parameters
   !>
   SUBROUTINE Init_phyd_config(config)
-    USE mo_jsb_namelist_iface,    ONLY: open_nml, POSITIONED, position_nml, close_nml
+    USE mo_namelist,              ONLY: open_nml, POSITIONED, position_nml, close_nml
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_phyd_config), INTENT(inout) :: config
     ! ----------------------------------------------------------------------------------------------------- !
@@ -54,11 +54,11 @@ CONTAINS
     CHARACTER(len=filename_max) :: bc_filename
     LOGICAL                     :: use_plant_hydraulics
 
-    NAMELIST /lnd_phyd_nml/           &
+    NAMELIST /phyd_ctl/           &
       & active,                     &
       & ic_filename,                &
       & bc_filename,                &
-      & use_plant_hydraulics
+      & use_plant_hydraulics   
     INTEGER :: nml_handler, nml_unit, istat
     CHARACTER(len=*), PARAMETER :: routine = modname//':Init_phyd_config'
     ! ----------------------------------------------------------------------------------------------------- !
@@ -68,13 +68,13 @@ CONTAINS
     active                    = .FALSE.
     bc_filename               = 'bc_land_plant_hydraulics.nc'
     ic_filename               = 'ic_land_plant_hydraulics.nc'
-    use_plant_hydraulics      = .FALSE.
+    use_plant_hydraulics = .FALSE. 
     ! ----------------------------------------------------------------------------------------------------- !
     ! Read namelist
     nml_handler = open_nml(TRIM(config%namelist_filename))
     ! ----------------------------------------------------------------------------------------------------- !
-    nml_unit = position_nml('lnd_phyd_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_phyd_nml)
+    nml_unit = position_nml('phyd_ctl', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, phyd_ctl)
     ! ----------------------------------------------------------------------------------------------------- !
     ! Write namelist values into config
     config%active                     = active

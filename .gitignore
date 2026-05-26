@@ -18,11 +18,6 @@ x86_64-intel
 # temporary build info files
 build/binary_git_info.txt
 
-# OS specific (meta) files
-.DS_Store
-./*/.DS_Store
-./*/*/.DS_Store
-
 # temporary IDE folders
 # clion IDE:
 .idea/

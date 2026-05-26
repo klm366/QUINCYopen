@@ -1,219 +1,261 @@
-! ICON
-!
-! ---------------------------------------------------------------
-! Copyright (C) 2004-2026, DWD, MPI-M, DKRZ, KIT, ETH, MeteoSwiss
-! Contact information: icon-model.org
-!
-! See AUTHORS.TXT for a list of authors
-! See LICENSES/ for license information
-! SPDX-License-Identifier: BSD-3-Clause
-! ---------------------------------------------------------------
-
 !>
-!!   open_nml         - open namelist file
-!!   close_nml        - close namelist file
-!!   position_nml     - position namelist file for reading
-!!   open_nml_output  - open a new ASCII file to record the
-!!                      actual values of the namelist variables.
-!!   close_nml_output - close that ASCII file.
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
 !!
-
+!! @brief Tools for namelist reading
+!!
+!! @par Revision History
+!!  copied to QUINCY by Jan Engel MPI-BGC (2016-03-18)
+!!
+!! @par ECHAM
+!!  this module originates from ECHAM, file is left untouched
+!!
 MODULE mo_namelist
+  ! position_nml - position namelist file for reading
+  ! 
+  ! Author:
+  ! 
+  ! L. Kornblueh, MPI, March 2001, original source
+  ! L. Kornblueh, MPI, January 2003, added error message for open
+  ! L. Kornblueh, MPI, April 2005, added close_nml
+  ! L. Kornblueh, MPI, February 2011, make it more usable, when 
+  !               having multiple files open
+  ! 
 
-  USE mo_util_string, ONLY: tolower
-  USE mo_exception, ONLY: finish, message
-  USE mo_io_units, ONLY: nnml, nnml_output, find_next_free_unit
+  USE mo_util_string,   ONLY: tolower
+  USE mo_filename,      ONLY: find_next_free_unit  
+  USE mo_exception,     ONLY: message, finish, message_text
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC :: position_nml ! position namelist file
-  PUBLIC :: open_nml ! open default namelist file
-  PUBLIC :: close_nml ! close namelist file
+  ! accessible functions
 
-  PUBLIC :: POSITIONED, MISSING,     & ! return values from position_nml
-       &    LENGTH_ERROR, READ_ERROR
+  PUBLIC :: position_nml
+  PUBLIC :: open_nml
+  PUBLIC :: close_nml
 
-  PUBLIC :: open_nml_output
-  PUBLIC :: close_nml_output
-  PUBLIC :: nnml
+  ! return values from position_nml
 
-  !  return values of function 'position_nml':
+  PUBLIC :: positioned, missing, closed, length_error, read_error
 
-  INTEGER, PARAMETER :: POSITIONED = 0 ! file pointer set to namelist group
-  INTEGER, PARAMETER :: MISSING = 1 ! namelist group is missing
-  INTEGER, PARAMETER :: LENGTH_ERROR = 2
-  INTEGER, PARAMETER :: READ_ERROR = 3
+  !> used to read namlist files, originates from ECHAM
+  !! 
+  !! used in SLM without any modification
+  TYPE t_namelist
+    CHARACTER(len=64) :: filename
+    INTEGER :: fileunit
+  END TYPE t_namelist
+
+  TYPE(t_namelist), ALLOCATABLE :: namelist_file_list(:) 
+  
+  INTEGER, PARAMETER :: chunk = 32
+  INTEGER, SAVE :: top = 0
+
+  ! return values of function 'position_nml':
+
+  INTEGER, PARAMETER :: positioned   =  0 ! file pointer set to namelist group
+  INTEGER, PARAMETER :: missing      =  1 ! namelist group is missing
+  INTEGER, PARAMETER :: closed       =  2 
+  INTEGER, PARAMETER :: length_error =  3 
+  INTEGER, PARAMETER :: read_error   =  4
 
 CONTAINS
 
-  !>
-  !! opens the namelist file.
-  !!
-  SUBROUTINE open_nml(file, lwarn, istat)
-    CHARACTER(len=*), INTENT(IN) :: file
-    LOGICAL, INTENT(IN), OPTIONAL :: lwarn
-    INTEGER, INTENT(OUT), OPTIONAL :: istat
-    LOGICAL :: l_lwarn = .FALSE.
-    INTEGER :: l_istat
+  !================================================================================================
+  FUNCTION open_nml (file) RESULT(unit)
+    INTEGER :: unit                         ! file handler
+    CHARACTER(len=*), INTENT(in)  :: file   ! namelist filename
 
-    IF (PRESENT(lwarn)) l_lwarn = lwarn
+    TYPE(t_namelist), ALLOCATABLE :: tmp_list(:) 
+    INTEGER :: ihandler, istat, iunit
 
-    OPEN (nnml, file=TRIM(file), iostat=l_istat, status='old', action='read', recl=16384, delim='apostrophe')
+    unit = -1
 
-    IF (l_istat /= 0) THEN
-      IF (l_lwarn) THEN
-        CALL message('open_nml', 'Could not open '//TRIM(file))
-      ELSE
-        CALL finish('open_nml', 'Could not open '//TRIM(file))
-      END IF
-    END IF
+    ! Create or extend table of namelist files
 
-    IF (PRESENT(istat)) istat = l_istat
+    IF (.NOT. ALLOCATED(namelist_file_list)) THEN
+      ALLOCATE(namelist_file_list(chunk))
+    ELSE
+      IF (MOD(top,chunk) == 0) THEN
+        CALL move_alloc(namelist_file_list, tmp_list)
+        ALLOCATE(namelist_file_list(top+chunk))
+        namelist_file_list(:top) = tmp_list(:)
+        DEALLOCATE(tmp_list)
+      ENDIF
+    ENDIF
 
-  END SUBROUTINE open_nml
+    ! Look up file name in table, re-open if close, otherwise go to begin.
+    ! Return from procedure if an entry was found.
 
-  !>
-  !! closes the namelist file.
-  !!
-  SUBROUTINE close_nml
-    INTEGER :: istat
+    IF (top > 0) THEN
+      DO ihandler = 1, top
+        IF (TRIM(namelist_file_list(ihandler)%filename) == file) THEN
+          IF (namelist_file_list(ihandler)%fileunit == -1) THEN
+            iunit = find_next_free_unit(100,200)
+            OPEN (iunit, file=file, iostat=istat, status='old', action='read', delim='apostrophe')
+            namelist_file_list(ihandler)%fileunit = iunit
+            CALL message('', 'Namelist file '//TRIM(file)//' reopened')
+          ELSE
+            CALL message('', 'Namelist file '//TRIM(file)//' already opened, rewind file to beginning')
+            REWIND (namelist_file_list(ihandler)%fileunit)
+          ENDIF
+          unit = ihandler
+          RETURN
+        ENDIF  
+      ENDDO
+    ENDIF
 
-    CLOSE (nnml, IOSTAT=istat)
+    ! If no entry was found, open file and create table entry.
 
-    IF (istat /= 0) THEN
-      CALL finish('close_nml', 'Could not close namelist file.')
-    END IF
+    iunit = find_next_free_unit(100,200)
+    OPEN (iunit, file=file, iostat=istat, status='old', action='read', delim='apostrophe')
 
-  END SUBROUTINE close_nml
+    IF (istat == 0) THEN
+      top = top+1
+      namelist_file_list(top)%filename = TRIM(file)
+      namelist_file_list(top)%fileunit = iunit      
+      unit = top
+      CALL message('', 'Opened namelist file '//TRIM(file))
+    ELSE
+      CALL finish('open_nml','Could not open namelist file '//TRIM(file))
+    ENDIF
 
-  !>
-  !! set file pointer to begin of namelist for reading namelist /name/ (case independent).
-  !!
-  SUBROUTINE position_nml(name, unit, lrewind, status)
-    CHARACTER(len=*), INTENT(IN)            :: name ! namelist group name
-    INTEGER, INTENT(IN), OPTIONAL :: unit ! file unit number
-    LOGICAL, INTENT(IN), OPTIONAL :: lrewind ! default: true
-    INTEGER, INTENT(OUT), OPTIONAL :: status ! error return value
+  END FUNCTION open_nml
+  !================================================================================================
+  FUNCTION position_nml (name, unit, rewind, status) RESULT (iunit)
+    
+    INTEGER :: iunit ! Fortran unit to read namelist from
 
-    CHARACTER(len=256) :: yline ! line read
-    CHARACTER(len=256) :: test ! uppercase namelist group name
-    INTEGER            :: stat ! local copy of status variable
-    INTEGER            :: ios ! status variable from read operation
-    LOGICAL            :: l_lrewind ! local copy of rewind flag
-    INTEGER            :: iunit ! local copy of unit number
-    INTEGER            :: len_name ! length of requested namelist group name
-    CHARACTER          :: ytest ! character to test for delimiter
-    CHARACTER(len=12)  :: code ! error code printed
-    INTEGER            :: idx ! index from index routine
-    INTEGER            :: idxc ! index of comment character (!)
+    ! position namelist file for reading on first occurrence
+    ! namelist /name/ (case independent). 
 
-!-------------------------------------------------------------------------
+    CHARACTER(len=*), INTENT(in)            :: name   ! namelist group name
+    INTEGER,          INTENT(in)            :: unit   ! file handler
+    LOGICAL,          INTENT(in)  ,OPTIONAL :: rewind ! default: true
+    INTEGER,          INTENT(out) ,OPTIONAL :: status ! error return value
 
-    l_lrewind = .TRUE.; IF (PRESENT(lrewind)) l_lrewind = lrewind
-    iunit = nnml; IF (PRESENT(unit)) iunit = unit
-    stat = MISSING
-    code = 'MISSING'
+    CHARACTER(len=256) :: yline     ! line read
+    CHARACTER(len=256) :: test      ! potentially uppercase namelist group name
+    INTEGER            :: stat      ! local copy of status variable
+    INTEGER            :: ios       ! status variable from read operation
+    LOGICAL            :: lrew      ! local copy of rewind flag
+    CHARACTER(len=64)  :: yfilename ! local copy of namelist filename 
+    INTEGER            :: len_name  ! length of requested namelist group name
+    CHARACTER          :: ytest     ! character to test for delimiter
+    CHARACTER(len=12)  :: action    ! current action 
+    INTEGER            :: ind       ! index from index routine
+    INTEGER            :: indc      ! index of comment character (!)
+    CHARACTER(len=256) :: iomsg
 
-    len_name = LEN_TRIM(name)
+    IF (namelist_file_list(unit)%fileunit == -1) THEN
+      CALL finish('position_nml','Namelist file '//TRIM(namelist_file_list(unit)%filename)//' already closed')
+    ELSEIF (unit > top) THEN
+      WRITE (message_text,'(a,i0,a)') 'Namelist file for handler ', unit, ' has not been opened'
+      CALL finish('position_nml',message_text)
+    ELSE
+      iunit     = namelist_file_list(unit)%fileunit
+      yfilename = TRIM(namelist_file_list(unit)%filename)
+    ENDIF
+
+    lrew  = .TRUE.   
+    IF (PRESENT(rewind)) lrew  = rewind
+    stat  =  missing
+    action  = 'missing'
+
+    len_name = LEN_TRIM (name)
 
     IF (len_name > LEN(test)) THEN
-      stat = LENGTH_ERROR
-      code = 'LENGTH_ERROR'
-    END IF
+      stat =  length_error
+      action = 'length_error'
+    ENDIF
 
-    test = tolower(name)
-
+    test = tolower (name)
+    
     ! Reposition file at beginning:
 
-    IF (l_lrewind) REWIND (iunit)
+    IF (lrew) THEN
+      REWIND (iunit)
+    ENDIF
 
     ! Search start of namelist
-
+    
     DO
       IF (stat /= MISSING) EXIT
 
-      yline = ' '
+      yline = ''
+    
+      READ (iunit,'(a)',IOSTAT=ios,IOMSG=iomsg) yline
 
-      READ (iunit, '(a)', IOSTAT=ios) yline
       IF (ios < 0) THEN
-        EXIT ! MISSING
+        EXIT  ! missing
       ELSE IF (ios > 0) THEN
-        stat = READ_ERROR
-        code = 'READ_ERROR'
+        stat =  read_error
+        action = 'read_error'
         EXIT
       END IF
 
-      yline = tolower(yline)
+      yline = tolower (yline)
+    
+      ind = INDEX(yline,'&'//TRIM(test))
+    
+      IF (ind == 0) CYCLE
+      
+      indc = INDEX(yline,'!')
 
-      idx = INDEX(yline, '&'//TRIM(test))
-
-      IF (idx == 0) CYCLE
-
-      idxc = INDEX(yline, '!')
-
-      IF (idxc > 0 .AND. idxc < idx) CYCLE
+      IF (indc > 0 .AND. indc < ind) CYCLE
 
       ! test for delimiter
+    
+      ytest = yline(ind+len_name+1:ind+len_name+1)
 
-      ytest = yline(idx + len_name + 1:idx + len_name + 1)
-
-      IF ((LGE(ytest, '0') .AND. LLE(ytest, '9')) .OR. &
-          (LGE(ytest, 'a') .AND. LLE(ytest, 'z')) .OR. &
-          ytest == '_' .OR. &
-          (LGE(ytest, 'A') .AND. LLE(ytest, 'Z'))) THEN
+      IF ( (LGE(ytest,'0') .AND. LLE(ytest,'9')) .OR. &
+           (LGE(ytest,'a') .AND. LLE(ytest,'z')) .OR. &
+            ytest == '_'                         .OR. &
+           (LGE(ytest,'A') .AND. LLE(ytest,'Z'))) THEN
         CYCLE
-      ELSE
-        stat = POSITIONED
+      ELSE 
+        stat = positioned
         BACKSPACE (iunit)
         EXIT
       END IF
-    END DO
+    ENDDO
+    
+    IF (PRESENT (status)) status = stat
+      SELECT CASE (stat)
+      CASE (positioned)
+        RETURN
+      CASE (missing)
+        IF (PRESENT (status)) RETURN
+      END SELECT
 
-    IF (PRESENT(status)) status = stat
-    SELECT CASE (stat)
-    CASE (POSITIONED)
-      RETURN
-    CASE (MISSING)
-      IF (PRESENT(status)) RETURN
-    END SELECT
+     CALL message ('position_nml','File '//TRIM(yfilename)// 'namelist /'//TRIM(test)//'/ '//TRIM(action))
 
-    CALL finish('position_nml', 'namelist /'//TRIM(test)//'/ '//code)
+   END FUNCTION position_nml
+  !================================================================================================
+  SUBROUTINE close_nml (unit)
 
-  END SUBROUTINE position_nml
-
-  !>
-  !!  opens an ASCII file which will later contain all the namelist variables
-  !!  and their actual values used in the simulation.
-  !!
-  SUBROUTINE open_nml_output(file)
-    CHARACTER(len=*), INTENT(IN) :: file
+    INTEGER, INTENT(in) :: unit ! file handler
     INTEGER :: istat
 
-    nnml_output = find_next_free_unit(10, 20)
+    IF (unit == -1) THEN
+      CALL finish('close_nml','Namelist file not opened')
+    ELSE
+      IF (namelist_file_list(unit)%fileunit == -1) THEN
+        CALL finish ('close_nml','Namelist file '//TRIM(namelist_file_list(unit)%filename)//' already closed')
+      ENDIF
+    ENDIF
 
-    OPEN (nnml_output, FILE=TRIM(file), IOSTAT=istat, DELIM='apostrophe')
+    CLOSE (namelist_file_list(unit)%fileunit, IOSTAT=istat)
 
-    IF (istat /= 0) THEN
-      CALL finish('open_nml_output', 'Could not open '//TRIM(file))
-    END IF
+    IF (istat == 0) THEN
+      namelist_file_list(unit)%fileunit = -1
+    ELSE
+      CALL finish('close_nml','Could not close namelist file '//TRIM(namelist_file_list(unit)%filename))
+    ENDIF
 
-  END SUBROUTINE open_nml_output
-
-  !>
-  !!  close the ASCII output that contains all the namelist
-  !!  variables and their actual values used in the simulation.
-  !!
-  SUBROUTINE close_nml_output
-    INTEGER :: istat
-
-    CLOSE (nnml_output, IOSTAT=istat)
-
-    IF (istat /= 0) THEN
-      CALL finish('close_nml_output', 'Could not close the namelist output')
-    END IF
-
-  END SUBROUTINE close_nml_output
-
+  END SUBROUTINE close_nml
+  !================================================================================================
 END MODULE mo_namelist

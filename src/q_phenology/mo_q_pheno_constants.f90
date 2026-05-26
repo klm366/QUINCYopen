@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -31,20 +31,9 @@ MODULE mo_q_pheno_constants
       ievergreen              = 1         , &
       isummergreen            = 2         , &
       iraingreen              = 3         , &
-      iperennial              = 4         , &
-      icrop_phenology         = 5
-
-  !> types with a specific phenological trigger for growing season
-  !>
-  INTEGER, PARAMETER ::                        &
-    & ipheno_type_cold_deciduous     = 1     , &   !< cold decidious
-    & ipheno_type_drought_deciduous  = 2     , &   !< drought deciduous
-    & ipheno_type_cbalance_deciduous = 3           !< deciduous because of carbon deficit
+      iperennial              = 4
 
   CHARACTER(len=*), PARAMETER, PRIVATE :: modname = 'mo_q_pheno_constants'
-
-  !$ACC DECLARE COPYIN(ievergreen, isummergreen, iraingreen, iperennial, icrop_phenology)
-  !$ACC DECLARE COPYIN(ipheno_type_cold_deciduous, ipheno_type_drought_deciduous, ipheno_type_cbalance_deciduous)
 
 #endif
 END MODULE mo_q_pheno_constants

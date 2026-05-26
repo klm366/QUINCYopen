@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -24,11 +24,6 @@ MODULE mo_jsb_impl_constants
   ! general parameters
   INTEGER, PARAMETER :: SHORT_NAME_LEN = 10
   INTEGER, PARAMETER :: MEDIUM_NAME_LEN = 20
-
-  ! water balance check descriptors
-  INTEGER, PARAMETER :: WB_IGNORE  = 0
-  INTEGER, PARAMETER :: WB_LOGGING = 1
-  INTEGER, PARAMETER :: WB_ERROR   = 2
 
   ! using the functionality of LOGICAL var with REAL var
   REAL(wp), PARAMETER :: false            = 0.0_wp    !< zero

@@ -1,15 +1,15 @@
-!> QUINCY plant hydraulics process memory
+!> Summary: QUINCY plant hydraulics process memory
 !>
-!> ICON-Land
+!>#### ICON-Land
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> ------------------------------------------------------------------------
+!> Copyright (C) 2004-2024, MPI-M, MPI-BGC, DWD, DKRZ, KIT, ETH, MeteoSwiss  
+!> Contact information: <https://icon-model.org>
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
+!> See AUTHORS.TXT for a list of authors  
+!> See LICENSES/ for license information  
 !> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!> ------------------------------------------------------------------------
 !>
 !> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
 !>
@@ -56,7 +56,7 @@ CONTAINS
   !> initialize memory (variables) for the process: phyd
   !>
   !>
-  SUBROUTINE Init_phyd_memory(mem, prefix, suffix, lct_ids, lib_id, model_id)
+  SUBROUTINE Init_phyd_memory(mem, prefix, suffix, lct_ids, model_id)
     USE mo_jsb_model_class,   ONLY: t_jsb_model
     USE mo_jsb_class,         ONLY: Get_model
     USE mo_jsb_varlist,       ONLY: BASIC, MEDIUM, FULL
@@ -68,7 +68,6 @@ CONTAINS
     CHARACTER(len=*),        INTENT(in)            :: prefix
     CHARACTER(len=*),        INTENT(in)            :: suffix
     INTEGER,                 INTENT(in)            :: lct_ids(:)
-    INTEGER,                 INTENT(in)            :: lib_id     !< id of primary lct in lctlib
     INTEGER,                 INTENT(in)            :: model_id
     ! ----------------------------------------------------------------------------------------------------- !
     TYPE(t_jsb_grid),   POINTER :: hgrid                        ! Horizontal grid

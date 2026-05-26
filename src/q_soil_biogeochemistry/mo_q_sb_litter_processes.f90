@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -39,33 +39,49 @@ CONTAINS
   !>according to their root profile
   !>
   SUBROUTINE calc_litter_partitioning( &
-    & nc, &                            ! in
-    & nsoil_w, &
+    & nc, &                         ! in
+    & nsoil_sb, &
     & num_sl_above_bedrock, &
     & lctlib_sla, &
     & lctlib_growthform, &
     & sb_model_scheme, &
     & soil_depth_sl, &
     & root_fraction_sl, &
-    & veg_litterfall_mt, &             ! in
-    & seed_bed_litterfall_mt, &        ! in
+    & veg_litterfall_mt, & 
+    & flag_artificial_exudation_CNP, &
+    & itimestep, &
+    & artificial_exudation_X, &    ! in
+    & ae_carbon, &   !out
+    & ae_nitrogen, &
+    & ae_phosphorus, &            
     & sb_formation_mt )                ! inout
 
-    USE mo_veg_constants,           ONLY: ITREE, IGRASS, ICROP
+    USE mo_veg_constants,           ONLY: ITREE, IGRASS
     USE mo_jsb_math_constants,      ONLY: eps8
     USE mo_sb_constants,            ONLY: fc_soluable_max, k_fc_soluable, k_fn_soluable, k_fp_soluable, &
-                                          lc_leaf_max, lc_leaf2sla, lc_fine_root, lc_coarse_root, lc_fruit, lc_seed_bed
+                                          lc_leaf_max, lc_leaf2sla, lc_fine_root, lc_coarse_root, lc_fruit, lc_seed_bed, &
+                                          f_exudate_N2C_ratio, f_exudate_P2N_ratio
+
+    USE mo_jsb_physical_constants, ONLY: PDB_STANDARD_C13, ATM_STANDARD_N15
     ! ----------------------------------------------------------------------------------------------------- !
     INTEGER,                           INTENT(in)    :: nc                        !< dimension
-    INTEGER,                           INTENT(in)    :: nsoil_w                   !< nr soil layer
+    INTEGER,                           INTENT(in)    :: nsoil_sb                  !< nr soil layer
     REAL(wp), DIMENSION(nc),           INTENT(in)    :: num_sl_above_bedrock      !< number of soil layers above bedrock, i.e., with layer thickness > eps8
+    LOGICAL,                           INTENT(in)    :: flag_artificial_exudation_CNP  !< flag for artificial exudation, that is calculated based on 
+                                                                                        ! artificial_exudation_X and the C2N, N2P ratios as parameters
     REAL(wp),                          INTENT(in)    :: lctlib_sla                !< lctlib parameter
     INTEGER,                           INTENT(in)    :: lctlib_growthform         !< lctlib parameter
     CHARACTER(len=*),                  INTENT(in)    :: sb_model_scheme           !< config option: soil model
-    REAL(wp), DIMENSION(nc, nsoil_w),  INTENT(in)    :: soil_depth_sl             !< soil layer thickness
-    REAL(wp), DIMENSION(nc, nsoil_w),  INTENT(in)    :: root_fraction_sl          !< root fraction per soil layer
+    REAL(wp), DIMENSION(nc, nsoil_sb), INTENT(in)    :: soil_depth_sl             !< soil layer thickness
+    REAL(wp), DIMENSION(nc, nsoil_sb), INTENT(in)    :: root_fraction_sl          !< root fraction per soil layer
     REAL(wp),                          INTENT(in)    :: veg_litterfall_mt(:,:,:)  !< bgcm flux: vegetation litterfall
-    REAL(wp),                          INTENT(in)    :: seed_bed_litterfall_mt(:,:)  !< bgcm flux: litterfall from seed bed turnover
+    REAL(wp),                          INTENT(in)    :: artificial_exudation_X    ! amount of C [mol/m2/timestep] that is used for artificial exudation
+    INTEGER,                           INTENT(in)    :: itimestep                 ! current timestep
+    !REAL(wp),                         INTENT(in)    :: time_doy                     !kschufft
+    !INTEGER,                          INTENT(in)    :: time_year                    !kschufft
+    REAL(wp), DIMENSION(nc, nsoil_sb), INTENT(out)   :: ae_carbon, &
+                                                        ae_nitrogen, &
+                                                        ae_phosphorus
     REAL(wp),                          INTENT(inout) :: sb_formation_mt(:,:,:,:)  !< bgcm flux: soil biogeochemistry formation flux
     ! ----------------------------------------------------------------------------------------------------- !
     REAL(wp), DIMENSION(nc) :: fc_soluable_leaf           !< fc: ...
@@ -88,9 +104,10 @@ CONTAINS
     REAL(wp), DIMENSION(nc) :: fp_soluable_fruit
     REAL(wp), DIMENSION(nc) :: fp_soluable_seed_bed
     REAL(wp), DIMENSION(nc) :: fp_soluable_labile
-    REAL(wp), DIMENSION(nc) :: fp_soluable_reserve
-    INTEGER                 :: ic, is                     !< loop over dimensions
-    INTEGER                 :: isoil                      !< loop over soil layers
+    REAL(wp), DIMENSION(nc) :: fp_soluable_reserve 
+    REAL(wp)                :: hlp1, &
+                              & hlp2
+    INTEGER                 :: ic, is                         !< loop over points of chunk
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_litter_partitioning'
     ! ----------------------------------------------------------------------------------------------------- !
 
@@ -164,9 +181,9 @@ CONTAINS
         END IF
       END IF
       ! seed_bed
-      IF(seed_bed_litterfall_mt(ixN, ic) > eps8) THEN
+      IF(veg_litterfall_mt(ix_seed_bed, ixN, ic) > eps8) THEN
         fc_soluable_seed_bed(ic) = MAX(0.0_wp, fc_soluable_max - k_fc_soluable * lc_seed_bed &
-          &                        * seed_bed_litterfall_mt(ixC, ic) / seed_bed_litterfall_mt(ixN, ic))
+          &                        * veg_litterfall_mt(ix_seed_bed, ixC, ic) / veg_litterfall_mt(ix_seed_bed, ixN, ic))
         IF(fc_soluable_seed_bed(ic) > eps8) THEN
           fn_soluable_seed_bed(ic) = 1._wp &
             &                        / (1._wp + (1._wp - fc_soluable_seed_bed(ic)) / (k_fn_soluable * fc_soluable_seed_bed(ic)))
@@ -186,7 +203,7 @@ CONTAINS
       &                                 + fc_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixC, :)     &
       &                                 + fc_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixC, :)    &
       &                                 + fc_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixC, :)   &
-      &                                 + fc_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixC, :)) &
+      &                                 + fc_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixC, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_soluable_litter, ixN, :, 1) = &
       &                              sb_formation_mt(ix_soluable_litter, ixN, :, 1) &
@@ -194,7 +211,7 @@ CONTAINS
       &                                 + fn_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixN, :)     &
       &                                 + fn_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixN, :)    &
       &                                 + fn_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixN, :)   &
-      &                                 + fn_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixN, :)) &
+      &                                 + fn_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixN, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_soluable_litter, ixP, :, 1) = &
       &                              sb_formation_mt(ix_soluable_litter, ixP, :, 1) &
@@ -202,7 +219,7 @@ CONTAINS
       &                                 + fp_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixP, :)     &
       &                                 + fp_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixP, :)    &
       &                                 + fp_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixP, :)   &
-      &                                 + fp_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixP, :)) &
+      &                                 + fp_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixP, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_soluable_litter, ixC13, :, 1) = &
       &                              sb_formation_mt(ix_soluable_litter, ixC13, :, 1) &
@@ -210,7 +227,7 @@ CONTAINS
       &                                 + fc_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixC13, :)     &
       &                                 + fc_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixC13, :)    &
       &                                 + fc_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixC13, :)   &
-      &                                 + fc_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixC13, :)) &
+      &                                 + fc_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixC13, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_soluable_litter, ixC14, :, 1) = &
       &                              sb_formation_mt(ix_soluable_litter, ixC14, :, 1) &
@@ -218,7 +235,7 @@ CONTAINS
       &                                 + fc_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixC14, :)     &
       &                                 + fc_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixC14, :)    &
       &                                 + fc_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixC14, :)   &
-      &                                 + fc_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixC14, :)) &
+      &                                 + fc_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixC14, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_soluable_litter, ixN15, :, 1) = &
       &                              sb_formation_mt(ix_soluable_litter, ixN15, :, 1) &
@@ -226,7 +243,7 @@ CONTAINS
       &                                 + fn_soluable_fruit(:)    * veg_litterfall_mt(ix_fruit, ixN15, :)     &
       &                                 + fn_soluable_labile(:)   * veg_litterfall_mt(ix_labile, ixN15, :)    &
       &                                 + fn_soluable_reserve(:)  * veg_litterfall_mt(ix_reserve, ixN15, :)   &
-      &                                 + fn_soluable_seed_bed(:) * seed_bed_litterfall_mt(ixN15, :)) &
+      &                                 + fn_soluable_seed_bed(:) * veg_litterfall_mt(ix_seed_bed, ixN15, :)) &
       &                              / soil_depth_sl(:,1)
     !>  2.2 polymeric litter
     !>
@@ -236,7 +253,7 @@ CONTAINS
       &                                 + (1.0_wp - fc_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixC, :)     &
       &                                 + (1.0_wp - fc_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixC, :)    &
       &                                 + (1.0_wp - fc_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixC, :)   &
-      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixC, :)) &
+      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixC, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_polymeric_litter, ixN, :, 1) = &
       &                              sb_formation_mt(ix_polymeric_litter, ixN, :, 1) &
@@ -244,7 +261,7 @@ CONTAINS
       &                                 + (1.0_wp - fn_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixN, :)     &
       &                                 + (1.0_wp - fn_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixN, :)    &
       &                                 + (1.0_wp - fn_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixN, :)   &
-      &                                 + (1.0_wp - fn_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixN, :)) &
+      &                                 + (1.0_wp - fn_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixN, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_polymeric_litter, ixP, :, 1) = &
       &                              sb_formation_mt(ix_polymeric_litter, ixP, :, 1) &
@@ -252,7 +269,7 @@ CONTAINS
       &                                 + (1.0_wp - fp_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixP, :)     &
       &                                 + (1.0_wp - fp_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixP, :)    &
       &                                 + (1.0_wp - fp_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixP, :)   &
-      &                                 + (1.0_wp - fp_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixP, :)) &
+      &                                 + (1.0_wp - fp_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixP, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_polymeric_litter, ixC13, :, 1) = &
       &                              sb_formation_mt(ix_polymeric_litter, ixC13, :, 1) &
@@ -260,7 +277,7 @@ CONTAINS
       &                                 + (1.0_wp - fc_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixC13, :)     &
       &                                 + (1.0_wp - fc_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixC13, :)    &
       &                                 + (1.0_wp - fc_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixC13, :)   &
-      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixC13, :)) &
+      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixC13, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_polymeric_litter, ixC14, :, 1) = &
       &                              sb_formation_mt(ix_polymeric_litter, ixC14, :, 1) &
@@ -268,7 +285,7 @@ CONTAINS
       &                                 + (1.0_wp - fc_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixC14, :)     &
       &                                 + (1.0_wp - fc_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixC14, :)    &
       &                                 + (1.0_wp - fc_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixC14, :)   &
-      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixC14, :)) &
+      &                                 + (1.0_wp - fc_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixC14, :)) &
       &                              / soil_depth_sl(:,1)
     sb_formation_mt(ix_polymeric_litter, ixN15, :, 1) = &
       &                              sb_formation_mt(ix_polymeric_litter, ixN15, :, 1) &
@@ -276,7 +293,7 @@ CONTAINS
       &                                 + (1.0_wp - fn_soluable_fruit(:))    * veg_litterfall_mt(ix_fruit, ixN15, :)     &
       &                                 + (1.0_wp - fn_soluable_labile(:))   * veg_litterfall_mt(ix_labile, ixN15, :)    &
       &                                 + (1.0_wp - fn_soluable_reserve(:))  * veg_litterfall_mt(ix_reserve, ixN15, :)   &
-      &                                 + (1.0_wp - fn_soluable_seed_bed(:)) * seed_bed_litterfall_mt(ixN15, :)) &
+      &                                 + (1.0_wp - fn_soluable_seed_bed(:)) * veg_litterfall_mt(ix_seed_bed, ixN15, :)) &
       &                              / soil_depth_sl(:,1)
 
     !>3.0 Add surface litter fall from sapwood and heartwood pools to surface woody litter pool for trees
@@ -306,7 +323,7 @@ CONTAINS
         &           sb_formation_mt(ix_woody_litter, ixN15, :, 1) &
         &           + (veg_litterfall_mt(ix_sap_wood, ixN15, :) + veg_litterfall_mt(ix_heart_wood, ixN15, :)) / soil_depth_sl(:,1)
     ! grass PFT
-    CASE (IGRASS,ICROP)
+    CASE (IGRASS)
       ! soluable litter
       sb_formation_mt(ix_soluable_litter, ixC, :, 1) = &
         &             sb_formation_mt(ix_soluable_litter, ixC, :, 1) &
@@ -494,6 +511,135 @@ CONTAINS
         END SELECT
       END DO
     END DO
+
+
+    IF (flag_artificial_exudation_CNP) THEN
+      !IF (time_doy == 200 .AND. time_year == 10) THEN
+      IF ((itimestep > (48*365*50+ 48*150) .AND. itimestep <= (48*365*55 + 48*150)) .AND. (mod(itimestep,48) == 24)) THEN  !365*48*10
+      !IF (itimestep > (48*365*85 + 48*150) .AND. itimestep <= (365*48*85 + 48*151)) THEN
+           !PRINT*,"Adding artificial exudation [CNP]"
+           !PRINT*, itimestep
+        DO ic = 1,nc
+          DO is = 1,INT(num_sl_above_bedrock(ic))
+         
+            SELECT CASE(TRIM(sb_model_scheme))
+            CASE ("simple_1d")
+              sb_formation_mt(ix_soluable_litter, ixC, ic, is) = &
+               &             sb_formation_mt(ix_soluable_litter, ixC, ic, is) &
+               &             + artificial_exudation_X &
+               &             * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+             
+              sb_formation_mt(ix_soluable_litter, ixN, ic, is) = &
+               &              sb_formation_mt(ix_soluable_litter, ixN, ic, is) &
+               &              + artificial_exudation_X  * f_exudate_N2C_ratio * & 
+               &              root_fraction_sl(is,ic) / soil_depth_sl(is,ic) 
+
+                          
+              sb_formation_mt(ix_soluable_litter, ixP, ic, is) = &
+               &              sb_formation_mt(ix_soluable_litter, ixP, ic, is) &
+               &              + artificial_exudation_X  * f_exudate_N2C_ratio * f_exudate_P2N_ratio * &  
+               &              root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+
+
+               hlp1 = 3.0 !3 per mil
+               hlp2= ((hlp1/1000.0_wp +1.0_wp)*PDB_STANDARD_C13*artificial_exudation_X) &
+                /(1.0_wp+((hlp1/1000.0_wp +1.0_wp)*PDB_STANDARD_C13))
+              
+
+              sb_formation_mt(ix_soluable_litter, ixC13, ic, is) = &
+               &              sb_formation_mt(ix_soluable_litter, ixC13, ic, is) &
+               &             + hlp2 &
+               &             * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+
+
+              hlp1 = 20.0 !20 per mil
+              hlp2= ((hlp1/1000.0_wp +1.0_wp)*ATM_STANDARD_N15*artificial_exudation_X*f_exudate_N2C_ratio)/ &
+                (1.0_wp+((hlp1/1000.0_wp +1.0_wp)*ATM_STANDARD_N15))
+
+
+
+              sb_formation_mt(ix_soluable_litter, ixN15, ic, is) = &
+                &              sb_formation_mt(ix_soluable_litter, ixN15, ic, is) &
+                &             + hlp2 &
+                &             * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+
+
+              ae_carbon(is,ic) = artificial_exudation_X* & 
+               root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+
+              ae_nitrogen(is,ic) = artificial_exudation_X  * f_exudate_N2C_ratio * & 
+               root_fraction_sl(is,ic) / soil_depth_sl(is,ic) 
+               
+              ae_phosphorus(is,ic) = artificial_exudation_X  * f_exudate_N2C_ratio * f_exudate_P2N_ratio * &  
+                 root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+              
+            CASE("jsm")
+
+            sb_formation_mt(ix_dom, ixC, ic, is) = &                  ! ic = 2
+              &              sb_formation_mt(ix_dom, ixC, ic, is) &
+              &             + artificial_exudation_X &
+                           * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+            sb_formation_mt(ix_dom, ixN, ic, is) = &
+              &              sb_formation_mt(ix_dom, ixN, ic, is) &
+              &              + artificial_exudation_X * f_exudate_N2C_ratio * & 
+                            root_fraction_sl(is,ic) / soil_depth_sl(is,ic) 
+              
+            ! sb_formation_mt(ix_dom, ixN15, ic, is) = &
+            !   &              sb_formation_mt(ix_dom, ixN15, ic, is) &
+            !   &              + artificial_exudation_X  * f_exudate_N2C_ratio * & 
+            !   &              root_fraction_sl(is,ic) / soil_depth_sl(is,ic) 
+
+            
+            ! C13
+            hlp1 = 751.305200405_wp !3 per mil
+            hlp2= ((hlp1/1000.0_wp +1.0_wp)*PDB_STANDARD_C13*artificial_exudation_X) &
+             /(1.0_wp+((hlp1/1000.0_wp +1.0_wp)*PDB_STANDARD_C13))
+
+            sb_formation_mt(ix_dom, ixC13, ic, is) = &
+              &              sb_formation_mt(ix_dom, ixC13, ic, is) &
+              &             + hlp2 &
+                           * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+             
+            sb_formation_mt(ix_dom, ixP, ic, is) = &
+              &              sb_formation_mt(ix_dom, ixP, ic, is) &
+              &              + artificial_exudation_X  * f_exudate_N2C_ratio * f_exudate_P2N_ratio * &  
+              &              root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+
+
+
+            !15N
+
+              hlp1 = 20.0_wp !20 per mil
+              hlp2= ((hlp1/1000.0_wp +1.0_wp)*ATM_STANDARD_N15*artificial_exudation_X*f_exudate_N2C_ratio)/ &
+                (1.0_wp+((hlp1/1000.0_wp +1.0_wp)*ATM_STANDARD_N15))
+
+
+
+              sb_formation_mt(ix_dom, ixN15, ic, is) = &
+                &              sb_formation_mt(ix_dom, ixN15, ic, is) &
+                &             + hlp2 &
+                             * root_fraction_sl(is,ic)  / soil_depth_sl(is,ic) 
+
+            ae_carbon(is,ic) = artificial_exudation_X* & 
+              root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+
+            ae_nitrogen(is,ic) = artificial_exudation_X  * f_exudate_N2C_ratio * & 
+              root_fraction_sl(is,ic) / soil_depth_sl(is,ic) 
+              
+            ae_phosphorus(is,ic) = artificial_exudation_X  * f_exudate_N2C_ratio * f_exudate_P2N_ratio * &  
+                root_fraction_sl(is,ic) / soil_depth_sl(is,ic)
+            END SELECT
+          END DO
+        END DO
+      ELSE
+          DO ic = 1 ,nsoil_sb
+            ae_carbon(is,ic)=0.0_wp   
+            ae_nitrogen(is,ic)=0.0_wp 
+            ae_phosphorus(is,ic)=0.0_wp 
+          END DO    
+      ENDIF
+    ENDIF
+
   END SUBROUTINE calc_litter_partitioning
 
 #endif

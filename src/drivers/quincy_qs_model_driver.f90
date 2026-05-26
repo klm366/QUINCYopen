@@ -1,19 +1,33 @@
-!> Driver for the QUINCY standalone model
 !>
-!> QUINCY standalone
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: https://doi.org/10.17871/quincy-model-2019
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
-!>#### main routine for running QUINCY standalone
-!>
-
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief driver for the stand-alone QUINCY model
+!!
+!! @author
+!!  Sönke Zaehle, MPI-BGC Jena 
+!!
+!! @par Revision History
+!!  First version by Sönke Zaehle (2015-12-04) 
+!!  Reworked by Jan Engel (multiple times)
+!!  Adding netcdf4 output: Julia Nabel (2022 March)
+!!  Adding buffered nc writing: Phillip Papastefanou and Julia Nabel (2023-04)
+!!
 PROGRAM quincy_qs_model_driver
 
   ! echam
@@ -21,7 +35,7 @@ PROGRAM quincy_qs_model_driver
   USE mo_util,                    ONLY: int2string
   USE mo_qs_time_util,            ONLY: calc_and_report_estimated_remaining_simulation_time, &
     &                                   open_quincy_time_output_files, close_quincy_time_output_files
-  USE mo_exception,               ONLY: message_text, finish, message
+  USE mo_exception,               ONLY: message_text, finish, message, l_log
   USE mo_io_units,                ONLY: nlog, nerr                ! LUN of log & error file
   ! land model
   USE mo_qs_model_interface,      ONLY: land_model_interface 
@@ -34,28 +48,23 @@ PROGRAM quincy_qs_model_driver
                                         flux_trans_timestep_out_state
   USE mo_jsb_class,               ONLY: get_model
   USE mo_jsb_model_class,         ONLY: t_jsb_model
-  USE mo_jsb_process_class,       ONLY: A2L_, Q_SYL_
+  USE mo_jsb_process_class,       ONLY: A2L_
   USE mo_quincy_model_config,     ONLY: QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION
   USE mo_jsb_base,                ONLY: setup_model_vgrid_procconf, quincy_proc_parameter_init, jsbach_setup_tiles
-  USE mo_jsb_time_iface,          ONLY: get_is_time_experiment_start, set_is_time_experiment_start
-  USE mo_lookup_tables_constants, ONLY: init_satpres_coeffs
   ! forcing
   USE mo_qs_forcing,              ONLY: forcing_options, calc_output_time_interval_pool
   ! atmland
   USE mo_qs_atmland_forcing,      ONLY: update_forcing, open_forcing_input_file, close_forcing_input_file ! valid for land plant canopy and soil
   ! output
   USE mo_qs_output_txt,           ONLY: open_pool_output_files, &
-    &                                   open_flux_output_files, &
-    &                                   close_output_files, &
-    &                                   open_output_files_soil_forcing, &
-    &                                   close_output_files_soil_forcing 
-  USE mo_qs_output_txt_util,      ONLY: init_output_txt_config, print_output_txt_config
+                                        open_flux_output_files, &
+                                        close_output_files
+  USE mo_qs_output_txt,           ONLY: open_output_files_soil_forcing, close_output_files_soil_forcing 
   !> NOTE: writing of soil forcing still required if 'l_output_as_ascii_text = .FALSE.', i.e. if 'normal ascii' output is written to netcdf
   USE mo_qs_output_netcdf4,       ONLY: assert_possible_output_interval, init_quincy_nc4_output, define_nc4_output_files, &
     &                                   prepare_nc4_output_writing, close_nc4_output_files, deallocate_quincy_output
 
   dsl4jsb_Use_memory(A2L_)
-  dsl4jsb_Use_config(Q_SYL_)
 
   IMPLICIT NONE
 
@@ -65,11 +74,8 @@ PROGRAM quincy_qs_model_driver
   !! 
   LOGICAL       :: l_forcing                          ! IF .TRUE. THEN run forcing routines (e.g. update_forcing())
   INTEGER       :: first_timestep                     ! number of the first timestep simulated in the below DO loop
-  LOGICAL       :: is_first_timestep                  ! is TRUE during the first timestep, i.e., experiment start
   INTEGER       :: transient_spinup_itimestep_period  ! count the number of timesteps covering one repeated spinup period
-  INTEGER       :: nblks, iblk, nproma, ics, ice, nc  !< *slmtmp may be an input from JSBACH4 later in SLM dev
-  INTEGER       :: npromz                             ! number of points in the last chunk (in QUINCY we only have one chunk)
-  INTEGER       :: n_output_years                     !< number of years to be written into a to be prepared netcdf file
+  INTEGER       :: iblk, nproma, ics, ice, nc         !< *slmtmp may be an input from JSBACH4 later in SLM dev
   INTEGER       :: nproca                             ! number of processors for jsbach
   INTEGER       :: nprocb                             ! has to be one
   INTEGER       :: nprocio                            ! number of processors for I/O server
@@ -93,8 +99,6 @@ PROGRAM quincy_qs_model_driver
 
   INTEGER :: buffer_nc_index !< position in the netcdf output buffer to write to next (if writing to netcdf)
   INTEGER :: buffer_nc_size  !< size of the buffer used for netcdf output (if writing to netcdf)
-
-  dsl4jsb_Def_config(Q_SYL_)
 
   ! A2L_
   dsl4jsb_Def_memory(A2L_)
@@ -131,6 +135,9 @@ PROGRAM quincy_qs_model_driver
   CLASS(t_jsb_tile_abstract), POINTER :: tile   !< local data structure for dynamic vegetation and soil variables
                                                 !! in jsbach4 tile is created in mo_jsb_model_usecases
 
+  !! enable logfile output
+  l_log = .TRUE.
+  
   !! open log & error file
   OPEN (UNIT = nlog, FILE = 'quincy_standalone.log', ACTION="write", STATUS="unknown")
   OPEN (UNIT = nerr, FILE = 'quincy_standalone.err', ACTION="write", STATUS="unknown")
@@ -151,74 +158,63 @@ PROGRAM quincy_qs_model_driver
   nprocio  = 0      ! ?
   npedim   = -1     ! ?
   model_id = 1      ! must be consistent with model_idx set in setup_model_vgrid_procconf()
-  nblks    = 1                ! must be always 1 in QUINCY (number of chunk in the "2D block of chunks" created from the 1D domain - information provided by ECHAM or ICON to JSBACH/QUINCY)
   iblk     = 1                ! must be always 1 in QUINCY (number of chunk in the "2D block of chunks" created from the 1D domain - information provided by ECHAM or ICON to JSBACH/QUINCY)
   nproma   = 1                ! number of points in the chunk
-  npromz   = nproma           ! number of points in the last chunk (in QUINCY we only have one chunk anyway)
   ics      = 1                ! must be 1 in QUINCY (and is also always 1 in "jsb4 standalone with ECHAM") - mo_jsb_memory_class:Add_var calculates ice using nproma & based on the assumption of ics=1 
   ice      = ics + nproma - 1 ! ice depends on ics and nproma; ics is always 1, hence, ice = nproma always
-  nc       = nproma           ! in QUINCY npromz = nproma always
+  nc       = nproma           ! in QUINCY there is no npromz, so nc = nproma always 
 
   buffer_nc_index = 1
 
   !! 1.2  set up the model with vgrid and process configs (jsbach%models(model_id)%m => model  with 'model' of TYPE(t_jsb_model))
-  CALL setup_model_vgrid_procconf("qs.namelist")
+  CALL setup_model_vgrid_procconf("namelist.slm")
   model => get_model(model_id)
 
   !! 1.3 init of horizontal grid
-  CALL jsbach_setup_grid(model%id, "hgrid0", nproma, npromz, nblks)  ! model%id, horizontal grid name (arbitrary name), number of points
+  CALL jsbach_setup_grid(model%id, "hgrid0", nproma)    ! model%id, horizontal grid name (arbitrary name), number of points
 
-  !! 1.4 init parameter of NWP atmosphere physics used for calculation of 'qsat' (saturation vapor pressure)
-  CALL init_satpres_coeffs(2)   ! apply "more accurate IFS coefficients"
-
-  !! 1.5 init process parameters (and modify parameter values for param-sensi)
+  !! 1.4 init process parameters (and modify parameter values for param-sensi)
   CALL quincy_proc_parameter_init(model%id)
 
-  !! 1.6 set up tiles, read lctlib (and modify parameter values for param-sensi) and init usecase
+  !! 1.5 set up tiles, read lctlib (and modify parameter values for param-sensi) and init usecase
   CALL jsbach_setup_tiles(model%id)
 
-  !! 1.7 quincy-model init
+  !! 1.6 quincy-model init
   !!     and init of: forcing, SB_ & VEG_ pools, tiles, time, fluxnet diagnostics
-  CALL quincy_init(model%id, iblk, nproma, nblks, ics, ice, nc, &           ! in
+  CALL quincy_init(model%id, iblk, nproma, ics, ice, nc, &                  ! in
                    l_forcing)                                               ! out
 
-  !! 1.8 init ascii txt and netcdf4 simulation output files
-  IF (l_output_as_ascii_text) THEN
-    ! init config
-    CALL init_output_txt_config(TRIM(model%config%output_txt_file_set))
-    ! print config to logfile
-    CALL print_output_txt_config()
-  ELSE
+  !! 1.7 init netcdf4 simulation output (if running with netcdf) and assert possible output intervals
+  IF (.NOT. l_output_as_ascii_text) THEN
     ! assert possible output intervals
-    ! spinup
-    output_interval_pool = calc_output_time_interval_pool(model%config%output_interval_pool_spinup, model%config%dtime)
+    output_interval_pool        = calc_output_time_interval_pool(model%config%output_interval_pool_spinup, &
+      &                           model%config%dtime)
     CALL assert_possible_output_interval(output_interval_pool, model%config%output_interval_pool_spinup, modname, 'spin-up')
-    ! transient simulation
-    output_interval_pool = calc_output_time_interval_pool(model%config%output_interval_pool, model%config%dtime)
+    output_interval_pool        = calc_output_time_interval_pool(model%config%output_interval_pool, &
+      &                           model%config%dtime)
     CALL assert_possible_output_interval(output_interval_pool, model%config%output_interval_pool, modname)
+
     ! init netcdf4 simulation output
     CALL init_quincy_nc4_output(model%id)
-  END IF
+  ENDIF
 
-  !! 1.9 get the tile
+  !! 1.8 get the tile
   !!     note: in this QUINCY model driver just one tile is used
-  CALL model%Get_top_tile(tile)
+  tile => model%Get_top_tile()
 
-  !! 1.10 define the netcdf4 output files and their output variables
-  !!      depending on the `model%config%qmodel_id`
+  !! 1.9 define the netcdf4 output files and their output variables
+  !!     depending on the `model%config%qmodel_id`
   IF (.NOT. l_output_as_ascii_text) THEN
     CALL define_nc4_output_files(model%id, tile)
 
-    IF ( (TRIM(model%config%output_interval_pool) .NE. TRIM(model%config%output_interval_flux)) .OR. &
+    IF ( (TRIM(model%config%output_interval_pool).NE. TRIM(model%config%output_interval_flux)) .OR. &
         & (TRIM(model%config%output_interval_pool_spinup) .NE. TRIM(model%config%output_interval_flux_spinup)) ) THEN
       WRITE(message_text,*) 'Quincy nc4 output module expects output intervals to be identical for fluxes and pools, please check!'
       CALL finish(TRIM(modname),message_text)
-    END IF
-  END IF
-
+    ENDIF
+  ENDIF
 
   !! 2.0 -----------------------------------------------------------------------------------------------
-  dsl4jsb_Get_config(Q_SYL_)
   dsl4jsb_Get_memory(A2L_)
   dsl4jsb_Get_var2D_onChunk(A2L_, t_air)
   dsl4jsb_Get_var2D_onChunk(A2L_, q_air)
@@ -293,8 +289,6 @@ PROGRAM quincy_qs_model_driver
     ! init spinup period counter
     transient_spinup_itimestep_period = 0
   ENDIF
-  is_first_timestep = .TRUE.        ! TRUE for the first timestep, i.e., experiment start
-  nr_forcing_years  = model%config%forcing_file_last_yr - model%config%forcing_file_start_yr + 1
 
 
   !! 4.0 -----------------------------------------------------------------------------------------------
@@ -309,11 +303,11 @@ PROGRAM quincy_qs_model_driver
   ! the output routine for SLM canopy is located in mo_qs_model_interface -> canopy_model_write_data()
   SELECT CASE(model%config%qmodel_id)
     CASE(QLAND, QPLANT, QSOIL, QCANOPY)
-      ! open output files for static mode or for transient spinup if output may be created (i.e. output interval is not 'none')
+      ! open output files for static more or for transient spinup if output may be created (i.e. output interval is not 'none')
       IF (model%config%l_static_forcing_mode) THEN
         IF (l_output_as_ascii_text) THEN
-          CALL open_pool_output_files(TRIM(model%config%output_interval_pool), '')
-          CALL open_flux_output_files(tile, model%options, TRIM(model%config%output_interval_flux), '')
+          CALL open_pool_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_pool), '')
+          CALL open_flux_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_flux), '')
         ELSE
           ! In static forcing mode we cannot trust the simulation year offset as for longer
           ! simluations the model cycles the forcing years
@@ -329,6 +323,7 @@ PROGRAM quincy_qs_model_driver
             CALL finish(TRIM(modname),message_text)
           ENDIF
 
+          nr_forcing_years = model%config%forcing_file_last_yr - model%config%forcing_file_start_yr + 1
           IF (forcing_options%simulation_length_number <= nr_forcing_years) THEN
             ! In this case the start date of the netcdf output file is set to the first year of forcing data
             start_date_char = TRIM(int2string(model%config%forcing_file_start_yr))//'-01-01 00:00'
@@ -346,15 +341,14 @@ PROGRAM quincy_qs_model_driver
             ! docu and info
             CALL message(TRIM(modname), 'Simulation output is written relative to the start date: '//TRIM(start_date_char))
           ENDIF
-          ! prepare file
-          n_output_years = model%config%output_end_last_day_year - model%config%output_start_first_day_year + 1
-          CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
+
+          CALL prepare_nc4_output_writing(tile, iblk, output_interval_pool_act, &
             &                             TRIM(model%config%output_interval_flux), 'static_', start_date_char)
         ENDIF
       ELSEIF (model%config%l_transient_forcing_mode .AND. output_interval_pool_act > 0.0_wp) THEN
         IF (l_output_as_ascii_text) THEN
-          CALL open_pool_output_files(TRIM(model%config%output_interval_pool_spinup), 'spinup_')
-          CALL open_flux_output_files(tile, model%options, TRIM(model%config%output_interval_flux_spinup), 'spinup_')
+          CALL open_pool_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_pool_spinup), 'spinup_')
+          CALL open_flux_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_flux_spinup), 'spinup_')
         ELSE
           ! docu and info
           WRITE(message_text,*) 'The start date of the netcdf output is dated back such that ', &
@@ -363,8 +357,7 @@ PROGRAM quincy_qs_model_driver
           ! calc netcdf start date and prepare netcdf output files
           start_date_char = TRIM(int2string(forcing_options%transient_simulation_start_year &
             &                                - forcing_options%transient_spinup_years))//'-01-01 00:00'
-          n_output_years = forcing_options%transient_spinup_years
-          CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
+          CALL prepare_nc4_output_writing(tile, iblk, output_interval_pool_act, &
             &                             TRIM(model%config%output_interval_flux_spinup), 'spinup_', start_date_char)
           ! docu and info
           CALL message(TRIM(modname), 'Simulation output is written relative to the start date: '//TRIM(start_date_char))
@@ -396,14 +389,6 @@ PROGRAM quincy_qs_model_driver
     ! exits the DO loop after completing the timestep with "itimestep == ntimestep"
     IF (itimestep == ntimestep) EXIT
 
-    !! first timestep, experiment start
-    !! 
-    !! is set to FALSE at the end of the first timestep
-    !! 
-    IF (is_first_timestep) THEN
-      CALL set_is_time_experiment_start(.TRUE.)
-    END IF
-
     !! 5.1 advance timestep of this loop
     !! init itimestep with 0, the timestep 1 means running from 0 to 1, equally to time_day
     itimestep       = itimestep + 1             ! increment DO loop counter
@@ -425,21 +410,20 @@ PROGRAM quincy_qs_model_driver
     IF (time_day > one_year) THEN
       time_day  = time_day - one_year   ! largest value of time ~ 365; see mo_jsb_math_constants
       time_year = time_year + 1   
-
-      IF (forcing_options%transient_spinup_years <= 20 .AND. forcing_options%simulation_length_number <= 20) THEN
-        PRINT *,"New sim year ", time_year, " using forcing from ", forcing_options%forcing_year
-      END IF
     END IF
     ! calculate the seconds passed on this day (subtract whole days and convert day to seconds)
     time_day_seconds(:) = (time_day - REAL(INT(time_day),wp)) * seconds_per_day
 
-    ! update model options
-    model%options%current_datetime%time_day = time_day
-    model%options%current_datetime%time_year = time_year
-
     ! calculate and report the real time that has passed over this simulation and 
     !   estimate remaining time
     CALL calc_and_report_estimated_remaining_simulation_time(first_timestep, itimestep, ntimestep)
+
+
+    !kschufft
+    model%options%current_day = time_day
+    model%options%current_year = time_year
+    ! actualle these also count for spinup, so it might be better to use
+    model%options%itimestep = itimestep
 
     !! 5.3 control for transient forcing_mode
     !! 
@@ -460,9 +444,6 @@ PROGRAM quincy_qs_model_driver
           model%config%l_transient_spinup                = .FALSE.           ! do not enter the "control spinup" IF statement anymore
           time_day                                       = timestep_prop_day ! equals 1.0 at the last simulated timestep of the day
           time_year                                      = 1                 ! the 1st year of a simulation == 1 (not zero)
-          ! update model options
-          model%options%current_datetime%time_day = time_day
-          model%options%current_datetime%time_year = time_year
           ! close spinup output files if output was created (i.e. spinup output interval is not 'none')
           IF (output_interval_pool_act > 0.0_wp) THEN
             IF (l_output_as_ascii_text) THEN
@@ -475,8 +456,8 @@ PROGRAM quincy_qs_model_driver
           output_interval_pool_act = output_interval_pool
           ! open new output files
           IF (l_output_as_ascii_text) THEN
-            CALL open_pool_output_files(TRIM(model%config%output_interval_pool), '')
-            CALL open_flux_output_files(tile, model%options, TRIM(model%config%output_interval_flux), '')
+            CALL open_pool_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_pool), '')
+            CALL open_flux_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_flux), '')
           ELSE
             start_date_char = TRIM(int2string(forcing_options%transient_simulation_start_year))//'-01-01 00:00'
 
@@ -485,21 +466,7 @@ PROGRAM quincy_qs_model_driver
                 & // "output_start_first_day_year and output_end_last_day_year."
             ENDIF
 
-            IF (model%config%fluxnet_type_transient_timestep_output) THEN
-              n_output_years = forcing_options%simulation_length_number &
-                &              - (model%config%fluxnet_static_forc_last_yr - model%config%fluxnet_static_forc_start_yr + 1)
-            ELSE
-              n_output_years = model%config%output_end_last_day_year - model%config%output_start_first_day_year + 1
-              IF (forcing_options%simulation_length_number < model%config%output_start_first_day_year) THEN
-                WRITE(message_text,*) 'With a simuation length of ('//TRIM(int2string(forcing_options%simulation_length_number)) &
-                  &                 // ') no output would be created because the first output year would not be reached: ('      &
-                  &                 // TRIM(int2string(model%config%output_start_first_day_year))//'). Please check!'
-                CALL finish(TRIM(modname), message_text)
-              ELSE IF (forcing_options%simulation_length_number < n_output_years) THEN
-                n_output_years = forcing_options%simulation_length_number
-              END IF
-            END IF
-            CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
+            CALL prepare_nc4_output_writing(tile, iblk, output_interval_pool_act, &
               &                             TRIM(model%config%output_interval_flux), 'transient_', start_date_char)
           ENDIF
         END IF
@@ -565,14 +532,7 @@ PROGRAM quincy_qs_model_driver
           WRITE(message_text,*) 'First year read from the forcing file ('//TRIM(int2string(forcing_options%forcing_year))      &
             &                   // ') not equal to forcing start year as specified in the namelist or else set as DEFAULT ('   &
             &                   // TRIM(int2string(model%config%forcing_file_start_yr))//'). Please check!'
-#ifdef __QUINCY_WITH_NETCDF__
-          CALL finish(TRIM(modname), message_text)
-#else
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-          WRITE(message_text,*) 'Note: the namelist settings forcing_file_[start/last]_yr do NOT affect/select the actual ', &
-            &                   'date of the forcing used for the simulation.'
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-#endif
+          CALL finish(TRIM(modname),message_text)
         ENDIF
 
         IF (model%config%l_transient_forcing_mode) THEN
@@ -581,29 +541,10 @@ PROGRAM quincy_qs_model_driver
             WRITE(message_text,*) 'First year read from the forcing file ('//TRIM(int2string(forcing_options%forcing_year))    &
               &                   // ') not equal to start year of transient spinup simulation as specified in the namelist (' &
               &                   // TRIM(int2string(forcing_options%transient_spinup_start_year))//'). Please check!'
-#ifdef __QUINCY_WITH_NETCDF__
-            CALL finish(TRIM(modname), message_text)
-#else
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-          WRITE(message_text,*) 'Note: the namelist settings forcing_file_[start/last]_yr do NOT affect/select the actual ', &
-            &                   'date of the forcing used for the simulation.'
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-#endif
+            CALL finish(TRIM(modname),message_text)
           ENDIF
         ENDIF
-
-        IF (dsl4jsb_Config(Q_SYL_)%flag_stand_harvest) THEN
-          IF (.NOT. dsl4jsb_Config(Q_SYL_)%harvest_active_in_qs) THEN
-            PRINT *, "Warning: flag_stand_harvest is TRUE but harvest_active_in_qs is FALSE, thus there will not be any harvest"
-          END IF
-          ! When simulating with stand replacing harvest: check if the climate forcing is cycled and if so warn that therefore multiple
-          ! harvest events are possible
-          IF (forcing_options%simulation_length_number > nr_forcing_years) THEN
-            PRINT *, "Warning: Beware, since the climate forcing is cycled, it is possible that the stand replacing harvest " &
-              & // "is executed several times."
-          END IF
-        END IF
-      END IF
+      ENDIF
 
       IF (model%config%l_transient_forcing_mode) THEN
         IF (itimestep == 1) THEN
@@ -615,14 +556,7 @@ PROGRAM quincy_qs_model_driver
             WRITE(message_text,*) 'First year read from the forcing file ('//TRIM(int2string(forcing_options%forcing_year)) &
               &                   // ') not equal to start year of transient simulation as specified in the namelist ('     &
               &                   // TRIM(int2string(forcing_options%transient_simulation_start_year))//'). Please check!'
-#ifdef __QUINCY_WITH_NETCDF__
-            CALL finish(TRIM(modname), message_text)
-#else
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-          WRITE(message_text,*) 'Note: the namelist settings forcing_file_[start/last]_yr do NOT affect/select the actual ', &
-            &                   'date of the forcing used for the simulation.'
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-#endif
+            CALL finish(TRIM(modname),message_text)
           ENDIF
         ENDIF
       ENDIF
@@ -656,17 +590,15 @@ PROGRAM quincy_qs_model_driver
             &                                   model%config%dtime) ! character to int
           output_interval_pool_act            = output_interval_pool
           IF (l_output_as_ascii_text) THEN
-            CALL open_pool_output_files(TRIM(model%config%output_interval_pool), '')
-            CALL open_flux_output_files(tile, model%options, TRIM(model%config%output_interval_flux), '')
+            CALL open_pool_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_pool), '')
+            CALL open_flux_output_files(tile, iblk, ics, ice, nc, TRIM(model%config%output_interval_flux), '')
           ELSE
             start_date_char = int2string(model%config%fluxnet_static_forc_start_yr)//'-01-01 00:00'
-            n_output_years = model%config%fluxnet_static_forc_last_yr - model%config%fluxnet_static_forc_start_yr + 1
-
             IF (TRIM(model%config%sim_siteset_specific) == "eucface_trans") THEN
-              CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
+              CALL prepare_nc4_output_writing(tile, iblk, output_interval_pool_act, &
                 &                             TRIM(model%config%output_interval_flux), 'eucface_', start_date_char)
             ELSE
-              CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
+              CALL prepare_nc4_output_writing(tile, iblk, output_interval_pool_act, &
                 &                             TRIM(model%config%output_interval_flux), 'fluxnetdata_', start_date_char)
             ENDIF
           ENDIF
@@ -778,16 +710,7 @@ PROGRAM quincy_qs_model_driver
                               elapsed_seconds, &
                               time_day, &
                               time_year &
-                              &  ) ! land_model_interface()
-
-    !! end first timestep, experiment start
-    !! 
-    !! set to FALSE
-    !! 
-    IF (is_first_timestep) THEN
-      is_first_timestep = .FALSE.
-      CALL set_is_time_experiment_start(.FALSE.)
-    END IF
+                                &  ) ! land_model_interface()
 
   END DO  ! end time loop 
 

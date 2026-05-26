@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -22,7 +22,9 @@ MODULE mo_jsb_var_class
 
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: t_jsb_var_real1d, t_jsb_var_real2d, t_jsb_var_real3d, t_jsb_var, t_jsb_var_p, REAL1D, REAL2D, REAL3D
+  PUBLIC :: t_jsb_var_real2d, t_jsb_var_real3d, t_jsb_var, t_jsb_var_p
+  PUBLIC :: REAL2D, REAL3D
+
 
   ENUM, BIND(C)
     ENUMERATOR :: REAL1D=1, REAL2D, REAL3D
@@ -34,7 +36,6 @@ MODULE mo_jsb_var_class
   !! 
   !-----------------------------------------------------------------------------------------------------
   TYPE, ABSTRACT :: t_jsb_var
-    REAL(wp), POINTER     :: ptr1d(:)     => NULL()
     REAL(wp), POINTER     :: ptr2d(:,:)   => NULL()
     REAL(wp), POINTER     :: ptr3d(:,:,:) => NULL()
     REAL(wp), ALLOCATABLE :: field(:,:,:,:,:)
@@ -50,27 +51,17 @@ MODULE mo_jsb_var_class
     INTEGER                       :: owner_model_id            ! 
     INTEGER                       :: owner_proc_id = -1        ! 
     INTEGER, ALLOCATABLE          :: owner_tile_path(:)        ! 
-    INTEGER, ALLOCATABLE          :: child_idx(:)              ! Position-numbers of the same var (as this var) on the children 
-                                                               !   of the current tile (i.e. within mem%vars(:) of that child).
+    INTEGER, ALLOCATABLE          :: child_idx(:)              ! Position-numbers of same variable for for the child tiles 
+                                                               ! (according to mem%vars(:)).
+    !! TYPE(t_subset), POINTER     :: sub  <= not needed; because it is available via: sub = var%Get_subset() !!
     REAL(dp)                      :: missval
-    LOGICAL                       :: l_aggregate_all   = .FALSE.  ! When aggregating, consider fractions of all child tiles even
-                                                                  ! of those where variable doesn't exist
-    LOGICAL                       :: is_conserved_quan = .FALSE.  ! Whether variable carries a to-be-conserved quantity
-    INTEGER                       :: cons_quan_type_id = -1       ! id identifying the type of the conserved quantity
-    LOGICAL                       :: is_in_output      = .FALSE.  ! Whether variable is requested to be written to output
-    LOGICAL                       :: is_in_restart     = .FALSE.  ! Whether variable is requested to be written to restart file
+    LOGICAL                       :: l_aggregate_all = .FALSE. ! When aggregating, consider fractions of all child tiles even
+                                                  ! of those where variable doesn't exist
   END TYPE t_jsb_var
 
 !#pragma GCC diagnostic push
 !#pragma GCC diagnostic ignored "-Wsurprising"
 
-  !================================================================================================================================
-  ! t_jsb_var_real1d
-  !================================================================================================================================
-  TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real1d
-    REAL(wp), POINTER &
-      :: ptr(:) => NULL()                    ! associated with ptr1d(:) with dimension ptr1d(1:1)
-  END TYPE t_jsb_var_real1d
 
   !-----------------------------------------------------------------------------------------------------
   !> 2D REAL Variable TYPE
@@ -79,7 +70,7 @@ MODULE mo_jsb_var_class
   !-----------------------------------------------------------------------------------------------------
   TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real2d
     REAL(wp), POINTER :: ptr(:,:) => NULL()  ! associated with ptr2d(:,:)
-    REAL(wp), POINTER :: ptrm1(:) => NULL()  ! points to ptr(ics:ice,iblk)
+    REAL(wp), POINTER :: ptrm1(:) => NULL()  ! points to ptr(ics:ice,iblk) updated each timestep with Associate_pointers
   CONTAINS
     FINAL     :: finalize_jsb_var_real2d
   END TYPE t_jsb_var_real2d
@@ -91,7 +82,7 @@ MODULE mo_jsb_var_class
   !-----------------------------------------------------------------------------------------------------
   TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real3d
     REAL(wp), POINTER :: ptr(:,:,:) => NULL()  ! associated with ptr3d(:,:,:)
-    REAL(wp), POINTER :: ptrm1(:,:) => NULL()  ! points to ptr(ics:ice,:,iblk)
+    REAL(wp), POINTER :: ptrm1(:,:) => NULL()  ! points to ptr(ics:ice,:,iblk) updated each timestep with Associate_pointers
   CONTAINS
     FINAL     :: finalize_jsb_var_real3d
   END TYPE t_jsb_var_real3d

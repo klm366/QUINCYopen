@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -51,7 +51,7 @@ MODULE mo_jsb_grid_class
     REAL(wp), POINTER             :: area(:,:) => NULL()
     LOGICAL,  POINTER             :: lsm(:,:) => NULL()
     REAL(wp), POINTER             :: lsf(:,:) => NULL()
-    INTEGER                       :: nblks = 0
+    INTEGER                       :: nblks = 1
     INTEGER                       :: nproma = 0
     INTEGER                       :: npromz = 0
     INTEGER                       :: ntotal_g              !< Total number of cells in grid

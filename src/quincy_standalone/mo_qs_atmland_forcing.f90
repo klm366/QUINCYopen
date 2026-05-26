@@ -1,22 +1,37 @@
-!> Forcing routine for generic forcing
 !>
-!> QUINCY standalone
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: https://doi.org/10.17871/quincy-model-2019
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief dummy forcing routine for generic forcing 
+!!
+!! @author
+!!  Sönke Zaehle, MPI-BGC Jena 
+!!
+!! @par Revision History
+!! First version by Sönke Zaehle (2016-01-27)
+!! 2nd version Jan Engel (20160825) moved memory from SLM to JSBACH4 style
+!! added daily reading / WG: Julia Nabel (20220523): WG based on jsbach3/4 WG with some ideas from OCN WG
+!!
 MODULE mo_qs_atmland_forcing
 
+  USE mo_jsb_model_init,        ONLY: time_year, time_day
   USE mo_kind,                  ONLY: wp
-  USE mo_util,                  ONLY: int2string, real2string
-  USE mo_jsb_time,              ONLY: is_newyear, execute_quincy_sb_accelerator_this_timestep, &
-      &                               executed_quincy_sb_accelerator_previous_timestep
+  USE mo_util,                  ONLY: int2string
   USE mo_jsb_control,           ONLY: debug_on
   USE mo_exception,             ONLY: message, finish, message_text
   USE mo_qs_forcing,            ONLY: forcing_options
@@ -24,7 +39,7 @@ MODULE mo_qs_atmland_forcing
 
   USE mo_lnd_bgcm_idx
   USE mo_lnd_bgcm_store,          ONLY: t_lnd_bgcm_store
-  USE mo_lnd_bgcm_store_class,    ONLY: VEG_BGCM_POOL_ID, VEG_BGCM_LITTERFALL_ID, VEG_BGCM_SEED_BED_LITTERFALL_ID
+  USE mo_lnd_bgcm_store_class,    ONLY: VEG_BGCM_POOL_ID, VEG_BGCM_LITTERFALL_ID
 
   IMPLICIT NONE
 
@@ -85,12 +100,12 @@ CONTAINS
 
     USE mo_jsb_class,              ONLY: Get_model
     USE mo_quincy_model_config,    ONLY: QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION
-    USE mo_jsb_process_class,      ONLY: A2L_, SPQ_, HYDRO_, SSE_, VEG_, Q_SYL_
+    USE mo_jsb_process_class,      ONLY: A2L_, SPQ_, VEG_
     USE mo_jsb_grid_class,         ONLY: t_jsb_grid, t_jsb_vgrid
     USE mo_jsb_grid,               ONLY: Get_Grid, Get_vgrid
     USE mo_jsb_tile_class,         ONLY: t_jsb_tile_abstract
     USE mo_jsb_model_class,        ONLY: t_jsb_model
-    USE mo_jsb_physical_constants, ONLY: molar_mass_N, molar_mass_P, grav, rain_as_snow_temp_thresh
+    USE mo_jsb_physical_constants, ONLY: molar_mass_N, molar_mass_P, grav
     USE mo_isotope_util,           ONLY: calc_mixing_ratio_C13C12, calc_mixing_ratio_C14C, calc_delta_C13, calc_delta_C14, &
       &                                  calc_mixing_ratio_N15N14
     USE mo_qs_atmland_util,        ONLY: update_orbital_parameters, calc_solar_angle, calc_fract_par_diffuse
@@ -98,12 +113,10 @@ CONTAINS
       &                                  frac_vis_swtot_srf, frac_par_swvis_srf
     USE mo_qs_atmland_constants,   ONLY: declination
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Use_config(SPQ_)
-    dsl4jsb_Use_config(Q_SYL_)
     dsl4jsb_Use_memory(A2L_)
-    dsl4jsb_Use_memory(HYDRO_)
-    dsl4jsb_Use_memory(SSE_)
+    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(VEG_)
+    dsl4jsb_Use_config(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_tile_abstract), INTENT(inout) :: tile                           !< one tile with data structure for one lct
     INTEGER                   , INTENT(in)    :: ics, ice, nc, iblk             !< info on block, chunk and soil layer number
@@ -139,8 +152,8 @@ CONTAINS
     TYPE(t_jsb_model),      POINTER  :: model                  !< the model structure
     TYPE(t_lnd_bgcm_store), POINTER  :: bgcm_store             !< the bgcm store of this tile
     TYPE(t_jsb_grid),       POINTER  :: hgrid                  !< horizontal grid
-    TYPE(t_jsb_vgrid),      POINTER  :: vgrid_soil_w           !< Vertical grid
-    INTEGER                          :: nsoil_w                !< number of soil layers as used/defined by the SB_ process
+    TYPE(t_jsb_vgrid),      POINTER  :: vgrid_soil_sb          !< Vertical grid
+    INTEGER                          :: nsoil_sb               !< number of soil layers as used/defined by the SB_ process
     ! ----------------------------------------------------------------------------------------------------- !
     ! READ() input variables for: land plant canopy and soil (these variable names can differ from column names in forcing files)
     REAL(wp) ::      sw_srf_down_r,      lw_srf_down_r, t_air_r,    q_air_r,    &
@@ -188,33 +201,26 @@ CONTAINS
     REAL(wp)                    :: lon, lat                       !< lon and lat - required to calculate timestep from daily forcing
     INTEGER                     :: nlevel_veg   = -1              !< number of levels at the Z-Axis (canopy layer)
     INTEGER                     :: isoil, ic                      !< looping over soil layers or chunk
-    INTEGER                     :: nr_years_passed                !< Years passed since the start of the SB_ slow-pool spinup-accelerator (if used)
-    INTEGER                     :: nr_of_executions               !< How often the SB_ slow-pool spinup-accelerator could be executed (if used)
-                                                                  !< given its interval and its the start year
     LOGICAL, DIMENSION(nc)      :: l_timestep_first_year_passed   !< is TRUE for the timestep after the 1st simulation year has passed
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':update_forcing'
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Def_mt2L2D :: veg_pool_mt
     dsl4jsb_Def_mt2L2D :: veg_litterfall_mt
-    dsl4jsb_Def_mt1L2D :: seed_bed_litterfall_mt
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Def_config(SPQ_)
-    dsl4jsb_Def_config(Q_SYL_)
-    dsl4jsb_Def_memory(HYDRO_)
-    dsl4jsb_Def_memory(SSE_)
+    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(VEG_)
     dsl4jsb_Def_memory(A2L_)
+    dsl4jsb_Def_config(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
     ! VEG_ 2D
     dsl4jsb_Real2D_onChunk      :: f_n_demand
     dsl4jsb_Real2D_onChunk      :: f_p_demand
     ! VEG_ 3D
     dsl4jsb_Real3D_onChunk      :: root_fraction_sl
-    ! HYDRO_
-    dsl4jsb_Real3D_onChunk      :: frac_wtr_transp_down_sl
-    dsl4jsb_Real3D_onChunk      :: wtr_soil_sl
-    ! SSE_ 3D
+    ! SPQ_
     dsl4jsb_Real3D_onChunk      :: t_soil_sl
+    dsl4jsb_Real3D_onChunk      :: w_soil_sl
+    dsl4jsb_Real3D_onChunk      :: percolation_sl
     ! A2L_
     dsl4jsb_Real2D_onChunk      :: nhx_deposition_acc
     dsl4jsb_Real2D_onChunk      :: noy_deposition_acc
@@ -231,26 +237,25 @@ CONTAINS
     dsl4jsb_Real2D_onChunk      :: co2_DC14_const
     dsl4jsb_Real2D_onChunk      :: local_time_day_seconds
     dsl4jsb_Real2D_onChunk      :: daytime_counter
-    dsl4jsb_Real2D_onChunk      :: daylength_prev_day
+    dsl4jsb_Real2D_onChunk      :: slow_sb_pool_accelerator_execution_counter
+    dsl4jsb_Real2D_onChunk      :: slow_sb_pool_accelerator_execute
     ! ----------------------------------------------------------------------------------------------------- !
     IF (debug_on() .AND. iblk == 1) CALL message(TRIM(routine), 'Starting on tile '//TRIM(tile%name)//' ...')
     ! ----------------------------------------------------------------------------------------------------- !
     model         => Get_model(tile%owner_model_id)
     hgrid         => Get_grid(model%grid_id)
-    vgrid_soil_w  => Get_vgrid('soil_depth_water')
-    nsoil_w       =  vgrid_soil_w%n_levels
+    vgrid_soil_sb => Get_vgrid('soil_layer_sb')
+    nsoil_sb      =  vgrid_soil_sb%n_levels
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_config(SPQ_)
-    dsl4jsb_Get_config(Q_SYL_)
-    dsl4jsb_Get_memory(HYDRO_)
-    dsl4jsb_Get_memory(SSE_)
+    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(VEG_)
     dsl4jsb_Get_memory(A2L_)
+    dsl4jsb_Get_config(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
-    ALLOCATE(t_soil_sl_r(nsoil_w))
-    ALLOCATE(w_soil_sl_r(nsoil_w))
-    ALLOCATE(percolation_sl_r(nsoil_w))
-    ALLOCATE(root_fraction_sl_r(nsoil_w))
+    ALLOCATE(t_soil_sl_r(nsoil_sb))
+    ALLOCATE(w_soil_sl_r(nsoil_sb))
+    ALLOCATE(percolation_sl_r(nsoil_sb))
+    ALLOCATE(root_fraction_sl_r(nsoil_sb))
     ! ----------------------------------------------------------------------------------------------------- !
     ! get bgcm matrices are needed only for the QSOIL model, hence all code is called below
     ! ----------------------------------------------------------------------------------------------------- !
@@ -258,11 +263,9 @@ CONTAINS
     dsl4jsb_Get_var2D_onChunk(VEG_,  f_p_demand)
     dsl4jsb_Get_var3D_onChunk(VEG_,  root_fraction_sl)
     ! ---------------------------
-    ! HYDRO_ 3D
-    dsl4jsb_Get_var3D_onChunk(HYDRO_, frac_wtr_transp_down_sl)
-    dsl4jsb_Get_var3D_onChunk(HYDRO_, wtr_soil_sl)
-    ! SSE_ 3D
-    dsl4jsb_Get_var3D_onChunk(SSE_, t_soil_sl)                      ! out
+    dsl4jsb_Get_var3D_onChunk(SPQ_, t_soil_sl)
+    dsl4jsb_Get_var3D_onChunk(SPQ_, w_soil_sl)
+    dsl4jsb_Get_var3D_onChunk(SPQ_, percolation_sl)
     ! A2L_
     dsl4jsb_Get_var2D_onChunk(A2L_, nhx_deposition_acc)
     dsl4jsb_Get_var2D_onChunk(A2L_, noy_deposition_acc)
@@ -279,7 +282,10 @@ CONTAINS
     dsl4jsb_Get_var2D_onChunk(A2L_, co2_DC14_const)
     dsl4jsb_Get_var2D_onChunk(A2L_, local_time_day_seconds)
     dsl4jsb_Get_var2D_onChunk(A2L_, daytime_counter)
-    dsl4jsb_Get_var2D_onChunk(A2L_, daylength_prev_day)
+    IF (model%config%flag_slow_sb_pool_spinup_accelerator) THEN
+      dsl4jsb_Get_var2D_onChunk(A2L_, slow_sb_pool_accelerator_execution_counter)
+      dsl4jsb_Get_var2D_onChunk(A2L_, slow_sb_pool_accelerator_execute)
+    ENDIF
     ! ----------------------------------------------------------------------------------------------------- !
 
     doy_old = 0.0_wp  ! doy in the previous timestep, used for detecting a new year
@@ -318,7 +324,7 @@ CONTAINS
       !> 1.0 orbital parameters
       !>
       ! "declination" is a parameter from mo_atmland_constants and is calculated here as output paramater, though, not used here in this module
-      CALL update_orbital_parameters(time, declination, sw_toa_down(:))  ! mo_qs_atmland_util
+      CALL update_orbital_parameters(time, declination, sw_toa_down(:))  ! mo_atmland_util
 
       !> 2.0 read forcing data
       !>
@@ -331,7 +337,8 @@ CONTAINS
       doy_old = day
 
       ! moved up from below because it is required to get timestep from daily forcing if demanded
-      cos_zenith_angle(:)     = MAX(calc_solar_angle(hgrid%lat(1,1), hgrid%lon(1,1), time), 0.0_wp)
+      cos_zenith_angle(:)     = calc_solar_angle(hgrid%lat(1,1), hgrid%lon(1,1), time)      ! @TODO  make working globally
+
       ! see above the comment "make working globally" ...
       ! ... following that comment here also hgrid%lon(1,1) and hgrid%lat(1,1) is used.
       ! ... However, reading of forcing does not work globally anyway currently!
@@ -356,14 +363,7 @@ CONTAINS
           WRITE(message_text,*) 'Last year read from the forcing file ('//TRIM(int2string(forcing_options%forcing_year)) &
             &                   // ') not equal to forcing last year as specified in the namelist ('                     &
             &                   // TRIM(int2string(model%config%forcing_file_last_yr))//'). Please check!'
-#ifdef __QUINCY_WITH_NETCDF__
-          CALL finish(TRIM(modname), message_text)
-#else
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-          WRITE(message_text,*) 'Note: the namelist settings forcing_file_[start/last]_yr do NOT affect/select the actual ', &
-            &                   'date of the forcing used for the simulation.'
-          CALL message(TRIM(modname), message_text, all_print=.TRUE.)
-#endif
+          CALL finish(TRIM(modname),message_text)
         ENDIF
       ENDIF
 
@@ -437,23 +437,6 @@ CONTAINS
         END IF
       END DO
 
-      !> 2.3 convert rain <-> snow
-      !>
-      ! convert snow to rain, of "snow is disabled"
-      IF (.NOT. dsl4jsb_Config(SPQ_)%flag_snow) THEN
-        rain_r = rain_r + snow_r
-        snow_r = 0.0_wp
-      ELSE
-        ! if "snow is enabled" and the forcing data does not provide information about snowfall
-        ! convert rain to snow below specific threshold of air temperature
-        IF (.NOT. forcing_options%flag_forcing_with_snow_data) THEN
-          IF (t_air_r < rain_as_snow_temp_thresh) THEN
-            snow_r = snow_r + rain_r
-            rain_r = 0.0_wp
-          END IF
-        END IF
-      END IF
-
       !> 3.0 update forcing variables from the above 'read data'
       !>
       t_air(:)                = t_air_r
@@ -469,6 +452,11 @@ CONTAINS
       swpar_srf_down(:)       = frac_par_swvis_srf * swvis_srf_down(:)
       fract_par_diffuse(:)    = calc_fract_par_diffuse(swnir_srf_down(:) + swvis_srf_down(:), sw_toa_down(:), cos_zenith_angle(:))
       ! elemental function: calc_fract_par_diffuse()
+
+      IF (.NOT. dsl4jsb_Config(SPQ_)%flag_snow) THEN
+        rain(:) = rain(:) + snow(:)
+        snow(:) = 0.0_wp
+      ENDIF
 
       !> 3.1 update CO2 & dC13 & DC14 forcing data
       !>
@@ -490,8 +478,12 @@ CONTAINS
             hlp1(ic)             = calc_mixing_ratio_C13C12(co2_dC13_r)
           END IF
         ELSE
-          hlp1(ic)               = calc_mixing_ratio_C13C12(def_co2_deltaC13)
+          hlp1(ic)               = calc_mixing_ratio_C13C12(def_co2_deltaC13)          
         END IF
+                !kschufft
+        ! IF (model%options%itimestep > 175200) THEN
+        !   hlp1(ic)             = calc_mixing_ratio_C13C12(1000.0_wp)
+        !ENDIF
         co2_mixing_ratio_C13(ic) = co2_mixing_ratio(ic) / (1._wp + 1._wp / hlp1(ic))
         ! DC14
         ! if DC14 forcing input is used
@@ -550,13 +542,11 @@ CONTAINS
         p_deposition(:) = p_deposition_r / molar_mass_P * 1000.0_wp / one_day      ! mg/m2/day -> mumol/m2/sec
       ENDSELECT
 
-      !> 3.4 update daytime_counter and daylength_prev_day
+      !> 3.2 update daytime_counter
       !>
-      ! store the daytime of the previous timestep
-      ! and reset the daytime_counter if last timestep was midnight
+      ! reset the daytime_counter if last timestep was midnight
       DO ic = 1, nc
         IF (ABS(local_time_day_seconds(ic) - dtime) < eps1) THEN
-          daylength_prev_day(ic) = daytime_counter(ic) * dtime
           daytime_counter(ic) = 0.0_wp
         ENDIF
         IF (swpar_srf_down(ic) > eps8) THEN
@@ -568,56 +558,44 @@ CONTAINS
       !          local time, thus the "global" time time_day_seconds passed from the driver can directly be taken as local time
       local_time_day_seconds(:) = time_day_seconds(:)
 
-      !> 3.5 enable the SB_ slow-pool spinup-accelerator for grid cells individually
+      !> 3.3 update slow_sb_pool_spinup_accelerator_year_counter
       !>
       IF (model%config%flag_slow_sb_pool_spinup_accelerator) THEN
-        ! Reset the slow sb pool accelerator flag and the one running in the previous timestep
-        IF (execute_quincy_sb_accelerator_this_timestep) THEN
-          execute_quincy_sb_accelerator_this_timestep = .FALSE.
-          executed_quincy_sb_accelerator_previous_timestep = .TRUE.
-        ELSE
-          executed_quincy_sb_accelerator_previous_timestep = .FALSE.
-        END IF
+        slow_sb_pool_accelerator_execute(:) = 0.0_wp
 
-        ! Only check at the start of a year and only during spinup
-        IF (is_newyear(model%options%current_datetime, dtime) .AND. (model%config%l_transient_spinup)) THEN
+        ! Only check once a year if the accelerator should be executed
+        IF (ABS(time_day) < timestep_prop_day) THEN
+          DO ic = 1, nc
+            !> stop increasing the time counter if the maximum execution time is already exceeded
+            IF(NINT(slow_sb_pool_accelerator_execution_counter(ic)) &
+              &     <= model%config%slow_sb_pool_spinup_accelerator_max_executions) THEN
 
-          ! There are multiple conditions to be met for the accelerator to be executed:
-          ! 1. the accelerator start year has to be passed:
-          IF (model%options%current_datetime%time_year >= model%config%slow_sb_pool_spinup_accelerator_start_year) THEN
-            ! 2. The year needs to be a multiple of the accelerator frequency
-            IF (MOD(model%options%current_datetime%time_year - model%config%slow_sb_pool_spinup_accelerator_start_year, &
-                &     model%config%slow_sb_pool_spinup_accelerator_frequency) < eps1 ) THEN
-              ! 3. And the maximum number of executions should not be exceeded
-              nr_years_passed = model%options%current_datetime%time_year - model%config%slow_sb_pool_spinup_accelerator_start_year
-              nr_of_executions = nr_years_passed / model%config%slow_sb_pool_spinup_accelerator_frequency
-              IF (nr_of_executions < model%config%slow_sb_pool_spinup_accelerator_max_executions) THEN
-                execute_quincy_sb_accelerator_this_timestep = .TRUE.
+              !> if accelerator was executed, set the logical value 'execute' as True (1.0_wp); the 'execution counter' +1
+              IF (time_year >= model%config%slow_sb_pool_spinup_accelerator_start_year &
+                  & .AND. MOD(time_year, model%config%slow_sb_pool_spinup_accelerator_frequency) < eps1 ) THEN
 
-                WRITE(message_text,*) 'Activate SB_ slow-pool spinup-accelerator for simulation year: ' &
-                    &   // TRIM(int2string(model%options%current_datetime%time_year)) // ' and day: ' &
-                    &   // TRIM(real2string(model%options%current_datetime%time_day)) &
-                    &   // ' | execution : ' // TRIM(int2string(nr_of_executions + 1)) &
-                    &   // ' of ' // TRIM(int2string(model%config%slow_sb_pool_spinup_accelerator_max_executions))
-                CALL message(TRIM(routine), message_text, all_print=.TRUE.)
+                slow_sb_pool_accelerator_execute(ic) = 1.0_wp
+                slow_sb_pool_accelerator_execution_counter(ic) = &
+                  &             slow_sb_pool_accelerator_execution_counter(ic) + 1.0_wp
+
+                PRINT*, TRIM(routine),  " slow_sb_pool_accelerator_execution_counter ", &
+                  & NINT(slow_sb_pool_accelerator_execution_counter(ic))
               END IF
             END IF
-          END IF
-        END IF ! new year and spinup
-
+          END DO ! cells
+        END IF ! new year
       END IF ! IF (model%config%flag_slow_sb_pool_spinup_accelerator)
 
-      !> 3.6 check stand harvest year
+      !> 3.4 check stand harvest year (if this functionality is enabled: model%config\%flag_stand_harvest)
       !>
-      ! Test if we have a stand replacing harvest event (default: no)
-      IF(dsl4jsb_Config(Q_SYL_)%active) THEN
-        dsl4jsb_Config(Q_SYL_)%flag_stand_harvest_event = .FALSE.
-        ! We only have a stand replacing harvest event after transient spinup, i.e., when l_transient_spinup=FALSE
-        ! and only if it is the start of the stand replacing year
-        IF((is_newyear(model%options%current_datetime, dtime) .AND. (.NOT. model%config%l_transient_spinup) &
-            & .AND. (dsl4jsb_Config(Q_SYL_)%flag_stand_harvest) &
-            & .AND. (forcing_options%forcing_year == dsl4jsb_Config(Q_SYL_)%stand_replacing_year))) THEN
-          dsl4jsb_Config(Q_SYL_)%flag_stand_harvest_event = .TRUE.
+      ! but enable harvesting only after transient spinup, i.e., when l_transient_spinup=FALSE
+      IF (model%config%flag_stand_harvest .AND. .NOT. model%config%l_transient_spinup) THEN
+        model%config%l_do_stand_replacing_harvest = .FALSE.                                      ! per default this flag is FALSE
+        ! set stand_harvest to TRUE for the 1st timestep of the stand_replacing_year only
+        IF (forcing_options%forcing_year .EQ. model%config%stand_replacing_year .AND. &
+            & forcing_options%forcing_doy  .EQ. 1                               .AND. &
+            & forcing_options%forcing_hour .LT. eps4                                     ) THEN
+          model%config%l_do_stand_replacing_harvest = .TRUE.
         END IF
       END IF
 
@@ -659,7 +637,6 @@ CONTAINS
       bgcm_store => tile%bgcm_store
       dsl4jsb_Get_mt2L2D(VEG_BGCM_POOL_ID, veg_pool_mt)
       dsl4jsb_Get_mt2L2D(VEG_BGCM_LITTERFALL_ID, veg_litterfall_mt)
-      dsl4jsb_Get_mt1L2D(VEG_BGCM_SEED_BED_LITTERFALL_ID, seed_bed_litterfall_mt)
 
       !>1.0 read data
       !>
@@ -719,8 +696,8 @@ CONTAINS
 
       lun=21
       READ(lun,*, IOSTAT=stat) time_hlp, & 
-                       t_soil_sl_r(1:nsoil_w), w_soil_sl_r(1:nsoil_w), &
-                       percolation_sl_r(1:nsoil_w), root_fraction_sl_r(1:nsoil_w), &
+                       t_soil_sl_r(1:nsoil_sb), w_soil_sl_r(1:nsoil_sb), &
+                       percolation_sl_r(1:nsoil_sb), root_fraction_sl_r(1:nsoil_sb), &
                        veg_pool_fine_root_carbon_r, &
                        nhx_deposition_r, noy_deposition_r, &
                        nhx_dn15_deposition_r, noy_dn15_deposition_r, &
@@ -738,8 +715,8 @@ CONTAINS
         REWIND(lun)
         CALL read_forcing_header(lun, model%config%qmodel_id)
         READ(lun,*) time_hlp, &
-                       t_soil_sl_r(1:nsoil_w), w_soil_sl_r(1:nsoil_w), &
-                       percolation_sl_r(1:nsoil_w), root_fraction_sl_r(1:nsoil_w), &
+                       t_soil_sl_r(1:nsoil_sb), w_soil_sl_r(1:nsoil_sb), &
+                       percolation_sl_r(1:nsoil_sb), root_fraction_sl_r(1:nsoil_sb), &
                        veg_pool_fine_root_carbon_r, &
                        nhx_deposition_r, noy_deposition_r, &
                        nhx_dn15_deposition_r, noy_dn15_deposition_r, &
@@ -829,23 +806,23 @@ CONTAINS
       veg_litterfall_mt(ix_fruit, ixN15, :)    = veg_litterfall_mt(ix_fruit, ixN, :) / ( 1._wp + 1._wp / &
                                                 calc_mixing_ratio_N15N14(fruit_dN15_r))
 
-      seed_bed_litterfall_mt(ixC, :)     = seed_bed_carbon_r / 1000._wp
-      seed_bed_litterfall_mt(ixN, :)   = seed_bed_nitrogen_r / 1000000._wp
-      seed_bed_litterfall_mt(ixP, :) = seed_bed_phosphorus_r / 1000000._wp
-      seed_bed_litterfall_mt(ixC13, :)   = seed_bed_litterfall_mt(ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_seed_bed, ixC, :)     = seed_bed_carbon_r / 1000._wp
+      veg_litterfall_mt(ix_seed_bed, ixN, :)   = seed_bed_nitrogen_r / 1000000._wp
+      veg_litterfall_mt(ix_seed_bed, ixP, :) = seed_bed_phosphorus_r / 1000000._wp
+      veg_litterfall_mt(ix_seed_bed, ixC13, :)   = veg_litterfall_mt(ix_seed_bed, ixC, :) / ( 1._wp + 1._wp / &
                                                 calc_mixing_ratio_C13C12(seed_bed_dC13_r))
-      seed_bed_litterfall_mt(ixC14, :)   = seed_bed_litterfall_mt(ixC, :) * &
+      veg_litterfall_mt(ix_seed_bed, ixC14, :)   = veg_litterfall_mt(ix_seed_bed, ixC, :) * &
                                                 calc_mixing_ratio_C14C(seed_bed_dC13_r,seed_bed_DC14_r)
-      seed_bed_litterfall_mt(ixN15, :) = seed_bed_litterfall_mt(ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_seed_bed, ixN15, :) = veg_litterfall_mt(ix_seed_bed, ixN, :) / ( 1._wp + 1._wp / &
                                                 calc_mixing_ratio_N15N14(seed_bed_dN15_r))
 
-      DO isoil = 1,nsoil_w
-        t_soil_sl(:,isoil)               = t_soil_sl_r(isoil)
-        wtr_soil_sl(:,isoil)             = w_soil_sl_r(isoil)
-        frac_wtr_transp_down_sl(:,isoil) = percolation_sl_r(isoil)
-        root_fraction_sl(:,isoil)        = root_fraction_sl_r(isoil)
+      DO isoil = 1,nsoil_sb
+        t_soil_sl(:,isoil)                  = t_soil_sl_r(isoil)
+        w_soil_sl(:,isoil)                  = w_soil_sl_r(isoil)
+        percolation_sl(:,isoil)             = percolation_sl_r(isoil)
+        root_fraction_sl(:,isoil)           = root_fraction_sl_r(isoil)
       ENDDO
-      veg_pool_mt(ix_fine_root, ixC, :) = veg_pool_fine_root_carbon_r
+      veg_pool_mt(ix_fine_root, ixC, :)     = veg_pool_fine_root_carbon_r
 
       nhx_deposition(:)     = nhx_deposition_r
       noy_deposition(:)     = noy_deposition_r
@@ -1037,7 +1014,7 @@ CONTAINS
                                         co2_DC14_r, &
                                         nhx_deposition_r, noy_deposition_r, p_deposition_r)
 
-    USE mo_phy_schemes,           ONLY: qsat_mixed
+    USE mo_atmland_util,          ONLY: calc_spec_humidity_sat
 
     ! -------------------------------------------------------------------------------------------------- !
     INTEGER, INTENT(IN)    :: lun                 !< logical unit number for file input stream
@@ -1191,12 +1168,12 @@ CONTAINS
       forcing_options%last_timestep_tair = t_air_r
 
       ! reduce qair if required
-      sat_spec_humidity = qsat_mixed(t_air_r, interp_press)
+      sat_spec_humidity = calc_spec_humidity_sat(t_air_r, interp_press)
       q_air_r           = MIN(interp_qair, sat_spec_humidity)
 
       ! compute sw
       !@Note: in ICON-Land/JSB cos_zenith_angle is calculated from the host model (ICON/Echam) in the routine
-      !       solar_parameters of the module mo_radiation_parameters: 
+      !       solar_parameters of the module mo_q_radiation_parameters: 
       !       there, cos_mu0 (cosine of the solar zenith angle) is [0,1] (thus set to zero where <= 0.0_wp)
       cos_zenith_angle_gt0 = cos_zenith_angle
       IF(cos_zenith_angle <= 0.0_wp) THEN
@@ -1467,7 +1444,7 @@ CONTAINS
   SUBROUTINE longwave_from_daily_longwave(longwave_down_daily, Tmin, Tmax, air_temp, timestep_longwave)
     ! -------------------------------------------------------------------------------------------------- !
     REAL(wp),INTENT(IN) :: longwave_down_daily          !< daily average downward longwave radiation [W/m^2]
-    ! Note: in jsb all temperature input is in degC but converted in the routine
+    ! Note: in jsb all temperature input is in °C but converted in the routine
     REAL(wp),INTENT(IN) :: Tmin                         !< daily mimimum temperature [K]
     REAL(wp),INTENT(IN) :: Tmax                         !< daily maximum temperature [K]
     REAL(wp),INTENT(IN) :: air_temp                     !< air temperature at bottom [K]

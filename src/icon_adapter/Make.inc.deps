@@ -1,34 +1,47 @@
-#!> list of module dependencies
-#!>
-#!> QUINCY standalone
-#!>
-#!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-#!>
-#!> Contact: https://doi.org/10.17871/quincy-model-2019
-#!> Authors: AUTHORS.md
-#!> See LICENSES/ for license information
-#!> SPDX-License-Identifier: BSD-3-Clause
-#!> ---------------------------------------
+##    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+##    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+##    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+##
+##    This file is part of the QUINCY model.
+##    The QUINCY model is free software: you can redistribute it and/or modify
+##    it under the terms of the GNU General Public License version 3,
+##    as published by the Free Software Foundation.
+##
+##    The QUINCY model is distributed in the hope that it will be useful,
+##    but WITHOUT ANY WARRANTY; without even the implied warranty of
+##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##    GNU General Public License for more details.
+##
+##    You should have received a copy of the GNU General Public License
+##    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
 
 mo_namelist.o: \
   mo_util_string.o \
-  mo_io_units.o \
+  mo_filename.o \
+  mo_exception.o
+
+mo_filename.o: \
   mo_exception.o
 
 mo_util_string.o: \
-  mo_exception.o \
-  mo_io_units.o
-
-mo_physical_constants.o: \
   mo_kind.o
 
-mo_turb_vdiff_params.o: \
-  mo_kind.o
-
-mo_model_domain.o: \
+mo_jsb_io_netcdf_iface.o: \
   mo_kind.o \
-  mo_decomposition_tools.o
+  mo_exception.o \
+  mo_io_units.o \
+  mo_jsb_domain_iface.o
+
+mo_jsb_domain_iface.o: \
+  mo_decomposition.o
+
+mo_jsb_utils_iface.o: \
+  mo_fortran_tools.o
+
+mo_fortran_tools.o: \
+  mo_kind.o \
+  mo_exception.o \
+  mo_impl_constants.o
 
 mo_impl_constants.o: \
   mo_kind.o
@@ -36,33 +49,7 @@ mo_impl_constants.o: \
 mo_exception.o: \
   mo_kind.o \
   mo_io_units.o \
-  mo_util_backtrace.o
+  mo_impl_constants.o
 
-mo_aes_thermo.o: \
-  mo_kind.o \
-  mo_physical_constants.o
-
-mo_thdyn_functions.o: \
-  mo_kind.o \
-  mo_physical_constants.o \
-  mo_lookup_tables_constants.o
-
-mo_lookup_tables_constants.o: \
-  mo_kind.o \
-  mo_physical_constants.o \
-  mo_exception.o
-
-mo_time_config.o: \
+mo_physical_constants_iface.o: \
   mo_kind.o
-
-mo_math_utilities.o: \
-  mo_kind.o
-
-mo_icon_land_dependency_dummies.o: \
-  mo_jsb_config_class.o
-
-mo_sync.o: \
-  mo_kind.o
-
-mo_sync.o: \
-  mo_decomposition_tools.o

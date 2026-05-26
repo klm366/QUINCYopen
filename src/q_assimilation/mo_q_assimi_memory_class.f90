@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -164,9 +164,6 @@ MODULE mo_q_assimi_memory_class
       & beta_soil_gs_tfrac_mavg   , &  !< scaling factor to account for soil moisture constraints on conductance time-averaged [unitless]
       & beta_soil_gs_tcnl_mavg         !< scaling factor to account for soil moisture constraints on conductance time-averaged [unitless]
 
-    TYPE(t_jsb_var_real2d) :: &
-      & wtr_soil_root_pot              !< Soil water potential in the root zone                 [MPa]
-
   CONTAINS
     PROCEDURE :: Init => Init_q_assimi_memory
   END TYPE t_q_assimi_memory
@@ -181,63 +178,30 @@ CONTAINS
   !>   init only the variables needed for the particular model
   !>   (i.e. allocate memory, add to varlist, set metadata)
   !>
-  SUBROUTINE Init_q_assimi_memory(mem, prefix, suffix, lct_ids, lib_id, model_id)
+  SUBROUTINE Init_q_assimi_memory(mem, prefix, suffix, lct_ids, model_id)
     USE mo_jsb_varlist,       ONLY: BASIC, MEDIUM, FULL
     USE mo_jsb_io,            ONLY: grib_bits, t_cf, t_grib1, t_grib2, tables
     USE mo_jsb_grid_class,    ONLY: t_jsb_grid, t_jsb_vgrid
     USE mo_jsb_grid,          ONLY: Get_grid, Get_vgrid
-    USE mo_jsb_process_class, ONLY: VEG_, Q_ASSIMI_
-    USE mo_jsb_class,         ONLY: Get_model
-    USE mo_jsb_model_class,   ONLY: t_jsb_model
-    ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Use_config(Q_ASSIMI_)
-    dsl4jsb_Use_config(VEG_)
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_q_assimi_memory), INTENT(inout), TARGET :: mem
     CHARACTER(len=*),      INTENT(in)               :: prefix
     CHARACTER(len=*),      INTENT(in)               :: suffix
     INTEGER,               INTENT(in)               :: lct_ids(:)
-    INTEGER,               INTENT(in)               :: lib_id     !< id of primary lct in lctlib
     INTEGER,               INTENT(in)               :: model_id
     ! ----------------------------------------------------------------------------------------------------- !
-    TYPE(t_jsb_model),  POINTER :: model
     TYPE(t_jsb_grid),   POINTER :: hgrid                        ! Horizontal grid
     TYPE(t_jsb_vgrid),  POINTER :: surface                      ! Vertical grid
     TYPE(t_jsb_vgrid),  POINTER :: vgrid_canopy_q_assimi        ! Vertical grid
-    TYPE(t_jsb_vgrid),  POINTER :: vgrid_soil_w                 !< Vertical grid for soil layers
+    TYPE(t_jsb_vgrid),  POINTER :: vgrid_soil_sb                !< Vertical grid for soil layers
     INTEGER                     :: table                        ! ...
-    LOGICAL                     :: restart_veg_optimal               !< if true: write restart (i.e. using optimality code)
-    LOGICAL                     :: restart_veg_optimal_n_fractions   !< if true: write restart (optimise n fractions)
-    LOGICAL                     :: restart_veg_optimal_stoichiometry !< if true: write restart (optimise stoichiom.)
     CHARACTER(len=*), PARAMETER :: routine = modname//':Init_q_assimi_memory_quincy'
-    ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Def_config(Q_ASSIMI_)
-    dsl4jsb_Def_config(VEG_)
     ! ----------------------------------------------------------------------------------------------------- !
     table                 = tables(1)
     hgrid                 => Get_grid(mem%grid_id)
     surface               => Get_vgrid('surface')
     vgrid_canopy_q_assimi => Get_vgrid('q_canopy_layer')
-    vgrid_soil_w          => Get_vgrid('soil_depth_water')
-    model                 => Get_model(model_id)
-    ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_config(Q_ASSIMI_)
-    dsl4jsb_Get_config(VEG_)
-
-    ! ----------------------------------------------------------------------------------------------------- !
-    ! determine which variables are required in the restart
-    restart_veg_optimal = .FALSE.
-    restart_veg_optimal_n_fractions = .FALSE.
-    restart_veg_optimal_stoichiometry = .FALSE.
-
-    IF (dsl4jsb_Config(Q_ASSIMI_)%flag_optimal_Nfraction) THEN
-      restart_veg_optimal = .TRUE.
-      restart_veg_optimal_n_fractions = .TRUE.
-    END IF
-    IF (TRIM(dsl4jsb_Config(VEG_)%leaf_stoichom_scheme) == "optimal") THEN
-      restart_veg_optimal = .TRUE.
-      restart_veg_optimal_stoichiometry = .TRUE.
-    END IF
+    vgrid_soil_sb         => Get_vgrid('soil_layer_sb')
 
     ! ----------------------------------------------------------------------------------------------------- !
     ! create memory at tiles of LAND_TYPE or VEG_TYPE
@@ -253,8 +217,7 @@ CONTAINS
         & output_level = BASIC, &
         & loutput = .TRUE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('gross_assimilation_cl', mem%gross_assimilation_cl, &
         & hgrid, vgrid_canopy_q_assimi, &
@@ -265,18 +228,17 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .TRUE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('ftranspiration_sl', mem%ftranspiration_sl, &
-        & hgrid, vgrid_soil_w, &
+        & hgrid, vgrid_soil_sb, &
         & t_cf('ftranspiration_sl', '?', 'fraction of transpiration'), &
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .TRUE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('aerodyn_cond', mem%aerodyn_cond, &
@@ -287,7 +249,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .TRUE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('canopy_cond_cl', mem%canopy_cond_cl, &
@@ -298,7 +260,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('co2_conc_leaf_cl', mem%co2_conc_leaf_cl, &
@@ -309,7 +271,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('gross_assimilation_C13', mem%gross_assimilation_C13, &
@@ -321,8 +283,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .TRUE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('gross_assimilation_C14', mem%gross_assimilation_C14, &
         & hgrid, surface, &
@@ -333,8 +294,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .TRUE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('net_assimilation', mem%net_assimilation, &
         & hgrid, surface, &
@@ -345,8 +305,7 @@ CONTAINS
         & output_level = MEDIUM, &
         & loutput = .FALSE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('net_assimilation_boc', mem%net_assimilation_boc, &
         & hgrid, surface, &
@@ -357,8 +316,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('maint_respiration_leaf', mem%maint_respiration_leaf, &
         & hgrid, surface, &
@@ -369,8 +327,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('net_assimilation_cl', mem%net_assimilation_cl, &
         & hgrid, vgrid_canopy_q_assimi, &
@@ -381,8 +338,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('maint_respiration_leaf_cl', mem%maint_respiration_leaf_cl, &
         & hgrid, vgrid_canopy_q_assimi, &
@@ -393,8 +349,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_air', mem%beta_air, &
         & hgrid, surface, &
@@ -404,7 +359,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soa', mem%beta_soa, &
@@ -415,7 +370,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_ps', mem%beta_soil_ps, &
@@ -426,7 +381,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_gs', mem%beta_soil_gs, &
@@ -437,7 +392,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('canopy_cond', mem%canopy_cond, &
@@ -448,7 +403,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('co2_conc_leaf', mem%co2_conc_leaf, &
@@ -459,7 +414,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('t_jmax_opt', mem%t_jmax_opt, &
@@ -470,7 +425,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('vpd', mem%vpd, &
@@ -481,7 +436,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('jmax_cl', mem%jmax_cl, &
@@ -492,9 +447,8 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & lrestart = .TRUE., &
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('vcmax_cl', mem%vcmax_cl, &
         & hgrid, vgrid_canopy_q_assimi, &
@@ -504,9 +458,8 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = .FALSE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all=.TRUE.)
+        & lrestart = .TRUE., &
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('chlfl_yield_cl', mem%chlfl_yield_cl, &
         & hgrid, vgrid_canopy_q_assimi, &
@@ -538,7 +491,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_air_daytime_dacc', mem%beta_air_daytime_dacc, &
@@ -549,7 +502,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_air_tfrac_mavg', mem%beta_air_tfrac_mavg, &
@@ -560,7 +513,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_n_fractions, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_air_tcnl_mavg', mem%beta_air_tcnl_mavg, &
@@ -571,7 +524,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_stoichiometry, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soa_tphen_mavg', mem%beta_soa_tphen_mavg, &
@@ -582,7 +535,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_n_fractions, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_ps_daytime', mem%beta_soil_ps_daytime, &
@@ -593,7 +546,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_ps_daytime_dacc', mem%beta_soil_ps_daytime_dacc, &
@@ -604,7 +557,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_ps_tfrac_mavg', mem%beta_soil_ps_tfrac_mavg, &
@@ -615,7 +568,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_n_fractions, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_ps_tcnl_mavg', mem%beta_soil_ps_tcnl_mavg, &
@@ -626,7 +579,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_stoichiometry, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_gs_daytime', mem%beta_soil_gs_daytime, &
@@ -637,7 +590,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_gs_daytime_dacc', mem%beta_soil_gs_daytime_dacc, &
@@ -648,7 +601,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_gs_tphen_mavg', mem%beta_soil_gs_tphen_mavg, &
@@ -670,7 +623,7 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_n_fractions, &
+        & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
 
       CALL mem%Add_var('beta_soil_gs_tcnl_mavg', mem%beta_soil_gs_tcnl_mavg, &
@@ -681,17 +634,8 @@ CONTAINS
         & prefix, suffix, &
         & output_level = FULL, &
         & loutput = .FALSE., &
-        & lrestart = restart_veg_optimal_stoichiometry, &
-        & initval_r = 0.0_wp)
-
-      CALL mem%Add_var( 'wtr_soil_root_pot', mem%wtr_soil_root_pot, &
-        & hgrid, surface, &
-        & t_cf('wtr_soil_root_pot', 'MPa', 'Soil water potential in the root zone'), &
-        & t_grib1(table, 255, grib_bits), t_grib2(255, 255, 255, grib_bits), &
-        & prefix, suffix, &
-        & output_level = BASIC, &
         & lrestart = .TRUE., &
-        & initval_r=0.0_wp)
+        & initval_r = 0.0_wp)
 
     END IF
   END SUBROUTINE Init_q_assimi_memory

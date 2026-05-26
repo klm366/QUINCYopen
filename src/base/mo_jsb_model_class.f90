@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -27,7 +27,7 @@ MODULE mo_jsb_model_class
   USE mo_jsb_task_class,      ONLY: t_jsb_task_options    ! , t_jsb_process_task, t_jsb_process_task_p, t_Task_queue
   USE mo_jsb_tile_class,      ONLY: t_jsb_tile_abstract
   USE mo_jsb_lctlib_class,    ONLY: t_lctlib_element
-  USE mo_qs_nc_output_class,  ONLY: t_quincy_output
+  USE mo_quincy_output_class, ONLY: t_quincy_output
 
   IMPLICIT NONE
   PRIVATE
@@ -62,7 +62,7 @@ MODULE mo_jsb_model_class
 !    TYPE(t_Task_queue),        POINTER :: queue        => NULL()
 !    CLASS(t_jsb_process_task_p), ALLOCATABLE :: current_task(:)
     TYPE(t_lctlib_element),    POINTER :: lctlib(:)
-    ! >> QUINCY Standalone with netcdf
+    ! >> QUINCY
     TYPE(t_quincy_output),     POINTER :: quincy_output
   CONTAINS
     ! From base type:
@@ -134,7 +134,7 @@ CONTAINS
 
     CHARACTER(len=*), PARAMETER :: routine = 'mo_jsb_model_class:new_model'
 
-    CALL message(TRIM(routine), 'starting construction of new instance: QUINCY standalone.')
+    CALL message(TRIM(routine), 'starting construction of new JSBACH model instance.')
 
     ALLOCATE(return_ptr)
 
@@ -199,7 +199,7 @@ CONTAINS
 
   END SUBROUTINE Configure_model_processes
 
-  SUBROUTINE Get_top_tile(this, return_ptr)
+  FUNCTION Get_top_tile(this) RESULT(return_ptr)
 
     CLASS(t_jsb_model), INTENT(in) :: this
     CLASS(t_jsb_tile_abstract), POINTER :: return_ptr
@@ -217,7 +217,7 @@ CONTAINS
       CALL finish(TRIM(routine), 'Unkown type for tile')
     END SELECT
 
-  END SUBROUTINE Get_top_tile
+  END FUNCTION Get_top_tile
 
   SUBROUTINE Reset_tiles(this)
 

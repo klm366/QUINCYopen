@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -13,7 +13,7 @@
 !>
 MODULE mo_hsm_class
 
-  USE mo_exception, ONLY: message, message_text, finish
+  USE mo_exception, ONLY: message, message_text, finish, em_warn
 !  USE mo_util,      ONLY: int2string
 #ifdef _OPENMP
   USE omp_lib,      ONLY: omp_get_max_threads, omp_get_thread_num
@@ -800,8 +800,8 @@ CONTAINS
 !!$    CALL message(TRIM(routine), 'Taking start transition from '//TRIM(this%current%name)//&
 !!$      &                                                  ' to '//TRIM(that%name))
 
-    ! IF (ASSOCIATED(this%next(no_omp_thread)%p)) &
-    !   & CALL message(TRIM(routine), 'Transition to '//TRIM(this%next(no_omp_thread)%p%name)//' already in progress', level=em_warn)
+    IF (ASSOCIATED(this%next(no_omp_thread)%p)) &
+      & CALL message(TRIM(routine), 'Transition to '//TRIM(this%next(no_omp_thread)%p%name)//' already in progress', level=em_warn)
 
     this%next(no_omp_thread)%p => that
 

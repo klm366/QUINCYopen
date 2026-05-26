@@ -1,15 +1,19 @@
-#!> list of module dependencies
-#!>
-#!> QUINCY standalone
-#!>
-#!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-#!>
-#!> Contact: https://doi.org/10.17871/quincy-model-2019
-#!> Authors: AUTHORS.md
-#!> See LICENSES/ for license information
-#!> SPDX-License-Identifier: BSD-3-Clause
-#!> ---------------------------------------
+##    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+##    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+##    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+##
+##    This file is part of the QUINCY model.
+##    The QUINCY model is free software: you can redistribute it and/or modify
+##    it under the terms of the GNU General Public License version 3,
+##    as published by the Free Software Foundation.
+##
+##    The QUINCY model is distributed in the hope that it will be useful,
+##    but WITHOUT ANY WARRANTY; without even the implied warranty of
+##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##    GNU General Public License for more details.
+##
+##    You should have received a copy of the GNU General Public License
+##    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
 
 mo_q_sb_interface.o: \
   mo_kind.o \
@@ -54,10 +58,10 @@ mo_sb_memory_class.o: \
   mo_kind.o \
   mo_exception.o \
   mo_util.o \
+  mo_jsb_utils_iface.o \
   mo_jsb_process_class.o \
   mo_lnd_bgcm_class.o \
   mo_lnd_bgcm_store_class.o \
-  mo_jsb_cqt_class.o \
   mo_jsb_memory_class.o \
   mo_jsb_var_class.o \
   mo_jsb_pool_class.o \
@@ -72,14 +76,10 @@ mo_sb_memory_class.o: \
 
 mo_sb_config_class.o: \
   mo_kind.o \
-  mo_qs_icon_adapter.o \
+  mo_namelist.o \
   mo_exception.o \
   mo_io_units.o \
-  mo_jsb_config_class.o \
-  mo_util.o \
-  mo_jsb_grid_class.o \
-  mo_jsb_grid.o \
-  mo_jsb_io.o
+  mo_jsb_config_class.o
 
 mo_sb_init.o: \
   mo_kind.o \
@@ -90,7 +90,6 @@ mo_sb_init.o: \
   mo_lnd_bgcm_store_class.o \
   mo_jsb_tile_class.o \
   mo_jsb_model_class.o \
-  mo_jsb_parallel.o \
   mo_jsb_class.o \
   mo_jsb_lctlib_class.o \
   mo_jsb_process_class.o \
@@ -98,19 +97,19 @@ mo_sb_init.o: \
   mo_jsb_grid.o \
   mo_jsb_io.o \
   mo_isotope_util.o \
+  mo_jsb_physical_constants.o \
   mo_jsb_math_constants.o \
   mo_q_assimi_constants.o \
   mo_q_assimi_parameters.o \
   mo_q_assimi_process.o \
   mo_sb_constants.o \
-  mo_sb_config_class.o \
   mo_q_sb_jsm_processes.o \
   mo_q_sb_jsm_transport.o \
-  mo_hydro_memory_class.o \
-  mo_sse_memory_class.o \
   mo_sb_memory_class.o \
   mo_veg_memory_class.o \
-  mo_jsb_physical_constants.o
+  mo_jsb_physical_constants.o \
+  mo_sb_constants.o \
+  mo_qs_process_init_util.o
 
 mo_q_sb_jsm_main.o: \
   mo_kind.o \
@@ -135,8 +134,7 @@ mo_q_sb_jsm_main.o: \
   mo_q_sb_jsm_transport.o \
   mo_q_sb_ssm_main.o \
   mo_veg_memory_class.o \
-  mo_sse_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_sb_memory_class.o
 
 mo_q_sb_update_pools.o: \
@@ -154,14 +152,12 @@ mo_q_sb_update_pools.o: \
   mo_jsb_process_class.o \
   mo_jsb_grid_class.o \
   mo_jsb_grid.o \
-  mo_jsb_time.o \
   mo_jsb_math_constants.o \
   mo_jsb_physical_constants.o \
   mo_isotope_util.o \
   mo_atm2land_memory_class.o \
   mo_veg_memory_class.o \
-  mo_sse_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_sb_constants.o \
   mo_sb_config_class.o \
   mo_q_sb_jsm_processes.o \
@@ -179,12 +175,8 @@ mo_q_sb_rate_modifier.o: \
   mo_jsb_lctlib_class.o \
   mo_jsb_math_constants.o \
   mo_jsb_physical_constants.o \
-  mo_sse_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_sb_memory_class.o \
-  mo_spq_constants.o \
-  mo_phy_schemes.o \
-  mo_veg_constants.o \
   mo_sb_constants.o
 
 mo_q_sb_jsm_processes.o: \
@@ -195,7 +187,6 @@ mo_q_sb_jsm_processes.o: \
   mo_lnd_time_averages.o \
   mo_jsb_physical_constants.o \
   mo_sb_constants.o \
-  mo_spq_util.o \
   mo_q_sb_jsm_transport.o \
   mo_sb_memory_class.o \
   mo_isotope_util.o
@@ -224,8 +215,7 @@ mo_q_sb_ssm_main.o: \
   mo_jsb_process_class.o \
   mo_jsb_grid_class.o \
   mo_jsb_grid.o \
-  mo_sse_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_jsb_math_constants.o \
   mo_jsb_physical_constants.o \
   mo_veg_constants.o \

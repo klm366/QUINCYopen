@@ -1,17 +1,31 @@
-!> Time control and time helpers
+
+!> Summary: time control and time helpers
 !>
-!> QUINCY standalone
+!>### Provides routines related to time and time control for the quincy model
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (c) 2023
 !>
-!> Contact: https://doi.org/10.17871/quincy-model-2019
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!>#### Revision History
 !>
-!>#### Provides routines related to time and time control for the quincy model
+!> First version by Phillip Papastefanou & Jan Engel (2023-03-13)
+!>
+!>#### License
+!>
+!> QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!> Copyright (C) 2022 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!>
+!> This file is part of the QUINCY model.
+!> The QUINCY model is free software: you can redistribute it and/or modify
+!> it under the terms of the GNU General Public License version 3,
+!> as published by the Free Software Foundation.
+!>
+!> The QUINCY model is distributed in the hope that it will be useful,
+!> but WITHOUT ANY WARRANTY; without even the implied warranty of
+!> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!> GNU General Public License for more details.
+!>
+!> You should have received a copy of the GNU General Public License
+!> along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
 !>
 MODULE mo_qs_time_util
 

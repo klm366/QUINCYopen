@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -25,6 +25,9 @@ MODULE mo_q_pheno_memory_class
   USE mo_jsb_lct_class,          ONLY: VEG_TYPE, LAND_TYPE
   USE mo_jsb_var_class,          ONLY: t_jsb_var_real2d, t_jsb_var_real3d
 
+  dsl4jsb_Use_processes Q_PHENO_
+  dsl4jsb_Use_config(Q_PHENO_)
+
   IMPLICIT NONE
   PRIVATE
 
@@ -42,8 +45,7 @@ MODULE mo_q_pheno_memory_class
       & growing_season, &           !< logical: growing season for the plant [0 = FALSE, 1 = TRUE]
       & gdd, &                      !< growing degree days above 5degC [K day]
       & nd_dormance, &              !< number of days since last growing season [# days]
-      & lai_max, &                  !< maximum lai - from site specific (i.e. local) lai data [m2 m-2]
-      & root_phenology_type         !< category (values 1, 2, 3) based on trigger for end of season in grasses [category]
+      & lai_max                     !< maximum lai - from site specific (i.e. local) lai data [m2 m-2]
 
   CONTAINS
     PROCEDURE :: Init => Init_q_pheno_memory
@@ -57,10 +59,10 @@ CONTAINS
   !> initialize memory (variables) for the process: q_phenology
   !>
   !>
-  SUBROUTINE Init_q_pheno_memory(mem, prefix, suffix, lct_ids, lib_id, model_id)
+  SUBROUTINE Init_q_pheno_memory(mem, prefix, suffix, lct_ids, model_id)
     USE mo_jsb_model_class,   ONLY: t_jsb_model
     USE mo_jsb_class,         ONLY: Get_model
-    USE mo_jsb_varlist,       ONLY: BASIC, MEDIUM, FULL, NONE
+    USE mo_jsb_varlist,       ONLY: BASIC, MEDIUM, FULL
     USE mo_jsb_io,            ONLY: grib_bits, t_cf, t_grib1, t_grib2, tables
     USE mo_jsb_grid_class,    ONLY: t_jsb_grid, t_jsb_vgrid
     USE mo_jsb_grid,          ONLY: Get_grid, Get_vgrid
@@ -69,7 +71,6 @@ CONTAINS
     CHARACTER(len=*),        INTENT(in)            :: prefix
     CHARACTER(len=*),        INTENT(in)            :: suffix
     INTEGER,                 INTENT(in)            :: lct_ids(:)
-    INTEGER,                 INTENT(in)            :: lib_id     !< id of primary lct in lctlib
     INTEGER,                 INTENT(in)            :: model_id
     ! ----------------------------------------------------------------------------------------------------- !
     TYPE(t_jsb_grid),   POINTER :: hgrid                        ! Horizontal grid
@@ -89,11 +90,11 @@ CONTAINS
 
       CALL mem%Add_var('growing_season', mem%growing_season, &
         & hgrid, surface, &
-        & t_cf('growing_season', '[0 FALSE, 1 TRUE]', 'logical to identify whether the plant is in the growing season'), &
+        & t_cf('growing_season', 'logical', 'logical to identify whether the plant is in the growing season'), &
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
-        & output_level = FULL, &
+        & output_level = BASIC, &
         & loutput = .TRUE., &
         & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
@@ -115,7 +116,7 @@ CONTAINS
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
-        & output_level = NONE, &
+        & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .TRUE., &
         & initval_r = 0.0_wp)
@@ -126,19 +127,7 @@ CONTAINS
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
-        & output_level = NONE, &
-        & loutput = .FALSE., &
-        & lrestart = .TRUE., &
-        & initval_r = 0.0_wp, &
-        & l_aggregate_all = .TRUE.)
-
-      CALL mem%Add_var('root_phenology_type', mem%root_phenology_type, &
-        & hgrid, surface, &
-        & t_cf('root_phenology_type', 'category', 'category to identify end of season trigger in grasses'), &
-        & t_grib1(table, 255, grib_bits), &
-        & t_grib2(255, 255, 255, grib_bits), &
-        & prefix, suffix, &
-        & output_level = NONE, &
+        & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .TRUE., &
         & initval_r = 0.0_wp)

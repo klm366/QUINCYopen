@@ -1,9 +1,9 @@
-!> Defines routine for QUINCY averaging variables
+!> defines routine for averaging variables
 !>
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -77,8 +77,6 @@ CONTAINS
                                          do_calc, avg_period_unit) &                    ! optional input arguments
                                          RESULT(new_avg)
 
-    !$ACC ROUTINE SEQ
-
     USE mo_kind,                ONLY: wp
     USE mo_jsb_math_constants,  ONLY: one_day, one_year
 
@@ -97,8 +95,8 @@ CONTAINS
     REAL(wp)                                  :: new_value_weight   ! weight of the new value
     REAL(wp)                                  :: avg_period2seconds ! for converting the period length (day, week, year) into seconds
     LOGICAL                                   :: l_do_calc          ! True/ False of the Optional variable do_calc present
+    CHARACTER(LEN=*), PARAMETER :: routine = TRIM(modname)//':calc_time_mavg'
 
-    CHARACTER(LEN=*), PARAMETER :: routine = modname//':calc_time_mavg'
 
     !> 1.0 deal with the optional arguments
     !!
@@ -112,7 +110,7 @@ CONTAINS
     !!
     avg_period2seconds = one_day  ! (one_day == 86400._wp seconds)
     IF(l_do_calc .AND. PRESENT(avg_period_unit)) THEN
-      SELECT CASE(avg_period_unit)
+      SELECT CASE(TRIM(avg_period_unit))
       !CASE('day')
       ! nothing to do, as 'avg_period2seconds = one_day' is set by default anyway
       CASE('week')

@@ -1,9 +1,9 @@
-!> QUINCY module to read and convert external forcing data
+!> Module to read and convert external forcing data
 !>
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -11,10 +11,9 @@
 !> SPDX-License-Identifier: BSD-3-Clause
 !> ---------------------------------------
 !>
-!> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
+!> expects annual files with year in filename
 !>
-!> - expects annual files with year in filename
-!> - current implementation only for daily, timestep or constant data
+!> current implementation only for daily, timestep or constant data
 !>
 MODULE mo_qs_forcing
 #ifndef __NO_JSBACH__
@@ -24,7 +23,7 @@ MODULE mo_qs_forcing
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: Init_forcing_qs, calc_output_time_interval_pool
+  PUBLIC :: Init_forcing, calc_output_time_interval_pool
   PUBLIC :: forcing_options
 
   !-----------------------------------------------------------------------------------------------------
@@ -52,7 +51,6 @@ MODULE mo_qs_forcing
     CHARACTER(15)     :: forcing_mode
     LOGICAL           :: flag_read_dC13
     LOGICAL           :: flag_read_DC14
-    LOGICAL           :: flag_forcing_with_snow_data
     CHARACTER(1)      :: simulation_length_unit
     INTEGER           :: simulation_length_number
     INTEGER           :: transient_spinup_start_year
@@ -99,9 +97,9 @@ CONTAINS
   !! 
   !! currently it does only: read parameters from namelist
   !-----------------------------------------------------------------------------------------------------
-  SUBROUTINE Init_forcing_qs(model_id)
+  SUBROUTINE Init_forcing(model_id)
 
-    USE mo_jsb_namelist_iface,              ONLY: open_nml, POSITIONED, position_nml, close_nml
+    USE mo_namelist,                        ONLY: open_nml, POSITIONED, position_nml, close_nml  ! read model options from file
     USE mo_exception,                       ONLY: message_text, message, finish
     USE mo_jsb_class,                       ONLY: Get_model
     USE mo_jsb_model_class,                 ONLY: t_jsb_model
@@ -113,13 +111,12 @@ CONTAINS
     ! ---------------------------
     ! 0.2 Local
     TYPE(t_jsb_model), POINTER          :: model
-    CHARACTER(len=*), PARAMETER         :: routine = TRIM(modname)//':Init_forcing_qs'
+    CHARACTER(len=*), PARAMETER         :: routine = TRIM(modname)//':Init_forcing'
     CHARACTER(15)                       :: n_deposition_scheme
     CHARACTER(15)                       :: p_deposition_scheme
     CHARACTER(15)                       :: forcing_mode                 !< static / transient
     LOGICAL                             :: flag_read_dC13
     LOGICAL                             :: flag_read_DC14
-    LOGICAL                             :: flag_forcing_with_snow_data  !< forcing data includes data about snowfall
     CHARACTER(1)                        :: simulation_length_unit       !< d days, w weeks, y years
     INTEGER                             :: simulation_length_number
     INTEGER                             :: transient_spinup_start_year
@@ -136,7 +133,6 @@ CONTAINS
                       forcing_mode                    , &
                       flag_read_dC13                  , &
                       flag_read_DC14                  , &
-                      flag_forcing_with_snow_data     , &
                       simulation_length_unit          , &
                       simulation_length_number        , &
                       transient_spinup_start_year     , &
@@ -151,7 +147,7 @@ CONTAINS
     ! variables for reading model-options from namelist
     INTEGER  :: nml_handler, nml_unit, istat
 
-    CALL message(TRIM(routine), 'Starting Init_forcing_qs')
+    CALL message(TRIM(routine), 'Starting Init_forcing')
 
     ! get model and namelist_filename
     model => Get_model(model_id)
@@ -160,12 +156,11 @@ CONTAINS
     !! 
 
     ! Set defaults
-    n_deposition_scheme                 = "dynamic"
-    p_deposition_scheme                 = "dynamic"
+    n_deposition_scheme                 = "none"
+    p_deposition_scheme                 = "none"
     forcing_mode                        = "static"    ! static / transient
-    flag_read_dC13                      = .TRUE.
-    flag_read_DC14                      = .TRUE.
-    flag_forcing_with_snow_data         = .TRUE.
+    flag_read_dC13                      = .FALSE.
+    flag_read_DC14                      = .FALSE.
     simulation_length_unit              = 'y'         ! y (years), w (weeks), d (days)
     simulation_length_number            = 30 
     transient_spinup_start_year         = 1901
@@ -207,7 +202,6 @@ CONTAINS
     forcing_options%forcing_mode                      = forcing_mode
     forcing_options%flag_read_dC13                    = flag_read_dC13
     forcing_options%flag_read_DC14                    = flag_read_DC14
-    forcing_options%flag_forcing_with_snow_data       = flag_forcing_with_snow_data
     forcing_options%simulation_length_unit            = simulation_length_unit
     forcing_options%simulation_length_number          = simulation_length_number
     forcing_options%transient_spinup_start_year       = transient_spinup_start_year
@@ -244,14 +238,7 @@ CONTAINS
     forcing_options%current%precipitation = -999.0_wp
     forcing_options%current%pressure      = -999.0_wp
 
-    !> 4.0 output info about settings to logfile
-    !>
-    ! convert rain to snow is enabled
-    IF (.NOT. flag_forcing_with_snow_data) THEN
-      CALL message(TRIM(routine), 'Conversion of rain to snow is enabled (flag_forcing_with_snow_data == TRUE).')
-    END IF
-
-  END SUBROUTINE Init_forcing_qs
+  END SUBROUTINE Init_forcing
 
 
   !-----------------------------------------------------------------------------------------------------

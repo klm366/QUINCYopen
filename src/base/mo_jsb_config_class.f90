@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -17,7 +17,6 @@ MODULE mo_jsb_config_class
   USE mo_kind,              ONLY: wp
   USE mo_io_units,          ONLY: filename_max
   USE mo_exception,         ONLY: message, finish, message_text
-  USE mo_jsb_io_netcdf,     ONLY: t_input_file
 
   IMPLICIT NONE
   PRIVATE
@@ -40,14 +39,13 @@ MODULE mo_jsb_config_class
     LOGICAL                        :: use_tmx
     LOGICAL                        :: use_lakes
     LOGICAL                        :: use_glacier
-    INTEGER                        :: enforce_water_budget!< descriptor for water balance 'ignore', 'logging', or 'error'
     CHARACTER(len=10)              :: tpe_scheme       ! For terraplanet setup: open/closed
     CHARACTER(len=10)              :: hsm_mode
+    LOGICAL                        :: l_compat401      ! Use configuration compatible with jsbach 4.01
     CHARACTER(len=10), ALLOCATABLE :: output_tiles(:)  ! List of tile names for which output should be generated
     
     ! Characteristics of bgc material in this model: flags specifying used elements and bookkeeping vector for elements used
     ! Note: no logical for carbon because we presuppose that it is always used!
-    LOGICAL                        :: force_c_isotopes      !< If c isotopes forcing should be used (else use atmland constant)
     LOGICAL                        :: include_nitrogen      !< If bgc materials contain nitrogen as element
     LOGICAL                        :: include_phosphorus    !< If bgc materials contain phosphorus as element
     LOGICAL                        :: include_carbon13      !< If bgc materials contain C13 as element
@@ -67,15 +65,13 @@ MODULE mo_jsb_config_class
     
     !! QUINCY added !!
     !! BASE_CTL
+    CHARACTER(len=filename_max)    :: file_sel_output_variables                !< file (and path) containing a list of selected output variables
     REAL(wp)          :: dtime                                    !< length of one time step in seconds; base_ctl namelist: dtime_step_length_sec
-    CHARACTER(len=20) :: quincy_model_name                        !< quincy model-mode [land, plant, soil, canopy, test_canopy, test_radiation]
-    LOGICAL           :: use_soil_phys_jsbach                     !< use either quincy SPQ_ or jsbach soil-physic processes
+    CHARACTER(len=20) :: quincy_model_name
     CHARACTER(len=50) :: git_branch                               !< branch for which the binary was compiled
     CHARACTER(len=8)  :: git_commit_SHA                           !< sha of commit used for this binary
     LOGICAL           :: code_has_changed_since_SHA               !< logical indicating if there has been any changes since last commit
     CHARACTER(len=20) :: simulation_run_by                        !< name of the user making the simulation
-    CHARACTER(len=filename_max) :: netcdf_output_var_list      !< file (and path) with list of selected variables for netcdf output
-    CHARACTER(len=20) :: output_txt_file_set                      !< set of ascii txt files for model output (options: mo_qs_output_txt_util)
     CHARACTER(8)      :: output_interval_pool, &                  !< interval at which output is generated during model runs not including spinup
                          output_interval_flux                     !< interval at which output is generated during model runs not including spinup - the pool value is used
     CHARACTER(8)      :: output_interval_pool_spinup, &           !< interval at which output is generated during spinup
@@ -96,19 +92,19 @@ MODULE mo_jsb_config_class
     LOGICAL           :: set_parameter_values_from_file           !< set values of (some) parameters to values given by namelist (parameter_slm_run.list)
     LOGICAL           :: set_parameter_values_proportional        !< if TRUE: change the default (hardcoded) parameter values by proportion as defined in namelist
     LOGICAL           :: flag_climate_forcing_one_year
+    LOGICAL           :: flag_stand_harvest
+    INTEGER           :: stand_replacing_year
+    LOGICAL           :: flag_spp1685
     ! GRID_CTL
     REAL(wp)          :: lat
     REAL(wp)          :: lon
     !! other parameters than namelist parameters => not set via namelist but at model runtime
     INTEGER           :: qmodel_id                          !< defines the applied model configuration (quincy_model_name)
+    LOGICAL           :: l_do_stand_replacing_harvest
     LOGICAL           :: l_transient_forcing_mode, &        !< set to TRUE if forcing_options%forcing_mode == transient
                          l_transient_spinup, &              !< TRUE for forcing_mode=='transient' and model spinup, otherwise FALSE
                          l_transient_spinup_rewind_forcing  !< TRUE at the timestep after one transient spinup period has finished (e.g. after 1930 for 1901-1930)
     LOGICAL           :: l_static_forcing_mode              !< set to TRUE if forcing_options%forcing_mode == static
-
-    LOGICAL                        :: init_from_ifs    ! Initialize from IFS analysis; quincy standalone: hardcoded FALSE
-    CHARACTER(len=:), ALLOCATABLE  :: ifs_filename
-    TYPE(t_input_file)             :: ifs_input_file
   END TYPE t_jsb_model_config
 
 
@@ -119,7 +115,6 @@ MODULE mo_jsb_config_class
   !-----------------------------------------------------------------------------------------------------
   TYPE, ABSTRACT :: t_jsb_config
     LOGICAL :: active
-    LOGICAL :: lrestart_cont
     CHARACTER(len=filename_max) :: ic_filename
     CHARACTER(len=filename_max) :: bc_filename
     CHARACTER(LEN=filename_max) :: namelist_filename
@@ -155,10 +150,10 @@ CONTAINS
   !-----------------------------------------------------------------------------------------------------
   FUNCTION new_model_config(namelist_filename) RESULT(model_config)
 
-    USE mo_jsb_namelist_iface,    ONLY: open_nml, POSITIONED, position_nml, close_nml
-    USE mo_jsb_impl_constants,    ONLY: WB_IGNORE, WB_LOGGING, WB_ERROR
-    USE mo_util,                  ONLY: tolower
-    USE mo_quincy_model_config,   ONLY: Get_quincy_model_config_id
+    !USE mo_jsb_namelist_iface, ONLY: open_nml, POSITIONED, position_nml, close_nml
+    USE mo_namelist, ONLY: open_nml, POSITIONED, position_nml, close_nml
+    USE mo_util,     ONLY: tolower
+    USE mo_quincy_model_config,      ONLY: Get_quincy_model_config_id
 
     CHARACTER(len=*),         INTENT(in) :: namelist_filename
     TYPE(t_jsb_model_config), POINTER    :: model_config
@@ -180,13 +175,10 @@ CONTAINS
     ! BASE_CTL
     REAL(wp)                    :: dtime_step_length_sec                      !< model-variable: dtime 
     CHARACTER(len=20)           :: quincy_model_name
-    LOGICAL                     :: use_soil_phys_jsbach
-    CHARACTER(len=80)           :: git_branch                               !< branch for which the binary was compiled
+    CHARACTER(len=50)           :: git_branch                               !< branch for which the binary was compiled
     CHARACTER(len=8)            :: git_commit_SHA                           !< sha of commit used for this binary
     LOGICAL                     :: code_has_changed_since_SHA               !< logical indicating if there has been any changes since last commit
     CHARACTER(len=20)           :: simulation_run_by
-    CHARACTER(len=filename_max) :: netcdf_output_var_list
-    CHARACTER(len=20)           :: output_txt_file_set
     CHARACTER(8)                :: output_interval_pool          , &
                                    output_interval_flux
     CHARACTER(8)                :: output_interval_pool_spinup   , & 
@@ -203,9 +195,13 @@ CONTAINS
     LOGICAL                     :: flag_generate_soil_forcing_trans
     LOGICAL                     :: flag_write_sb_output
     LOGICAL                     :: flag_write_veg_output
+    CHARACTER(len=filename_max) :: file_sel_output_variables
     LOGICAL                     :: set_parameter_values_from_file
     LOGICAL                     :: set_parameter_values_proportional
     LOGICAL                     :: flag_climate_forcing_one_year
+    LOGICAL                     :: flag_stand_harvest
+    INTEGER                     :: stand_replacing_year
+    LOGICAL                     :: flag_spp1685
 
     LOGICAL                     :: include_nitrogen           !< element variables in bgc_material (infrastructure)
     LOGICAL                     :: include_phosphorus         !< element variables in bgc_material (infrastructure)
@@ -223,25 +219,21 @@ CONTAINS
     LOGICAL                     :: use_tmx
     LOGICAL                     :: use_lakes
     LOGICAL                     :: use_glacier
-    CHARACTER(len=10)           :: enforce_water_budget
+    LOGICAL                     :: l_compat401
     CHARACTER(len=filename_max) :: fract_filename
     CHARACTER(len=40)           :: usecase
     CHARACTER(len=10)           :: tpe_scheme
     CHARACTER(len=10)           :: hsm_mode
     CHARACTER(len=10)           :: output_tiles(99)
-    LOGICAL                     :: init_from_ifs
-    CHARACTER(len=filename_max) :: ifs_filename
 
     NAMELIST /base_ctl/                           &  
         dtime_step_length_sec                   , &
         quincy_model_name                       , &
-        use_soil_phys_jsbach                    , &
         git_branch                              , &
         git_commit_SHA                          , &
         code_has_changed_since_SHA              , &
         simulation_run_by                       , &
-        netcdf_output_var_list               , &
-        output_txt_file_set                     , &
+        file_sel_output_variables               , &
         output_interval_pool                    , &
         output_interval_flux                    , &
         output_interval_pool_spinup             , &
@@ -261,6 +253,9 @@ CONTAINS
         set_parameter_values_from_file          , &
         set_parameter_values_proportional       , &
         flag_climate_forcing_one_year           , &
+        flag_stand_harvest                      , &
+        stand_replacing_year                    , &
+        flag_spp1685, &
         include_nitrogen, &
         include_phosphorus, &
         include_carbon13, &
@@ -270,13 +265,13 @@ CONTAINS
         slow_sb_pool_spinup_accelerator_frequency, &
         slow_sb_pool_spinup_accelerator_length, &
         slow_sb_pool_spinup_accelerator_start_year, &
-        slow_sb_pool_spinup_accelerator_max_executions, &
-        enforce_water_budget
+        slow_sb_pool_spinup_accelerator_max_executions
                           
     ! NAMELIST /jsb_model_nml/  &
     !   use_tmx, &
     !   use_lakes, &
     !   use_glacier, &
+    !   l_compat401, &
     !   usecase, &
     !   tpe_scheme, &
     !   hsm_mode, &
@@ -295,16 +290,10 @@ CONTAINS
     ! BASE_CTL
     dtime_step_length_sec                   = 1800.0_wp   ! length of one time step in seconds
     quincy_model_name                       = 'land'      ! default is the coupled veg-soil model, a.k.a. land
-#ifdef __QUINCY_STANDALONE__
-    use_soil_phys_jsbach                    = .FALSE.     ! with quincy standalone the default is to not use the "jsbach soil physic" but SPQ_
-#else
-    use_soil_phys_jsbach                    = .TRUE.
-#endif
     git_branch                              = 'not_set'   ! branch for which the binary was compiled
     git_commit_SHA                          = 'not_set'   ! commit SHA of the executed binary
     simulation_run_by                       = 'not_set'   ! person who executed the simulation
-    netcdf_output_var_list               = 'not_set'   ! file (with path) containing a list of selected output variables
-    output_txt_file_set                     = 'basic'     ! set of ascii txt files for model output (options: mo_qs_output_txt_util)
+    file_sel_output_variables               = 'not_set'   ! file (with path) containing a list of selected output variables
     code_has_changed_since_SHA              = .TRUE.      ! whether the code of the binary changed since SHA
     output_interval_pool                    = 'weekly'    ! timestep daily weekly monthly yearly
     output_interval_flux                    = 'weekly'    ! timestep daily weekly monthly yearly
@@ -325,6 +314,8 @@ CONTAINS
     set_parameter_values_from_file          = .FALSE.     ! .TRUE. .FALSE.
     set_parameter_values_proportional       = .FALSE.     ! .TRUE. .FALSE.
     flag_climate_forcing_one_year           = .FALSE.     ! .TRUE. .FALSE.
+    flag_stand_harvest                      = .FALSE.     ! .TRUE. .FALSE.
+    stand_replacing_year                    = 1500        ! the year 1500
     ! GRID_CTL
     latitude                                = 50.91       ! about the MPI-BGC Jena
     longitude                               = 11.56       ! about the MPI-BGC Jena
@@ -339,6 +330,7 @@ CONTAINS
     use_tmx                                 = .FALSE.
     use_lakes                               = .FALSE.
     use_glacier                             = .FALSE.
+    l_compat401                             = .FALSE.
     grid_filename                           = ''
     grid_name                               = ''
     usecase                                 = ''
@@ -346,6 +338,7 @@ CONTAINS
     hsm_mode                                = 'simple'
     fract_filename                          = 'bc_land_frac.nc'
     output_tiles(:)                         = ''
+    flag_spp1685                            = .FALSE.       ! if TRUE: soil layer specific texture information for SPP_1685 sites: simple_1d and jsm
     include_nitrogen                        = .TRUE.
     include_phosphorus                      = .TRUE.
     include_carbon13                        = .TRUE.
@@ -357,10 +350,6 @@ CONTAINS
     slow_sb_pool_spinup_accelerator_length = 1000
     slow_sb_pool_spinup_accelerator_start_year = 300
     slow_sb_pool_spinup_accelerator_max_executions = 4
-
-    enforce_water_budget                    = 'ignore'
-    init_from_ifs                           = .FALSE.
-    ifs_filename                            = 'ifs2icon.nc'
 
     ! Read namelist
     nml_handler = open_nml(TRIM(namelist_filename))
@@ -380,13 +369,11 @@ CONTAINS
 
     model_config%dtime                                  = dtime_step_length_sec
     model_config%quincy_model_name                      = quincy_model_name
-    model_config%use_soil_phys_jsbach                   = use_soil_phys_jsbach
     model_config%git_branch                             = git_branch
     model_config%git_commit_SHA                         = git_commit_SHA
     model_config%code_has_changed_since_SHA             = code_has_changed_since_SHA
     model_config%simulation_run_by                      = simulation_run_by
-    model_config%netcdf_output_var_list              = netcdf_output_var_list
-    model_config%output_txt_file_set                    = TRIM(output_txt_file_set)
+    model_config%file_sel_output_variables              = file_sel_output_variables
     model_config%output_interval_pool                   = output_interval_pool
     model_config%output_interval_flux                   = output_interval_flux
     model_config%output_interval_pool_spinup            = output_interval_pool_spinup
@@ -406,6 +393,9 @@ CONTAINS
     model_config%set_parameter_values_from_file         = set_parameter_values_from_file
     model_config%set_parameter_values_proportional      = set_parameter_values_proportional
     model_config%flag_climate_forcing_one_year          = flag_climate_forcing_one_year
+    model_config%flag_stand_harvest                     = flag_stand_harvest              ! might be modified below IF (config%stand_replacing_year .LT. 1901)
+    model_config%stand_replacing_year                   = stand_replacing_year
+    model_config%flag_spp1685                           = flag_spp1685
     ! organise elements in bgc_material
     model_config%include_nitrogen                       = include_nitrogen
     model_config%include_phosphorus                     = include_phosphorus
@@ -431,10 +421,10 @@ CONTAINS
     CASE DEFAULT
       CALL finish(TRIM(routine), 'Selected model_scheme '//TRIM(model_scheme)//' not available.')
     END SELECT
-    model_config%use_tmx        = use_tmx
-    model_config%init_from_ifs  = init_from_ifs
+    model_config%use_tmx      = use_tmx
     ! model_config%use_lakes      = use_lakes
     ! model_config%use_glacier    = use_glacier
+    ! model_config%l_compat401    = l_compat401
     ! model_config%usecase        = usecase
     ! model_config%tpe_scheme     = tpe_scheme
     ! model_config%hsm_mode       = hsm_mode
@@ -443,22 +433,14 @@ CONTAINS
     ! set the model configuration id
     model_config%qmodel_id = Get_quincy_model_config_id(model_config%quincy_model_name)
 
-    SELECT CASE (tolower(TRIM(enforce_water_budget)))
-    CASE ("ignore")
-      model_config%enforce_water_budget = WB_IGNORE
-      CALL message(TRIM(routine), 'WARNING: Land surface water balance will not be checked during simulation '// &
-        & '(unless set differently in hydro or hd config).')
-    CASE ("logging")
-      model_config%enforce_water_budget = WB_LOGGING
-      CALL message(TRIM(routine), 'WARNING: Simulation will not stop due to any land water balance violation '// &
-        & '(unless set differently in hydro or hd config) but information will be added to the log file')
-    CASE ("error")
-      model_config%enforce_water_budget = WB_ERROR
-      CALL message(TRIM(routine), 'WARNING: Simulation will stop due to any land water balance violation '// &
-        & '(unless set differently in hydro or hd config).')
-    CASE DEFAULT
-      CALL finish(TRIM(routine), 'enforce_water_budget == '//tolower(TRIM(enforce_water_budget))//' not available.')
-    END SELECT
+    ! limit the stand replacement functionality to years after 1900
+    ! i.e., if there was stand replacement before 1901 this may not be considered by SLM (see site_list.dat column 21: PlantYear)
+    IF (model_config%stand_replacing_year .LT. 1901) THEN
+      model_config%flag_stand_harvest = .FALSE.
+    END IF
+    
+    ! set default for other config% parameter that are changed during runtime not via namelist
+    model_config%l_do_stand_replacing_harvest = .FALSE.
 
     DO i=1,99
       IF (output_tiles(i) == '') EXIT

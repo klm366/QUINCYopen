@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -23,8 +23,7 @@ MODULE mo_jsb_process_class
   PRIVATE
   
   PUBLIC :: t_jsb_process, t_jsb_process_p, Get_process_name
-  PUBLIC :: A2L_, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-    &       SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+  PUBLIC :: A2L_, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, Q_RAD_, Q_ASSIMI_, Q_PHENO_, SB_, DFIRE_, PHYD_
   PUBLIC :: SKIP_, AGGREGATE_, ON_LEAFS_, ON_TILE_, ON_SUBTREE_, INHERIT_, Get_action_name
 
   TYPE t_jsb_process
@@ -46,10 +45,8 @@ MODULE mo_jsb_process_class
   END TYPE t_jsb_process_p
 
   ENUM, BIND(C)
-    ! A2L_=1, L2A_=2, SEB_=3, TURB_=4, SSE_=5, HYDRO_=6, VEG_=7, Q_ASSIMI_=9, Q_PHENO_=10,
-    ! SB_=11, DFIRE_=12, PHYD_=13, RAD_=14, Q_SYL_=15, Q_AGR_=16, SPQ_=17
-    ENUMERATOR :: A2L_=1, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-      &           SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+    ! A2L_=1, L2A_=2, SPQ_=5, VEG_=7, Q_RAD_=9, Q_ASSIMI_=10, Q_PHENO_=11, SB_=12, DFIRE_=13, PHYD_=14
+    ENUMERATOR :: A2L_=1, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, Q_RAD_, Q_ASSIMI_, Q_PHENO_, SB_, DFIRE_, PHYD_
   END ENUM
 
   ! Process actions
@@ -75,18 +72,20 @@ CONTAINS
       return_value = 'a2l'
     CASE (L2A_)
       return_value = 'l2a'
-    CASE (SEB_)
-      return_value = 'seb'
-    CASE (TURB_)
-      return_value = 'turb'
-    CASE (SSE_)
-      return_value = 'sse'
+   CASE (SEB_)
+     return_value = 'seb'
+   CASE (TURB_)
+     return_value = 'turb'
+    CASE (SPQ_)
+      return_value = 'spq'
     CASE (SB_)
       return_value = 'sb'
-    CASE (HYDRO_)
-      return_value = 'hydro'
+   CASE (HYDRO_)
+     return_value = 'hydro'
     CASE (VEG_)
       return_value = 'veg'
+    CASE (Q_RAD_)
+      return_value = 'q_rad'
     CASE (Q_ASSIMI_)
       return_value = 'q_assimi'
     CASE (Q_PHENO_)
@@ -95,16 +94,6 @@ CONTAINS
       return_value = 'dfire'
     CASE (PHYD_)
       return_value = 'phyd'
-    CASE (RAD_)
-      return_value = 'rad'
-    CASE (Q_SYL_)
-      return_value = 'q_syl'
-    CASE (Q_AGR_)
-      return_value = 'q_agr'
-    CASE (SPQ_)
-      return_value = 'spq'
-    CASE (ALCC_)
-      return_value = 'alcc'
 #ifndef __NO_JSBACH_HD__
    CASE (HD_)
      return_value = 'hd'

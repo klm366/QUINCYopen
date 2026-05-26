@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -18,20 +18,18 @@
 MODULE mo_sb_config_class
 #ifndef __NO_QUINCY__
 
-  USE mo_exception,           ONLY: message_text, message, finish
-  USE mo_io_units,            ONLY: filename_max
-  USE mo_kind,                ONLY: wp
-  USE mo_jsb_impl_constants,  ONLY: def_parameters
-  USE mo_jsb_config_class,    ONLY: t_jsb_config
+  USE mo_exception,         ONLY: message_text, message, finish
+  USE mo_io_units,          ONLY: filename_max
+  USE mo_kind,              ONLY: wp
+  USE mo_jsb_config_class,  ONLY: t_jsb_config
 
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: t_sb_config, get_number_of_sb_compartments, simple_1d_compartments
   PUBLIC :: SB_PART_DOM_IDX , SB_PART_DOM_ASSOC_IDX, SB_PART_SOLUBLE_LITTER_IDX,                   &
     &       SB_PART_POLYMERIC_LITTER_IDX, SB_PART_WOODY_LITTER_IDX
-  PUBLIC :: SB_PART_MYCORRHIZA_IDX, SB_PART_MICROBIAL_IDX, SB_PART_RESIDUE_IDX, &
+  PUBLIC :: SB_PART_FUNGI_IDX, SB_PART_MYCORRHIZA_IDX, SB_PART_MICROBIAL_IDX, SB_PART_RESIDUE_IDX, &
     &       SB_PART_RESIDUE_ASSOC_IDX
-  PUBLIC :: CONST_DEP, REFYEAR_DEP, TRANS_DEP
 
   !-----------------------------------------------------------------------------------------------------
   !> configuration of the soil_biogeochemistry process, derived from t_jsb_config
@@ -51,17 +49,12 @@ MODULE mo_sb_config_class
                                                         !!              based on Rastaetter et al. 2001, Meyerholt et al. 2016, Kern, 2021
                                                         !! unlimited: asymbiotic N fixation set to satify plant growth demands at any point in time
     CHARACTER(15)         :: sb_adsorp_scheme
-    !!
-    INTEGER :: deposition_scheme !< one of: CONST_DEP=1, REFYEAR_DEP=2, TRANS_DEP=3
-                                 !< - in case of REFYEAR_DEP and TRANS_DEP the data is read from an external file in IQ
+    CHARACTER(15)         :: jsm_turnover_model
     !> flags
     !!
-    LOGICAL               :: read_sb_state          !< TRUE: call sb_read_states (mo_sb_init) after init/restart from file
-    LOGICAL               :: flag_sb_prescribe_nh4  !< TRUE: solute NH4 is kept at a prescribed level
-    LOGICAL               :: flag_sb_prescribe_no3  !< TRUE: solute NO3 is kept at a prescribed level
-    LOGICAL               :: flag_sb_prescribe_po4  !< TRUE: solute PO4 is kept at a prescribed level
-    LOGICAL               :: flag_sb_interactive_n  !< TRUE: N cycle state affects C,P processes via stoichiometry or allocation changes
-    LOGICAL               :: flag_sb_interactive_p  !< TRUE: P cycle state affects C,N processes via stoichiometry or allocation changes
+    LOGICAL               :: flag_sb_prescribe_nh4
+    LOGICAL               :: flag_sb_prescribe_no3
+    LOGICAL               :: flag_sb_prescribe_po4
     ! mycorrhiza
     LOGICAL               :: flag_mycorrhiza
     LOGICAL               :: flag_mycorrhiza_org
@@ -70,8 +63,16 @@ MODULE mo_sb_config_class
     LOGICAL               :: flag_sb_jsm_transport
     LOGICAL               :: flag_sb_jsm_litter_input
     LOGICAL               :: flag_sb_jsm_OM_sorption
-    ! P sorption
+    ! P sorpion
     LOGICAL               :: flag_sb_double_langmuir
+    ! exudation
+    LOGICAL               :: flag_c_exudation
+    ! artificial exudates 
+    LOGICAL               :: flag_artificial_exudation_CNP
+    REAL(wp)              :: artificial_exudation_X
+    !grazing
+    LOGICAL               :: flag_grazing
+    LOGICAL               :: flag_grazing_P
     !> parameter
     !!
     INTEGER               :: usda_taxonomy_class
@@ -84,22 +85,7 @@ MODULE mo_sb_config_class
     REAL(wp)              :: soil_p_primary
     REAL(wp)              :: qmax_org_fine_particle    !< maximum sorption capacity of OM to fine soil particle, mol C/ kg fine particle
 
-    CHARACTER(len=filename_max) :: bc_quincy_soil_filename    !< IQ (QUINCY) soil input data
-    CHARACTER(len=filename_max) :: deposition_filename_prefix !< IQ. Note: should NOT include an ending "_"
-
-    ! parameter calibration
-    LOGICAL          :: flag_apply_nml_parameters  !< replace values of sb_constants parameters by the values of the below nml_* variables
-    REAL(wp)         :: nml_temp_freeze_thres_bio
-    REAL(wp)         :: nml_temp_freeze_window_bio
-    REAL(wp)         :: nml_frac_woody2dec_litter
-    REAL(wp)         :: nml_frac_litter2fast_som
-    REAL(wp)         :: nml_f_nit_noy
-    REAL(wp)         :: nml_f_nit_n2o
-    REAL(wp)         :: nml_vmax_nitrification
-    REAL(wp)         :: nml_vmax_denitrification
-    REAL(wp)         :: nml_t_ref_decomposition
-    REAL(wp)         :: nml_ea_decomposition
-    REAL(wp)         :: nml_ed_decomposition
+    CHARACTER(len=filename_max) :: bc_quincy_soil_filename  !< IQ (QUINCY) soil input data
 
    CONTAINS
      PROCEDURE :: Init => Init_sb_config
@@ -113,19 +99,12 @@ MODULE mo_sb_config_class
       & SB_PART_SOLUBLE_LITTER_IDX,   &  !< metabolic litter (sugars, cellulose etc.)
       & SB_PART_POLYMERIC_LITTER_IDX, &  !< structural litter (lignified litter)
       & SB_PART_WOODY_LITTER_IDX,     &  !< physically protected wood litter
+      & SB_PART_FUNGI_IDX,            &  !< saprophytic fungal biomass
       & SB_PART_MYCORRHIZA_IDX,       &  !< mycorrhizal fungal biomass
       & SB_PART_MICROBIAL_IDX,        &  !< microbial biomass (bacteria!)
       & SB_PART_RESIDUE_IDX,          &  !< necromass of fungi, microbial and mycorrhiza
       & SB_PART_RESIDUE_ASSOC_IDX,    &  !< minerally associated microbial necromass
       & LAST_SB_PART_IDX                 !< last of this ENUM, used to determine the max number of compartments
-  END ENUM
-
-  !> deposition schemes (possible values for deposition_scheme)
-  ENUM, BIND(C)
-    ENUMERATOR ::       &
-      & CONST_DEP = 1,      &  !< use global constant nhx, noy and p deposition
-      & REFYEAR_DEP,        &  !< read monthly maps of nhx, noy and p deposition but only initially for reference year (IQ)
-      & TRANS_DEP              !< read monthly maps of nhx, noy and p deposition for each simulation year (IQ)
   END ENUM
 
   INTEGER, PARAMETER :: simple_1d_compartments(6) = [ SB_PART_SOLUBLE_LITTER_IDX, SB_PART_POLYMERIC_LITTER_IDX, &
@@ -141,34 +120,28 @@ CONTAINS
   !! currently it does only: read parameters from namelist
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE Init_sb_config(config)
+#ifdef __QUINCY_STANDALONE__
+    USE mo_namelist,              ONLY: open_nml, POSITIONED, position_nml, close_nml
+#else
     USE mo_jsb_namelist_iface,    ONLY: open_nml, POSITIONED, position_nml, close_nml
-    USE mo_util,                  ONLY: tolower
-    USE mo_jsb_grid_class,        ONLY: t_jsb_vgrid, new_vgrid
-    USE mo_jsb_grid,              ONLY: Register_vgrid
-    USE mo_jsb_io,                ONLY: ZAXIS_GENERIC
-
+#endif
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_sb_config), INTENT(inout) :: config    !< config type for sb
     ! ---------------------------
     ! 0.2 Local
     ! variables for reading from namlist, identical to variable-name in namelist
     LOGICAL                     :: active
-    LOGICAL                     :: lrestart_cont
     CHARACTER(len=filename_max) :: ic_filename
     CHARACTER(len=filename_max) :: bc_filename
     CHARACTER(len=filename_max) :: bc_quincy_soil_filename
-    CHARACTER(len=filename_max) :: deposition_filename_prefix
     CHARACTER(15)               :: sb_model_scheme
     CHARACTER(15)               :: sb_nloss_scheme
     CHARACTER(15)               :: sb_bnf_scheme
     CHARACTER(15)               :: sb_adsorp_scheme
-    CHARACTER(9)                :: deposition_scheme         !< one of constant, refyear, transient
-    LOGICAL                     :: read_sb_state
+    CHARACTER(15)               :: jsm_turnover_model
     LOGICAL                     :: flag_sb_prescribe_nh4
     LOGICAL                     :: flag_sb_prescribe_no3
     LOGICAL                     :: flag_sb_prescribe_po4
-    LOGICAL                     :: flag_sb_interactive_n
-    LOGICAL                     :: flag_sb_interactive_p
     LOGICAL                     :: flag_mycorrhiza
     LOGICAL                     :: flag_mycorrhiza_org
     LOGICAL                     :: flag_mycorrhiza_prim
@@ -176,6 +149,12 @@ CONTAINS
     LOGICAL                     :: flag_sb_jsm_litter_input
     LOGICAL                     :: flag_sb_jsm_OM_sorption
     LOGICAL                     :: flag_sb_double_langmuir
+    LOGICAL                     :: flag_c_exudation
+    !kschufft
+    LOGICAL                     :: flag_artificial_exudation_CNP
+    REAL(wp)                    :: artificial_exudation_X 
+    LOGICAL                     :: flag_grazing
+    LOGICAL                     :: flag_grazing_P
     INTEGER                     :: usda_taxonomy_class
     INTEGER                     :: nwrb_taxonomy_class
     REAL(wp)                    :: soil_ph
@@ -185,37 +164,24 @@ CONTAINS
                                    soil_p_occluded,     &
                                    soil_p_primary
     REAL(wp)                    :: qmax_org_fine_particle
-    LOGICAL                     :: flag_apply_nml_parameters
-    REAL(wp)                    :: nml_temp_freeze_thres_bio
-    REAL(wp)                    :: nml_temp_freeze_window_bio
-    REAL(wp)                    :: nml_frac_woody2dec_litter
-    REAL(wp)                    :: nml_frac_litter2fast_som
-    REAL(wp)                    :: nml_f_nit_noy
-    REAL(wp)                    :: nml_f_nit_n2o
-    REAL(wp)                    :: nml_vmax_nitrification
-    REAL(wp)                    :: nml_vmax_denitrification
-    REAL(wp)                    :: nml_t_ref_decomposition
-    REAL(wp)                    :: nml_ea_decomposition
-    REAL(wp)                    :: nml_ed_decomposition
 
-    NAMELIST /lnd_sb_nml/                     &
+#ifdef __QUINCY_STANDALONE__
+    NAMELIST /soil_biogeochemistry_ctl/       &
+#else
+    NAMELIST /jsb_sb_nml/                     &
+#endif
                       active                    , &
-                      lrestart_cont             , &
                       ic_filename               , &
                       bc_filename               , &
                       bc_quincy_soil_filename   , &
-                      deposition_filename_prefix, &
                       sb_model_scheme           , &
                       sb_nloss_scheme           , &
                       sb_bnf_scheme             , &
                       sb_adsorp_scheme          , &
-                      deposition_scheme         , &
-                      read_sb_state             , &
+                      jsm_turnover_model        , &
                       flag_sb_prescribe_nh4     , &
                       flag_sb_prescribe_no3     , &
                       flag_sb_prescribe_po4     , &
-                      flag_sb_interactive_n     , &
-                      flag_sb_interactive_p     , &
                       flag_mycorrhiza           , &
                       flag_mycorrhiza_org       , &
                       flag_mycorrhiza_prim      , &
@@ -223,6 +189,11 @@ CONTAINS
                       flag_sb_jsm_litter_input  , &
                       flag_sb_jsm_OM_sorption   , &
                       flag_sb_double_langmuir   , &
+                      flag_c_exudation          , &
+                      flag_artificial_exudation_CNP, &
+                      artificial_exudation_X    , &
+                      flag_grazing             , &
+                      flag_grazing_P             , &
                       usda_taxonomy_class       , &
                       nwrb_taxonomy_class       , &
                       soil_ph                   , &
@@ -231,45 +202,26 @@ CONTAINS
                       soil_p_slow               , &
                       soil_p_occluded           , &
                       soil_p_primary            , &
-                      qmax_org_fine_particle, &
-      &   flag_apply_nml_parameters, &
-      &   nml_temp_freeze_thres_bio, &
-      &   nml_temp_freeze_window_bio, &
-      &   nml_frac_woody2dec_litter, &
-      &   nml_frac_litter2fast_som, &
-      &   nml_f_nit_noy, &
-      &   nml_f_nit_n2o, &
-      &   nml_vmax_nitrification, &
-      &   nml_vmax_denitrification, &
-      &   nml_t_ref_decomposition, &
-      &   nml_ea_decomposition, &
-      &   nml_ed_decomposition
+                      qmax_org_fine_particle
 
-    TYPE(t_jsb_vgrid), POINTER  :: time_months_vgrid
-    INTEGER :: i_month
-    INTEGER :: nml_handler, nml_unit, istat      ! variables for reading model-options from namelist
+    INTEGER  :: nml_handler, nml_unit, istat      ! variables for reading model-options from namelist
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Init_sb_config'
 
     CALL message(TRIM(routine), 'Starting soil_biogeochemistry configuration')
 
     ! Set defaults
     active                      = .TRUE.
-    lrestart_cont               = .FALSE.           ! TRUE: Continue even if SB variables are missing in restart file
-    ic_filename                 = 'ic_land_sb.nc'
+    ic_filename                 = 'ic_land_srf.nc'
     bc_filename                 = 'bc_land_srf.nc'
     bc_quincy_soil_filename     = 'bc_quincy_soil.nc'
-    deposition_filename_prefix  = 'bc_land_npdep_quincy'
     sb_model_scheme             = "simple_1d"       ! simple_1d jsm
     sb_nloss_scheme             = "dynamic"         ! none fixed dynamic
     sb_bnf_scheme               = "dynamic"         ! none dynamic unlimited (fixed == dynamic)
-    sb_adsorp_scheme            = "eca_part"        ! eca_full; eca_part (only uptake, not for adsorption); eca_none
-    deposition_scheme           = 'constant'
-    read_sb_state               = .FALSE.
+    sb_adsorp_scheme            = "eca_full"        ! eca_full; eca_part (only uptake, not for adsorption); eca_none
+    jsm_turnover_model          = "jsm_original"
     flag_sb_prescribe_nh4       = .FALSE.
     flag_sb_prescribe_no3       = .FALSE.
-    flag_sb_prescribe_po4       = .TRUE.
-    flag_sb_interactive_n       = .TRUE.
-    flag_sb_interactive_p       = .FALSE.
+    flag_sb_prescribe_po4       = .FALSE.
     flag_mycorrhiza             = .FALSE.
     flag_mycorrhiza_org         = .FALSE.
     flag_mycorrhiza_prim        = .FALSE.
@@ -277,6 +229,11 @@ CONTAINS
     flag_sb_jsm_litter_input    = .FALSE.
     flag_sb_jsm_OM_sorption     = .FALSE.
     flag_sb_double_langmuir     = .FALSE.
+    flag_c_exudation            = .FALSE.
+    flag_artificial_exudation_CNP = .FALSE.
+    flag_grazing                = .FALSE.
+    flag_grazing_P                = .FALSE.
+    artificial_exudation_X       = 1.0_wp
     usda_taxonomy_class         = 1
     nwrb_taxonomy_class         = 1
     soil_ph                     = 6.5_wp
@@ -286,43 +243,32 @@ CONTAINS
     soil_p_occluded             = 150._wp
     soil_p_primary              = 100._wp
     qmax_org_fine_particle      = 6.5537_wp
-    flag_apply_nml_parameters   = .FALSE.
-    nml_temp_freeze_thres_bio   = def_parameters
-    nml_temp_freeze_window_bio  = def_parameters
-    nml_frac_woody2dec_litter   = def_parameters
-    nml_frac_litter2fast_som    = def_parameters
-    nml_f_nit_noy               = def_parameters
-    nml_f_nit_n2o               = def_parameters
-    nml_vmax_nitrification      = def_parameters
-    nml_vmax_denitrification    = def_parameters
-    nml_t_ref_decomposition     = def_parameters
-    nml_ea_decomposition        = def_parameters
-    nml_ed_decomposition        = def_parameters
 
     ! read the namelist
     nml_handler = open_nml(TRIM(config%namelist_filename))
-    nml_unit = position_nml('lnd_sb_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_sb_nml)
+#ifdef __QUINCY_STANDALONE__
+    nml_unit = position_nml('soil_biogeochemistry_ctl', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, soil_biogeochemistry_ctl)
+#else
+    nml_unit = position_nml('jsb_sb_nml', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, jsb_sb_nml)
+#endif
 
     CALL close_nml(nml_handler)
 
     ! pass values as read from file
     config%active                          = active
-    config%lrestart_cont                   = lrestart_cont
     config%ic_filename                     = ic_filename
     config%bc_filename                     = bc_filename
     config%bc_quincy_soil_filename         = bc_quincy_soil_filename
-    config%deposition_filename_prefix      = deposition_filename_prefix
     config%sb_model_scheme                 = TRIM(sb_model_scheme)
     config%sb_nloss_scheme                 = TRIM(sb_nloss_scheme)
     config%bnf_scheme                      = TRIM(sb_bnf_scheme)
     config%sb_adsorp_scheme                = TRIM(sb_adsorp_scheme)
-    config%read_sb_state                   = read_sb_state
+    config%jsm_turnover_model              = TRIM(jsm_turnover_model)
     config%flag_sb_prescribe_nh4           = flag_sb_prescribe_nh4
     config%flag_sb_prescribe_no3           = flag_sb_prescribe_no3
     config%flag_sb_prescribe_po4           = flag_sb_prescribe_po4
-    config%flag_sb_interactive_n           = flag_sb_interactive_n
-    config%flag_sb_interactive_p           = flag_sb_interactive_p
     config%flag_mycorrhiza                 = flag_mycorrhiza
     config%flag_mycorrhiza_org             = flag_mycorrhiza_org
     config%flag_mycorrhiza_prim            = flag_mycorrhiza_prim
@@ -330,6 +276,12 @@ CONTAINS
     config%flag_sb_jsm_litter_input        = flag_sb_jsm_litter_input
     config%flag_sb_jsm_OM_sorption         = flag_sb_jsm_OM_sorption
     config%flag_sb_double_langmuir         = flag_sb_double_langmuir
+    !kschufft
+    config%flag_c_exudation                = flag_c_exudation
+    config%flag_artificial_exudation_CNP   = flag_artificial_exudation_CNP
+    config%flag_grazing                    = flag_grazing
+    config%flag_grazing_P                    = flag_grazing_P
+    config%artificial_exudation_X          = artificial_exudation_X
     config%usda_taxonomy_class             = usda_taxonomy_class
     config%nwrb_taxonomy_class             = nwrb_taxonomy_class
     config%soil_ph                         = soil_ph
@@ -339,18 +291,24 @@ CONTAINS
     config%soil_p_occluded                 = soil_p_occluded
     config%soil_p_primary                  = soil_p_primary
     config%qmax_org_fine_particle          = qmax_org_fine_particle
-    config%flag_apply_nml_parameters       = flag_apply_nml_parameters
-    config%nml_temp_freeze_thres_bio       = nml_temp_freeze_thres_bio
-    config%nml_temp_freeze_window_bio      = nml_temp_freeze_window_bio
-    config%nml_frac_woody2dec_litter       = nml_frac_woody2dec_litter
-    config%nml_frac_litter2fast_som        = nml_frac_litter2fast_som
-    config%nml_f_nit_noy                   = nml_f_nit_noy
-    config%nml_f_nit_n2o                   = nml_f_nit_n2o
-    config%nml_vmax_nitrification          = nml_vmax_nitrification
-    config%nml_vmax_denitrification        = nml_vmax_denitrification
-    config%nml_t_ref_decomposition         = nml_t_ref_decomposition
-    config%nml_ea_decomposition            = nml_ea_decomposition
-    config%nml_ed_decomposition            = nml_ed_decomposition
+    
+    ! modify qmax_org_fine_particle based on value of nwrb_taxonomy_class
+    ! 2022-12-09, Lin
+    IF (config%nwrb_taxonomy_class < 4._wp ) THEN 
+    ! Gleysols, Fluvisoils, Cambisols
+      config%qmax_org_fine_particle = config%qmax_org_fine_particle * 0.8_wp
+    ELSEIF (config%nwrb_taxonomy_class < 6._wp ) THEN 
+    ! Alisols, Plinthosols
+      config%qmax_org_fine_particle = config%qmax_org_fine_particle * 0.6_wp
+    ELSEIF (config%nwrb_taxonomy_class < 8._wp ) THEN 
+    ! Acrisols, Ferrasols
+      config%qmax_org_fine_particle = config%qmax_org_fine_particle * 0.9_wp 
+    ENDIF
+
+    ! IF (config%nwrb_taxonomy_class == 89._wp ) THEN 
+    !   ! Gleysols, Fluvisoils, Cambisols
+    !     config%qmax_org_fine_particle = config%qmax_org_fine_particle * 0.8_wp
+    ! ENDIF
 
     ! test sb_model_scheme
     SELECT CASE(TRIM(sb_model_scheme))
@@ -361,27 +319,6 @@ CONTAINS
     CASE DEFAULT
       CALL finish(TRIM(routine),  'No such soil model available: '//TRIM(sb_model_scheme))
     END SELECT
-
-    ! Set deposition scheme
-    SELECT CASE (tolower(TRIM(deposition_scheme)))
-    CASE ("constant")
-      CALL message(TRIM(routine), 'Running with constant deposition.')
-      config%deposition_scheme = CONST_DEP
-    CASE ("refyear")
-      CALL message(TRIM(routine), 'Running with deposition from a refyear.')
-      config%deposition_scheme = REFYEAR_DEP
-    CASE ("transient")
-      CALL message(TRIM(routine), 'Running with transient deposition.')
-      config%deposition_scheme = TRANS_DEP
-    CASE DEFAULT
-      CALL finish(TRIM(routine), 'deposition_scheme == '//tolower(TRIM(deposition_scheme))//' not available.')
-    END SELECT
-
-    ! Create vertical axis
-    ! - this grid might be useful in other contexts, too?
-    time_months_vgrid => new_vgrid('time_months', ZAXIS_GENERIC, 12, &
-      & levels=(/ (REAL(i_month, kind=wp), i_month = 1,12) /), units='')
-    CALL register_vgrid(time_months_vgrid)
 
   END SUBROUTINE Init_sb_config
 

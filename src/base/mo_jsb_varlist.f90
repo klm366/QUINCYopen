@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -21,10 +21,10 @@ MODULE mo_jsb_varlist
   PRIVATE
 
   PUBLIC :: VARNAME_LEN
-  PUBLIC :: BASIC, MEDIUM, FULL, NONE
+  PUBLIC :: BASIC, MEDIUM, FULL
 
   ENUM, BIND(C)
-    ENUMERATOR :: NONE=0, BASIC, MEDIUM, FULL
+    ENUMERATOR :: BASIC=1, MEDIUM, FULL
   END ENUM
 
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_varlist'

@@ -1,16 +1,33 @@
-!> Routine for running the test-radiation QUINCY model
 !>
-!> QUINCY standalone
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: https://doi.org/10.17871/quincy-model-2019
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief
+!!  routine for running the test_radiation_model \n
+!!  run QUINCY for one time step
+!!
+!! @author
+!!  Sönke Zaehle, MPI-BGC Jena
+!!  Jan Engel, MPI-BGC Jena: copied from mo_qs_test_canopy_model
+!!
+!! @par Revision History
+!!  created from mo_qs_test_canopy_model to call the new routine calc_radiative_transfer
+!!
 MODULE mo_qs_test_radiation_model
 
   USE mo_kind,                    ONLY: wp
@@ -41,21 +58,20 @@ CONTAINS
     USE mo_jsb_task_class,                ONLY: t_jsb_task_options
     USE mo_jsb_model_class,               ONLY: t_jsb_model
     USE mo_jsb_lctlib_class,              ONLY: t_lctlib_element
-    USE mo_jsb_process_class,             ONLY: Q_ASSIMI_, RAD_, VEG_, HYDRO_, TURB_, A2L_
+    USE mo_jsb_process_class,             ONLY: Q_ASSIMI_, Q_RAD_, VEG_, SPQ_, A2L_
     USE mo_jsb_grid_class,                ONLY: t_jsb_vgrid
     USE mo_jsb_grid,                      ONLY: Get_vgrid
     USE mo_atmland_constants,             ONLY: frac_vis_swtot_srf, frac_par_swvis_srf, eps_vpd, &
       &                                         standard_press_srf, def_co2_mixing_ratio
-    USE mo_phy_schemes,                   ONLY: qsat_mixed
+    USE mo_atmland_util,                  ONLY: calc_spec_humidity_sat
     USE mo_jsb_physical_constants,        ONLY: molar_mass_N, Tzero, grav
     USE mo_q_veg_canopy,                  ONLY: calc_canopy_layers
-    USE mo_qs_rad_scope,                     ONLY: calc_radiative_transfer
+    USE mo_q_rad_scope,                   ONLY: calc_radiative_transfer
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Use_config(Q_ASSIMI_)
-    dsl4jsb_Use_memory(RAD_)
+    dsl4jsb_Use_memory(Q_RAD_)
     dsl4jsb_Use_memory(VEG_)
-    dsl4jsb_Use_memory(HYDRO_)
-    dsl4jsb_Use_memory(TURB_)
+    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_tile_abstract), INTENT(inout)     :: tile         !< one tile with data structure for one lct
@@ -94,20 +110,18 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     ! Declare process configuration and memory Pointers
     dsl4jsb_Def_config(Q_ASSIMI_)
-    dsl4jsb_Def_memory(RAD_)
+    dsl4jsb_Def_memory(Q_RAD_)
     dsl4jsb_Def_memory(VEG_)
-    dsl4jsb_Def_memory(HYDRO_)
-    dsl4jsb_Def_memory(TURB_)
+    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
-    ! RAD_
+    ! Q_RAD_
     dsl4jsb_Real3D_onChunk      :: ppfd_sunlit_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: ppfd_shaded_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: canopy_reflectance_sp
-    ! HYDRO_
-    dsl4jsb_Real2D_onChunk      :: wtr_rootzone_rel
-    ! TURB_
-    dsl4jsb_Real2D_onChunk      :: drag_srf_stdalone
+    ! SPQ_
+    dsl4jsb_Real2D_onChunk      :: w_soil_root_theta
+    dsl4jsb_Real2D_onChunk      :: spq_drag_srf
     ! A2L_
     dsl4jsb_Real2D_onChunk      :: t_air
     dsl4jsb_Real2D_onChunk      :: q_air
@@ -155,22 +169,20 @@ CONTAINS
     nspec           =  vgrid_spectral%n_levels
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Get_config(Q_ASSIMI_)
-    dsl4jsb_Get_memory(RAD_)
+    dsl4jsb_Get_memory(Q_RAD_)
     dsl4jsb_Get_memory(VEG_)
-    dsl4jsb_Get_memory(HYDRO_)
-    dsl4jsb_Get_memory(TURB_)
+    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
     bgcm_store => tile%bgcm_store
     dsl4jsb_Get_mt2L2D(VEG_BGCM_POOL_ID, veg_pool_mt)
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_sunlit_tfrac_mavg_cl)      ! in
-    dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_shaded_tfrac_mavg_cl)      ! in
-    dsl4jsb_Get_var3D_onChunk(RAD_, canopy_reflectance_sp)
+    dsl4jsb_Get_var3D_onChunk(Q_RAD_, ppfd_sunlit_tfrac_mavg_cl)      ! in
+    dsl4jsb_Get_var3D_onChunk(Q_RAD_, ppfd_shaded_tfrac_mavg_cl)      ! in
+    dsl4jsb_Get_var3D_onChunk(Q_RAD_, canopy_reflectance_sp)
     ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(HYDRO_, wtr_rootzone_rel)
-    ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(TURB_, drag_srf_stdalone)
+    dsl4jsb_Get_var2D_onChunk(SPQ_, w_soil_root_theta)
+    dsl4jsb_Get_var2D_onChunk(SPQ_, spq_drag_srf)
     ! ---------------------------
     dsl4jsb_Get_var2D_onChunk(A2L_, t_air)
     dsl4jsb_Get_var2D_onChunk(A2L_, q_air)
@@ -218,7 +230,7 @@ CONTAINS
     !>
     t_air(:)            = ref_t_air + TZero
     press_srf(:)        = standard_press_srf
-    q_air(:)            = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)            = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
     co2_mixing_ratio(:) = def_co2_mixing_ratio   ! def_co2_mixing_ratio is used instead of ref_co2_mixing_ratio
     swpar_srf_down(:)   = ref_swdown
     swvis_srf_down(:)   = swpar_srf_down(:) / frac_par_swvis_srf
@@ -226,7 +238,7 @@ CONTAINS
     fract_par_diffuse(:)= ref_fdiffuse
     wind_air(:)         = ref_wind
     wind_10m(:)         = wind_air(:)
-    drag_srf_stdalone(:)     = ref_ga / wind_air(:) * alpha * grav * model%options%dtime
+    spq_drag_srf(:)     = ref_ga / wind_air(:) * alpha * grav * model%options%dtime
     cos_zenith_angle(:) = ref_cos_angle
     !latitude                  = 50.0_wp
     !longitude                 = 0.0_wp
@@ -235,7 +247,7 @@ CONTAINS
     !!
     !!
     ! soil water & lai 
-    wtr_rootzone_rel(:) = ref_theta
+    w_soil_root_theta(:) = ref_theta
     lai(:)   = ref_lai
     ! leaf N & P
     IF(ref_pft==0) THEN
