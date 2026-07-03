@@ -1,16 +1,17 @@
-!> Contains process class
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains process class
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2015-09-01)
+!! Copied to QUINCY by Jan Engel MPI-BGC (2016-08-17)
+!!
 MODULE mo_jsb_process_class
 #ifndef __NO_JSBACH__
 
@@ -23,8 +24,7 @@ MODULE mo_jsb_process_class
   PRIVATE
   
   PUBLIC :: t_jsb_process, t_jsb_process_p, Get_process_name
-  PUBLIC :: A2L_, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-    &       SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+  PUBLIC :: A2L_, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, RAD_, ASSIMI_, PHENO_, SB_, DFIRE_
   PUBLIC :: SKIP_, AGGREGATE_, ON_LEAFS_, ON_TILE_, ON_SUBTREE_, INHERIT_, Get_action_name
 
   TYPE t_jsb_process
@@ -46,10 +46,8 @@ MODULE mo_jsb_process_class
   END TYPE t_jsb_process_p
 
   ENUM, BIND(C)
-    ! A2L_=1, L2A_=2, SEB_=3, TURB_=4, SSE_=5, HYDRO_=6, VEG_=7, Q_ASSIMI_=9, Q_PHENO_=10,
-    ! SB_=11, DFIRE_=12, PHYD_=13, RAD_=14, Q_SYL_=15, Q_AGR_=16, SPQ_=17
-    ENUMERATOR :: A2L_=1, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-      &           SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+    ! A2L_=1, L2A_=2, SPQ_=5, VEG_=7, RAD_=9, ASSIMI_=10, PHENO_=11, SB_=12, DFIRE_=13
+    ENUMERATOR :: A2L_=1, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, RAD_, ASSIMI_, PHENO_, SB_, DFIRE_
   END ENUM
 
   ! Process actions
@@ -75,36 +73,26 @@ CONTAINS
       return_value = 'a2l'
     CASE (L2A_)
       return_value = 'l2a'
-    CASE (SEB_)
-      return_value = 'seb'
-    CASE (TURB_)
-      return_value = 'turb'
-    CASE (SSE_)
-      return_value = 'sse'
-    CASE (SB_)
-      return_value = 'sb'
-    CASE (HYDRO_)
-      return_value = 'hydro'
-    CASE (VEG_)
-      return_value = 'veg'
-    CASE (Q_ASSIMI_)
-      return_value = 'q_assimi'
-    CASE (Q_PHENO_)
-      return_value = 'q_pheno'
-    CASE (DFIRE_)
-      return_value = 'dfire'
-    CASE (PHYD_)
-      return_value = 'phyd'
-    CASE (RAD_)
-      return_value = 'rad'
-    CASE (Q_SYL_)
-      return_value = 'q_syl'
-    CASE (Q_AGR_)
-      return_value = 'q_agr'
+   CASE (SEB_)
+     return_value = 'seb'
+   CASE (TURB_)
+     return_value = 'turb'
     CASE (SPQ_)
       return_value = 'spq'
-    CASE (ALCC_)
-      return_value = 'alcc'
+    CASE (SB_)
+      return_value = 'sb'
+   CASE (HYDRO_)
+     return_value = 'hydro'
+    CASE (VEG_)
+      return_value = 'veg'
+    CASE (RAD_)
+      return_value = 'rad'
+    CASE (ASSIMI_)
+      return_value = 'assimi'
+    CASE (PHENO_)
+      return_value = 'pheno'
+    CASE (DFIRE_)
+      return_value = 'dfire'
 #ifndef __NO_JSBACH_HD__
    CASE (HD_)
      return_value = 'hd'

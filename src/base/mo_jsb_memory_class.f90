@@ -1,16 +1,17 @@
-!> Contains the class and methods for the JSBACH memory structure
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains the class and methods for the JSBACH memory structure
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-04-04)
+!! Copied to QUINCY by Jan Engel (2016-08-15) & updated 2017-05-16
+!!
 MODULE mo_jsb_memory_class
 #ifndef __NO_JSBACH__
 
@@ -33,8 +34,8 @@ MODULE mo_jsb_memory_class
   ! USE mo_jsb_utils_iface,   ONLY: assign_if_present
   ! modified for QUINCY
   USE mo_jsb_var_class,     ONLY: t_jsb_var_p, t_jsb_var, &
-    &                             t_jsb_var_real1d, t_jsb_var_real2d, t_jsb_var_real3d, &
-    &                             REAL1D, REAL2D, REAL3D
+    &                             t_jsb_var_real2d, t_jsb_var_real3d, &
+    &                             REAL2D, REAL3D
   USE mo_jsb_io,            ONLY: t_cf, t_grib1, t_grib2, &
     &                             missval, tables
 
@@ -62,8 +63,7 @@ MODULE mo_jsb_memory_class
     CLASS(t_jsb_pool), POINTER :: bgc_material  => NULL()   ! TODO t_jsb_memory rename 't_jsb_pool' -> 't_lnd_bgc_material'
     CHARACTER(LEN=:), ALLOCATABLE :: varlist_name
     TYPE(t_jsb_var_p), ALLOCATABLE :: vars(:)
-    LOGICAL :: in_var_groups = .FALSE. !< Whether variables of this memory are in any var group
-    LOGICAL :: lrestart_cont = .FALSE. !< TRUE: Continue although variables are missing in restart file
+    LOGICAL :: in_var_groups = .FALSE.
   CONTAINS
     PROCEDURE (Init_memory), DEFERRED, PASS(mem) :: Init
     PROCEDURE                                    :: Get_var
@@ -88,11 +88,9 @@ MODULE mo_jsb_memory_class
     ! PROCEDURE                                    :: Average_over_children_real2d ! Average var over the child tiles
     !> QUINCY
     !>
-    PROCEDURE                                    :: t_jsb_memory_quincy_add_var_r1d
     PROCEDURE                                    :: t_jsb_memory_quincy_add_var_r2d
     PROCEDURE                                    :: t_jsb_memory_quincy_add_var_r3d
-    GENERIC                                      :: Add_var => t_jsb_memory_quincy_add_var_r1d, &
-                                                               t_jsb_memory_quincy_add_var_r2d, &
+    GENERIC                                      :: Add_var => t_jsb_memory_quincy_add_var_r2d, &
                                                                t_jsb_memory_quincy_add_var_r3d, &
                                                                t_jsb_memory_add_pool        ! used for compatibility between QS & IQ
   END TYPE t_jsb_memory
@@ -104,12 +102,11 @@ MODULE mo_jsb_memory_class
   ! Note: argument "mem" needs to have the TARGET attribute so that we can point to individual variables
   !       (of class t_jsb_var) contained in the memory structure.
   ABSTRACT INTERFACE
-    SUBROUTINE Init_memory(mem, prefix, suffix, lct_ids, lib_id, model_id)
+    SUBROUTINE Init_memory(mem, prefix, suffix, lct_ids, model_id)
       IMPORT :: t_jsb_memory
       CLASS(t_jsb_memory), INTENT(inout), TARGET :: mem
       CHARACTER(LEN=*),    INTENT(in)    :: prefix, suffix
       INTEGER,             INTENT(in)    :: lct_ids(:)     !< Primary lct (1) and lcts of descendant tiles
-      INTEGER,             INTENT(in)    :: lib_id         !< id of primary lct in lctlib
       INTEGER,             INTENT(in)    :: model_id
     END SUBROUTINE Init_memory
   END INTERFACE
@@ -158,7 +155,6 @@ CONTAINS
 !     TYPE(t_grib2_var) :: grib2_loc
 !     LOGICAL           :: lmiss_loc
 !     REAL(dp)          :: missval_r_loc
-!     LOGICAL           :: lrestart_cont_loc
 !     INTEGER           :: ldims(1), gdims(1)
 !     INTEGER           :: pos_of_var
 !     CHARACTER(len=VARNAME_LEN), ALLOCATABLE :: groups(:)     ! groups to which this variable belongs to
@@ -180,9 +176,6 @@ CONTAINS
 !     missval_r_loc = missval
 !     IF (PRESENT(missval_r)) missval_r_loc = missval_r
 ! 
-!     lrestart_cont_loc = mem%lrestart_cont
-!     IF (PRESENT(lrestart_cont)) lrestart_cont_loc = lrestart_cont
-!
 !     cf_loc = t_cf_var(cf%standard_name, cf%units, cf%long_name, cf%datatype)
 !     grib2_loc = grib2_var(grib2%discipline, grib2%category, grib2%number, grib2%bits, GRID_UNSTRUCTURED, GRID_CELL)
 ! 
@@ -237,7 +230,7 @@ CONTAINS
 !       this_list, TRIM(name_loc), var%ptr1d, GRID_LONLAT, vgrid%ZaxisID,                       &
 !       cf_loc, grib2_loc, code=grib1%parameter, table=grib1%table,                             &
 !       ldims=ldims, gdims=gdims, levelindx=vgrid%echamZaxisIdx,                                &
-!       loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont_loc, &
+!       loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont, &
 !       initval_r=initval_r, isteptype=isteptype, resetval_r=resetval_r,                        &
 !       lmiss=lmiss_loc, missval_r=missval_r_loc, in_groups=groups,                             &
 !       verbose=verbose)
@@ -316,7 +309,6 @@ CONTAINS
   !   TYPE(t_grib2_var) :: grib2_loc
   !   LOGICAL           :: lmiss_loc
   !   REAL(dp)          :: missval_r_loc
-  !   LOGICAL           :: lrestart_cont_loc
   !   INTEGER           :: ldims(2), gdims(2)
   !   INTEGER           :: pos_of_var
   !   CHARACTER(len=VARNAME_LEN), ALLOCATABLE :: groups(:)     ! groups to which this variable belongs to
@@ -337,10 +329,7 @@ CONTAINS
   !   IF (PRESENT(lmiss)) lmiss_loc = lmiss
   !   missval_r_loc = missval
   !   IF (PRESENT(missval_r)) missval_r_loc = missval_r
-  !
-  !   lrestart_cont_loc = mem%lrestart_cont
-  !   IF (PRESENT(lrestart_cont)) lrestart_cont_loc = lrestart_cont
-  !
+  ! 
   !   cf_loc = t_cf_var(cf%standard_name, cf%units, cf%long_name, cf%datatype)
   !   grib2_loc = grib2_var(grib2%discipline, grib2%category, grib2%number, grib2%bits, GRID_UNSTRUCTURED, GRID_CELL)
   ! 
@@ -380,7 +369,7 @@ CONTAINS
   !     this_list, TRIM(name_loc), var%ptr2d, GRID_UNSTRUCTURED_CELL, vgrid%ZaxisID, &
   !     cf_loc, grib2_loc, code=grib1%parameter, table=grib1%table, &
   !     ldims=ldims, gdims=gdims, levelindx=vgrid%echamZaxisIdx, &
-  !     loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont_loc, &
+  !     loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont, &
   !     initval_r=initval_r, isteptype=isteptype, resetval_r=resetval_r, &
   !     ! lmiss=lmiss_loc, missval_r=missval_r_loc)
   !     lmiss=lmiss_loc, missval_r=missval_r_loc, in_groups=groups, &
@@ -473,7 +462,6 @@ CONTAINS
   !   TYPE(t_grib2_var) :: grib2_loc
   !   LOGICAL           :: lmiss_loc
   !   REAL(dp)          :: missval_r_loc
-  !   LOGICAL           :: lrestart_cont_loc
   !   INTEGER           :: ldims(3), gdims(3)
   !   INTEGER           :: pos_of_var
   !   CHARACTER(len=VARNAME_LEN), ALLOCATABLE :: groups(:)     ! groups to which this variable belongs to
@@ -495,10 +483,7 @@ CONTAINS
   !   IF (PRESENT(lmiss)) lmiss_loc = lmiss
   !   missval_r_loc = missval
   !   IF (PRESENT(missval_r)) missval_r_loc = missval_r
-  !
-  !   lrestart_cont_loc = mem%lrestart_cont
-  !   IF (PRESENT(lrestart_cont)) lrestart_cont_loc = lrestart_cont
-  !
+  ! 
   !   cf_loc = t_cf_var(cf%standard_name, cf%units, cf%long_name, cf%datatype)
   !   grib2_loc = grib2_var(grib2%discipline, grib2%category, grib2%number, grib2%bits, GRID_UNSTRUCTURED, GRID_CELL)
   ! 
@@ -554,7 +539,7 @@ CONTAINS
   !     this_list, TRIM(name_loc), var%ptr3d, GRID_UNSTRUCTURED_CELL, vgrid%ZaxisID, &
   !     cf_loc, grib2_loc, code=grib1%PARAMETER, table=grib1%table, &
   !     ldims=ldims, gdims=gdims, levelindx=vgrid%echamZaxisIdx, &
-  !     loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont_loc, &
+  !     loutput=loutput, lcontainer=lcontainer, lrestart=lrestart, lrestart_cont=lrestart_cont, &
   !     initval_r=initval_r, isteptype=isteptype, resetval_r=resetval_r, &
   !     ! lmiss=lmiss_loc, missval_r=missval_r_loc)
   !     lmiss=lmiss_loc, missval_r=missval_r_loc, in_groups=groups, verbose=verbose)
@@ -612,7 +597,7 @@ CONTAINS
     loutput, lcontainer,                                        &
     lrestart, lrestart_cont, initval_r, isteptype,              &
     resetval_r, lmiss, missval_r, l_aggregate_all,              &
-    output_level, verbose, cons_quan_type_id, transfer_all      &
+    output_level, verbose                                       &
     )
   
     CLASS(t_jsb_memory),   INTENT(inout)        :: mem                 ! memory structure
@@ -637,9 +622,7 @@ CONTAINS
     LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
     INTEGER,              INTENT(in), OPTIONAL :: output_level        ! minimum level of output groups this var belongs to
     LOGICAL,              INTENT(in), OPTIONAL :: verbose             ! print information
-    INTEGER,              INTENT(in), OPTIONAL :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,              INTENT(in), OPTIONAL :: transfer_all        ! transfer all or only a proportion of matter upon lcc
-
+  
     ! TYPE(t_jsb_varlist), POINTER :: this_list           ! list
     ! CHARACTER(len=50) :: name_loc
     ! TYPE(t_cf_var)    :: cf_loc
@@ -1023,67 +1006,6 @@ CONTAINS
   !
 
   ! ======================================================================================================= !
-  !> add 1D variable to process memory (for global sum of variables; is essentially a scalar with dimension ptr(1:1))
-  !>
-  !> mem <- var
-  !>
-  SUBROUTINE t_jsb_memory_quincy_add_var_r1d( &
-    mem, name, var, &
-    hgrid, vgrid, cf, grib1, grib2, prefix, suffix, &
-    loutput, lrestart, lrestart_cont, output_level, output_groups, &
-    initval_r, l_aggregate_all, isteptype)
-
-    CLASS(t_jsb_memory),              INTENT(inout)   :: mem            ! memory structure
-    CHARACTER(len=*),                 INTENT(in)      :: name           ! name of variable
-    TYPE(t_jsb_var_real1d),   TARGET, INTENT(inout)   :: var            ! reference to jsbach var -> newly created plain scalar REAL
-    TYPE(t_jsb_grid),        POINTER, INTENT(in)      :: hgrid          ! horizontal grid type
-    TYPE(t_jsb_vgrid),       POINTER, INTENT(in)      :: vgrid          ! vertical grid type
-    TYPE(t_cf),                       INTENT(in)      :: cf             ! CF related metadata
-    TYPE(t_grib1),                    INTENT(in)      :: grib1          ! GRIB1 related metadata
-    TYPE(t_grib2),                    INTENT(in)      :: grib2          ! GRIB2 related metadata
-    CHARACTER(len=*),                 INTENT(in)      :: prefix         ! Prefix for variable name
-    CHARACTER(len=*),                 INTENT(in)      :: suffix         ! Suffix for variable name
-    LOGICAL,                OPTIONAL, INTENT(in)      :: loutput        ! output flag
-    LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart       ! restart flag
-    LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
-    INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
-    CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
-    REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r        ! value if var not available
-    LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all  ! aggregate over all child tiles?
-    INTEGER,                OPTIONAL, INTENT(in)      :: isteptype        ! type of statistical processing
-
-    INTEGER                     :: pos_of_var
-    INTEGER                     :: ice, ics, nproma, iblk
-    CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':t_jsb_memory_quincy_add_var_r1d'
-
-    ics     = 1              ! is always 1, see quincy_qs_model_driver
-    ice     = hgrid%nproma   ! number of points in the chunk
-    nproma  = hgrid%nproma   ! number of points in the chunk
-    iblk    = 1              ! is always 1, see quincy_qs_model_driver
-    
-    IF (PRESENT(l_aggregate_all)) var%l_aggregate_all = l_aggregate_all
-
-    ALLOCATE(var%field(1,1,1,1,1))
-    var%ptr1d => var%field(1:1,1,1,1,1)
-    var%ptr   => var%ptr1d
-
-    var%name          = TRIM(name)
-    var%type          = REAL1D
-    var%owner_proc_id = mem%owner_proc_id
-
-    pos_of_var = mem%no_of_vars + 1
-    IF (pos_of_var > mem%max_no_of_vars) THEN
-      CALL finish(TRIM(routine), 'Maximum number of vars exceeded: '//TRIM(mem%varlist_name)//', '//TRIM(name))
-    ELSE
-      mem%vars(pos_of_var)%p => var
-      mem%no_of_vars = pos_of_var
-    END IF
-
-    var%ptr(:) = initval_r
-
-  END SUBROUTINE t_jsb_memory_quincy_add_var_r1d
-
-  ! ======================================================================================================= !
   !> add 2D variable to process memory
   !>
   !> mem <- var
@@ -1091,8 +1013,8 @@ CONTAINS
   SUBROUTINE t_jsb_memory_quincy_add_var_r2d( &
     mem, name, var, &
     hgrid, vgrid, cf, grib1, grib2, prefix, suffix, &
-    loutput, lrestart, lrestart_cont, output_level, output_groups, &
-    initval_r, l_aggregate_all, isteptype, cons_quan_type_id, transfer_all)
+    loutput, lrestart, output_level, &
+    initval_r, l_aggregate_all)
 
     CLASS(t_jsb_memory),              INTENT(inout)   :: mem            ! memory structure
     CHARACTER(len=*),                 INTENT(in)      :: name           ! name of variable
@@ -1106,14 +1028,9 @@ CONTAINS
     CHARACTER(len=*),                 INTENT(in)      :: suffix         ! Suffix for variable name
     LOGICAL,                OPTIONAL, INTENT(in)      :: loutput        ! output flag
     LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart       ! restart flag
-    LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
     INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
-    CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
     REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
-    INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
-    INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,                OPTIONAL, INTENT(in)      :: transfer_all   ! transfer all or only a proportion of matter upon lcc
 
     INTEGER                     :: pos_of_var
     INTEGER                     :: ice, ics, nproma, iblk
@@ -1158,8 +1075,8 @@ CONTAINS
   SUBROUTINE t_jsb_memory_quincy_add_var_r3d( &
     mem, name, var, &
     hgrid, vgrid, cf, grib1, grib2, prefix, suffix, &
-    loutput, lrestart, lrestart_cont, output_level, output_groups, &
-    initval_r, l_aggregate_all, isteptype, cons_quan_type_id, transfer_all)
+    loutput, lrestart, output_level, &
+    initval_r, l_aggregate_all)
   
     CLASS(t_jsb_memory),              INTENT(inout)   :: mem            ! memory structure
     CHARACTER(len=*),                 INTENT(in)      :: name           ! name of variable
@@ -1173,14 +1090,9 @@ CONTAINS
     CHARACTER(len=*),                 INTENT(in)      :: suffix         ! Suffix for variable name
     LOGICAL,                OPTIONAL, INTENT(in)      :: loutput        ! output flag
     LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart       ! restart flag
-    LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
     INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
-    CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
     REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
-    INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
-    INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,                OPTIONAL, INTENT(in)      :: transfer_all   ! transfer all or only a proportion of matter upon lcc
 
     INTEGER                     :: pos_of_var
     INTEGER                     :: ice, ics, nproma, iblk

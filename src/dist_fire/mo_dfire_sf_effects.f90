@@ -1,17 +1,26 @@
-!> QUINCY determine the effects of dfire
 !>
-!> ICON-Land
+!>  @par Copyright
+!>    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!>    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!>    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!>    This file is part of the QUINCY model.
+!>    The QUINCY model is free software: you can redistribute it and/or modify
+!>    it under the terms of the GNU General Public License version 3,
+!>    as published by the Free Software Foundation.
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!>    The QUINCY model is distributed in the hope that it will be useful,
+!>    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!>    GNU General Public License for more details.
 !>
-!> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
+!>    You should have received a copy of the GNU General Public License
+!>    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!> 
+!> @brief module to determine the effects of dfire
+!>
+!> @author
+!>  Albert Jornet Puig, MPI-BGC Jena
 !>
 MODULE mo_dfire_sf_effects
 #ifndef __NO_JSBACH__

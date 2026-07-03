@@ -1,16 +1,17 @@
-!> Contains basic model structure
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief basic container (structure) for models
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!!  Reiner Schnur, MPI-M Hamburg
+!!  Jan Engel, MPI-BGC Jena: initial integration into QUINCY and adaption to QUINCY (2016-10-25) & update 2017-05-16
+!!
 MODULE mo_jsb_class
 #ifndef __NO_JSBACH__
 
@@ -54,7 +55,7 @@ CONTAINS
     INTEGER, INTENT(in)        :: id
     TYPE(t_jsb_model), POINTER :: model
 
-    CHARACTER(len=*), PARAMETER :: routine = modname//':get_model_by_id'
+    CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':get_model_by_id'
 
     model => jsbach%models(id)%m
 

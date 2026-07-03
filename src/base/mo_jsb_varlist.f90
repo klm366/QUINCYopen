@@ -1,18 +1,19 @@
-!> Contains routines for var_lists/streams
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @brief Contains routines for var_lists/streams
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-12-04)
+!! Copied from JSBACH4 (git revison e3001993a1da854518008510d6947611a9a942af) by Jan Engel and removed most of the code (2021-02-23)
+!!
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+
 MODULE mo_jsb_varlist
-#ifndef __NO_JSBACH__
 
   USE mo_kind,              ONLY: wp
   USE mo_jsb_varlist_iface, ONLY: VARNAME_LEN
@@ -21,15 +22,14 @@ MODULE mo_jsb_varlist
   PRIVATE
 
   PUBLIC :: VARNAME_LEN
-  PUBLIC :: BASIC, MEDIUM, FULL, NONE
+  PUBLIC :: BASIC, MEDIUM, FULL
 
   ENUM, BIND(C)
-    ENUMERATOR :: NONE=0, BASIC, MEDIUM, FULL
+    ENUMERATOR :: BASIC=1, MEDIUM, FULL
   END ENUM
 
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_varlist'
 
 !CONTAINS
 
-#endif
 END MODULE mo_jsb_varlist

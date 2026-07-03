@@ -1,23 +1,37 @@
-!> Atmosphere-land constants, conversion factors, plus init routine
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief atmosphere-land constants, orbital parameters, conversion factors, plus init routine
+!!
+!! @author
+!!  Soenke Zaehle, MPI-BGC Jena
+!!
+!! @par Revision History
+!! First version by Soenke Zaehle (2015-12-04)
+!!
 MODULE mo_atmland_constants
 #ifndef __NO_JSBACH__
 
   USE mo_kind,            ONLY: wp
 
   IMPLICIT NONE
-
+  
   ! solar constant
   REAL(wp),SAVE :: frac_vis_swtot_srf          !< fraction of solar shortwave radiation in the VIS band (here: 320-700nm for albedo)
   REAL(wp),SAVE :: frac_par_swvis_srf          !< fraction of visible solar shortwave radiation in the PAR band (400-700nm)
@@ -25,7 +39,6 @@ MODULE mo_atmland_constants
   ! wind speed
   REAL(wp),SAVE :: min_wind                    !< minimum wind speed allowed to prevent total decoupling of the surface (m/s)
   REAL(wp),SAVE :: max_wind                    !< maximum wind speed allowed to prevent excess cooling of the surface (m/s)
-  REAL(wp),SAVE :: def_wind                    !< wind (m/s)
 
   ! conversion factors
   REAL(wp),SAVE :: standard_press_srf          !< standard pressure in Pa
@@ -40,19 +53,14 @@ MODULE mo_atmland_constants
   REAL(wp),SAVE :: def_cos_angle               !< cosine of zenith angle
   REAL(wp),SAVE :: def_co2_mixing_ratio        !< atmospheric CO2 in ppm
   REAL(wp),SAVE :: def_co2_mixing_ratio_C13    !< atmospheric 13CO2 in ppm
-  REAL(wp),SAVE :: def_co2_mixing_ratio_C14    !< atmospheric 14CO2 in 10^-12 ppm
+  REAL(wp),SAVE :: def_co2_mixing_ratio_C14    !< atmospheric 14CO2 in pp?
   REAL(wp),SAVE :: def_co2_deltaC13            !< molar mixing ratio of 13C / 12C of atmospheric CO2
   REAL(wp),SAVE :: def_co2_deltaC14            !< molar mixing ratio of 14C / 12C of atmospheric CO2
+  REAL(wp),SAVE :: def_wind                    !< wind in m/s
 
   PUBLIC
 
   CHARACTER(len=*), PARAMETER, PRIVATE :: modname = 'mo_atmland_constants'
-
-  !$ACC DECLARE CREATE(frac_vis_swtot_srf, frac_par_swvis_srf)
-  !$ACC DECLARE CREATE(min_wind, max_wind, def_wind, standard_press_srf, eps_vpd)
-  !$ACC DECLARE CREATE(def_t_air, def_vpd, def_swdown, def_fdiffuse, def_cos_angle)
-  !$ACC DECLARE CREATE(def_co2_mixing_ratio, def_co2_deltaC13, def_co2_mixing_ratio_C13)
-  !$ACC DECLARE CREATE(def_co2_deltaC14, def_co2_mixing_ratio_C14)
 
 CONTAINS
 
@@ -84,7 +92,6 @@ CONTAINS
     !!
     min_wind                  = 0.3_wp
     max_wind                  = 5.0_wp
-    def_wind                  = 1.0_wp
 
     !> conversion factors
     !!
@@ -99,18 +106,11 @@ CONTAINS
     def_fdiffuse              = 0.2_wp
     def_cos_angle             = 1.0_wp
     def_co2_mixing_ratio      = 380.0_wp
-    def_co2_deltaC13          = -6.6_wp     ! CMIP7 PI control 1850 reference value, cf. Graven, H. (2025)
-                                            ! doi: 10.25981/ESGF.input4MIPs.CMIP7/2583902.
+    def_co2_deltaC13          = -7.5_wp
     def_co2_mixing_ratio_C13  = def_co2_mixing_ratio / (1._wp + 1._wp/calc_mixing_ratio_C13C12(def_co2_deltaC13))
-    def_co2_deltaC14          = -3.2_wp     ! CMIP7 PI control 1850 reference value for NH, cf. Graven, H. (2025)
-                                            ! doi: 10.25981/ESGF.input4MIPs.CMIP7/2583902.
+    def_co2_deltaC14          = -14.9_wp
     def_co2_mixing_ratio_C14  = calc_mixing_ratio_C14C(def_co2_deltaC13, def_co2_deltaC14) * def_co2_mixing_ratio
-
-    !$ACC UPDATE DEVICE(frac_vis_swtot_srf, frac_par_swvis_srf) ASYNC(1)
-    !$ACC UPDATE DEVICE(min_wind, max_wind, def_wind, standard_press_srf, eps_vpd) ASYNC(1)
-    !$ACC UPDATE DEVICE(def_t_air, def_vpd, def_swdown, def_fdiffuse, def_cos_angle) ASYNC(1)
-    !$ACC UPDATE DEVICE(def_co2_mixing_ratio, def_co2_deltaC13, def_co2_mixing_ratio_C13) ASYNC(1)
-    !$ACC UPDATE DEVICE(def_co2_deltaC14, def_co2_mixing_ratio_C14) ASYNC(1)
+    def_wind                  = 1.0_wp
 
   END SUBROUTINE init_atmland_constants
 

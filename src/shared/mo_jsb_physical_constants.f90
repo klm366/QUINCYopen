@@ -1,23 +1,43 @@
-!> Contains physical constants
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief 
+!!  Contains physical constants
+!!
+!! @author
+!!  Sönke Zaehle, MPI-BGC Jena 
+!!
+!! @par Revision History
+!! First version by Sönke Zaehle (2015-12-04)
+!! 2nd version: renamed to mo_jsb_phys_constants by Jan Engel (20190114)
+!! replaced by unified mo_jsb_physical_constants from ICON-Land by Julia Nabel (20230302)
+!!                          by Reiner Schnur (2016-03-18)
+!!
 MODULE mo_jsb_physical_constants
 #ifndef __NO_JSBACH__
 
   USE mo_kind, ONLY: wp
 
-  ! Most constants are USEd from host model (ICON) via mo_physical_constants_iface in mo_util_jsbach.f90:
-  !   src/shared/mo_util_jsbach.f90 -> mo_physical_constants_iface -> mo_physical_constants.f90
+  ! most constants are USEd from host model (ECHAM/ICON) via mo_physical_constants_iface in
+  ! jsbach4_util_mods.f90 resp. mo_util_jsbach.f90 :
+  !   echam/src/echam/jsbach4_util_mods.f90 -> mo_physical_constants_iface -> mo_physical_constants.f90
+  !   src/shared/mo_util_jsbach.f90         -> mo_physical_constants_iface -> mo_physical_constants.f90
   USE mo_physical_constants_iface
 
   IMPLICIT NONE
@@ -28,12 +48,12 @@ MODULE mo_jsb_physical_constants
     & dens_org           = 1300._wp,   & !< Density of organic part of soil                                    [kg/m3]
     & dens_ice           = rhoi,       & !< Density of frozen water in soil (ice)                              [kg/m3]
     & dens_snow          = rhos,       & !< =300.0  Density of snow                                            [kg/m3]
-    & dens_snow_min      = 50._wp        !< Minimum density of snow (for fresh snow)                           [kg/m3]
+    & dens_snow_min      = 50._wp,     & !< Minimum density of snow (for fresh snow)                           [kg/m3]
+    & dens_snow_max      = 300._wp       !< Maximum density of snow                                            [kg/m3]
 
   REAL(wp), PARAMETER :: &
     molarMassDryAir = amd   * 1.e-3_wp, & ! 28.970e-3_wp. Mass [kg] per amount of substance [mol] of dry air
     molarMassCO2    = amco2 * 1.e-3_wp    ! 44.0095e-3_wp. Mass [kg] per amount of substance [mol] of CO2
-  !$ACC DECLARE COPYIN(molarMassDryAir, molarMassCO2)
 
   REAL(wp), PARAMETER :: von_karman = 0.4_wp    !< von Karmann constant for evaporation
 
@@ -47,7 +67,6 @@ MODULE mo_jsb_physical_constants
     & Tzero        = 273.15_wp        ,  &      !< the value of Tzero (QUINCY) is identical with tmelt (ECHAM/ICON/jsbach4)
                                                 !<  but in reality tmelt is not always at Tzero [K]
     & rain_as_snow_temp_thresh = Tzero + 2.5_wp !< threshold below which rain falls as snow - source: OCN-weather generator
-
   REAL(wp), PARAMETER :: &
     & LatentHeatVaporization = alv , &          !< [J/kg]   latent heat for vaporisation
     & LatentHeatSublimation  = als              !< [J/kg]   latent heat for sublimation

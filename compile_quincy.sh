@@ -1,21 +1,24 @@
 #!/bin/bash
 
-#!> Compile script for MPI-BGC
-#!>
-#!> QUINCY standalone
-#!>
-#!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-#!>
-#!> Contact: https://doi.org/10.17871/quincy-model-2019
-#!> Authors: AUTHORS.md
-#!> See LICENSES/ for license information
-#!> SPDX-License-Identifier: BSD-3-Clause
-#!> ---------------------------------------
-#!>
-#!>#### compile quincy code at MPI-BGC
-#!>
+##    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+##    Copyright (C) 2021 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+##    Contributors: @TODO: see file?
+##
+##    This file is part of the QUINCY model.
+##    The QUINCY model is free software: you can redistribute it and/or modify
+##    it under the terms of the GNU General Public License version 3,
+##    as published by the Free Software Foundation.
+##
+##    The QUINCY model is distributed in the hope that it will be useful,
+##    but WITHOUT ANY WARRANTY; without even the implied warranty of
+##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##    GNU General Public License for more details.
+##
+##    You should have received a copy of the GNU General Public License
+##    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
 
+# First version   by Julia Nabel   (2021-12-03)
+#
 # run this script by executing: ./compile_quincy.sh [SETUP]
 # 
 # this script compiles quincy according to the specified SETUP
@@ -64,7 +67,7 @@ binaryBuildDir="x86_64-gfortran/"                   # build dir with info files,
 
 #--- source modules
 ## a bash script providing the function 'create_git_binary_info_files'
-source ./build/compile_hlp/create_git_binary_info_files.sh
+source contrib/compile_hlp/create_git_binary_info_files.sh
 ## the 'compile_options.incl' is sourced below
 
 #--- help
@@ -149,8 +152,8 @@ else
   exit 1
 fi
 
-#--- create the "build/make_compile-options.incl", used by the Makefile, accordingly to the compile_setup
-source ./../build/compile_hlp/compile_options.incl
+## create the "compile options file", used by the Makefile, accordingly to the compile_setup
+source ../contrib/compile_hlp/compile_options.incl
 
 #--- select and load the correct compiler (& netcdf4) software modules
 echo " "

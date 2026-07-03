@@ -1,19 +1,16 @@
-!> Contains process task class
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
-
-!NEC$ options "-finline-file=externals/jsbach/src/base/mo_jsb_control.pp-jsb.f90"
-
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains process task class
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2015-09-01)
+!!
 MODULE mo_jsb_task_class
 #ifndef __NO_JSBACH__
 
@@ -22,7 +19,6 @@ MODULE mo_jsb_task_class
   USE mo_jsb_control,     ONLY: debug_on!, l_timer
   USE mo_hsm_class,       ONLY: t_Message   ! , t_jsb_task_msg => t_Message
   USE mo_jsb_tile_class,  ONLY: t_jsb_tile_abstract
-  USE mo_jsb_time,        ONLY: t_datetime
 
   IMPLICIT NONE
   PRIVATE
@@ -31,17 +27,14 @@ MODULE mo_jsb_task_class
 
 
   TYPE t_jsb_task_options
-    REAL(wp) :: dtime   = -1._wp                  !< length of one time step
-    REAL(wp) :: alpha   = -1._wp                  !< Implicitness factor (differs between standalone and coupled simulations)
-    TYPE(t_datetime), POINTER :: current_datetime !< stores current date and time information; TODO: use time_config
+    REAL(wp) :: dtime   = -1._wp  !< length of one time step
+    REAL(wp) :: steplen = -1._wp  !< ...
+    REAL(wp) :: alpha   = -1._wp  !< Implicitness factor (differs between standalone and coupled simulations)
     INTEGER  :: iblk    = -1      !< Number of current block (chunk)
     INTEGER  :: nproma  = -1      !< number of points per chunk
     INTEGER  :: ics     = -1      !< first point in the chunk the model currently works on
     INTEGER  :: ice     = -1      !< last  point in the chunk the model currently works on
     INTEGER  :: nc      = -1      !< nc = ice - ics + 1
-    INTEGER  :: nsoil_e = -1      !< Number of soil layers for energy
-    INTEGER  :: nsoil_w = -1      !< Number of soil layers for water
-    INTEGER  :: nsnow_e = -1      !< Number of snow layers for energy
   END TYPE t_jsb_task_options
 
 !!$  TYPE, EXTENDS(t_Message) :: t_jsb_task_msg

@@ -1,16 +1,13 @@
-!> Contains basic definitions and functions for I/O
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains the definition of io variable types
+!!
+!! @par Revision History
+!!  copied to from ICON-Land to QUINCY by Jan Engel MPI-BGC (2023-05-30)
+!! 
 MODULE mo_jsb_io
 #ifndef __NO_JSBACH__
 

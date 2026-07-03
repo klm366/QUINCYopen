@@ -1,22 +1,20 @@
-!> define indices and helper functions for bgc material
+!> Summary: Contains elem enum and soon common functions for bgc materials; to be integrated with current mo_jsb_pool_class
 !>
-!> ICON-Land
+!>### Contains enum and methods for bgc materials; to be integrated with current mo_jsb_pool_class
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (c) 2022 Julia Nabel
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!>#### Revision History
+!> First version and ongoing changes   by Julia Nabel (2022-12-14 - present)
 !>
-!> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
+!>#### License
 !>
-!>#### define indices (enumerator) and helper functions for bgc material and their components
+!> This code is subject to the MPI-M-ICON - License - Agreement in it's most recent form.
+!> Please see [this link](https://code.mpimet.mpg.de/attachments/download/20888/MPI-M-ICONLizenzvertragV2.6.pdf) for details.
+!> Where software is supplied by third parties, it is indicated in the headers of the routines.
 !>
 MODULE mo_lnd_bgcm_class
-#ifndef __NO_QUINCY__
+#ifndef __NO_JSBACH__
 
   USE mo_kind,                ONLY: wp
   USE mo_util,                ONLY: int2string
@@ -46,7 +44,7 @@ MODULE mo_lnd_bgcm_class
   !> ID of first and last bgcm elements
   INTEGER, PARAMETER :: FIRST_ELEM_ID = ELEM_C_ID
   INTEGER, PARAMETER :: LAST_ELEM_ID  = ONEPLUS_LAST_ELEM_ID - 1
-
+  
   CHARACTER(len=*), PARAMETER :: modname = 'mo_lnd_bgcm_class'
 
 CONTAINS
@@ -74,7 +72,7 @@ CONTAINS
     ! -------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_pool), POINTER, INTENT(IN) :: this      !< bgc material to test assertion for
     CHARACTER(len=*),           INTENT(IN) :: tile_name !< name of the tile with this bgc material
-    CHARACTER(len=*),           INTENT(IN) :: routine   !< name of the calling routine
+    CHARACTER(len=*),           INTENT(IN) :: routine   !< name of the calling routine 
     ! -------------------------------------------------------------------------------------------------- !
     IF(ASSOCIATED(this%pool_list)) THEN
       IF(.NOT. SIZE(this%pool_list) .EQ. 0) THEN
@@ -97,7 +95,7 @@ CONTAINS
     ! -------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_pool), POINTER, INTENT(IN) :: this      !< bgc material to test assertion for
     CHARACTER(len=*),           INTENT(IN) :: tile_name !< name of the tile with this bgc material
-    CHARACTER(len=*),           INTENT(IN) :: routine   !< name of the calling routine
+    CHARACTER(len=*),           INTENT(IN) :: routine   !< name of the calling routine 
     INTEGER                                :: this_dim  !< dimension
     ! -------------------------------------------------------------------------------------------------- !
     INTEGER :: nr_of_elements, i_element
@@ -196,8 +194,8 @@ CONTAINS
     ! -------------------------------------------------------------------------------------------------- !
 
     element_idx = elements_index_map(element_id)
-
-    ! Assert that the model is running with this element
+    
+    ! Assert that the model is running with this element 
     IF ( element_idx == 0 ) THEN
       CALL finish(TRIM(caller), 'Unknown or unused element id: ' // int2string(element_id) &
         & // ' - element name: "' // get_name_for_element_id(element_id) // '". Please check!' )

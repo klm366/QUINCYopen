@@ -1,21 +1,10 @@
-!> Contains function to read the landcover library file
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
-!>
-!! This module provides the data from the landcover library file, which contains additional information on the
-!! landcover data used in a particular run of JSBACH.
-!! The name of the landcover library file is specified in the JSBACH configuration file (run.def) under the
-!! keyword "LCT_FILE".
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @par Revision History
+!!  First implementation into QUINCY by Jan Engel MPI-BGC Jena (2017-05-18)
 !!
 MODULE mo_jsb_lctlib_class
   !
@@ -53,14 +42,11 @@ MODULE mo_jsb_lctlib_class
     LOGICAL  :: LakeFlag             !! "true" for a land surface class that signifies lake or ocean
     LOGICAL  :: GlacierFlag          !! "true" for a land surface class that signifies glaciers
     LOGICAL  :: BareSoilFlag         !! "true" if none of the foregoing landcover classes
-    LOGICAL  :: C4flag               !! derived from ps_pathway, "true" if: ps_pathway == ic4phot
 
     INTEGER  :: growthform 
     INTEGER  :: ps_pathway
     INTEGER  :: phenology_type
-    REAL(wp) :: lai_max
-    REAL(wp) :: vegetation_height
-    REAL(wp) :: sla
+    REAL(wp) :: sla                 
     REAL(wp) :: sigma_vis 
     REAL(wp) :: sigma_nir 
     REAL(wp) :: omega_clumping 
@@ -94,9 +80,7 @@ MODULE mo_jsb_lctlib_class
     ! N uptake parameters
     REAL(wp) :: vmax_uptake_n     , &
                 vmax_uptake_p     , &
-                bnf_base          , &
-                vmax_symb_bnf     , &
-                km_symb_bnf
+                bnf_base
 
     ! Vegetation dynamics parameters
     REAL(wp) :: lambda_est_light  , &
@@ -128,18 +112,7 @@ MODULE mo_jsb_lctlib_class
                 fstore_target
 
     ! Soil
-    REAL(wp) :: &
-      & k_root_dist                   , &
-      & k_som_fast_init               , &
-      & k_som_slow_init
-
-    ! copy of jsbach param
-    REAL(wp) :: &
-      & AlbedoLitterVIS               , &
-      & AlbedoLitterNIR               , &
-      & VegRoughness                  , &
-      & MinVegRoughness               , &
-      & MaxVegRoughness
+    REAL(wp) :: k_root_dist
     ! --- END QUINCY model parameters (MPI-BGC Jena) -----------------------------------------------------------------------------
 
   END TYPE t_lctlib_element
@@ -183,13 +156,15 @@ CONTAINS
     !
     ! The file can contain more keywords than needed --- therefore the same file can be used by several model components.
     !
-    USE mo_util, ONLY: tolower
-
+#ifdef __QUINCY_STANDALONE__
+    USE mo_util,        ONLY: tolower
+#else
+    USE mo_util_string, ONLY: tolower
+#endif
     ! USE statements necessary for modifying QUINCY model input values of lctlib parameters
     USE mo_jsb_math_constants,      ONLY: one_day, one_year
-    USE mo_jsb_physical_constants,  ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero
-    USE mo_veg_constants,           ONLY: carbon_per_dryweight_leaf, sm2lm_grass, igrass, itree, icrop
-    USE mo_q_assimi_constants,      ONLY: ic4phot
+    USE mo_jsb_physical_constants,  ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero 
+    USE mo_veg_constants,           ONLY: carbon_per_dryweight_leaf, sm2lm_grass, igrass, itree
 
     CHARACTER(len=*), INTENT(in) :: lctlib_file_name
     TYPE(t_lctlib_element), POINTER    :: return_value(:)
@@ -282,8 +257,6 @@ CONTAINS
     LOGICAL            :: exists_growthform = .FALSE.
     LOGICAL            :: exists_ps_pathway = .FALSE.
     LOGICAL            :: exists_phenology_type = .FALSE.
-    LOGICAL            :: exists_lai_max = .FALSE.
-    LOGICAL            :: exists_vegetation_height = .FALSE.
     LOGICAL            :: exists_sla = .FALSE.
     LOGICAL            :: exists_sigma_vis = .FALSE.
     LOGICAL            :: exists_sigma_nir = .FALSE.
@@ -315,8 +288,6 @@ CONTAINS
     LOGICAL            :: exists_vmax_uptake_n = .FALSE.
     LOGICAL            :: exists_vmax_uptake_p = .FALSE.
     LOGICAL            :: exists_bnf_base = .FALSE.
-    LOGICAL            :: exists_vmax_symb_bnf = .FALSE.
-    LOGICAL            :: exists_km_symb_bnf = .FALSE.
     LOGICAL            :: exists_lambda_est_light = .FALSE.
     LOGICAL            :: exists_k_est_light = .FALSE.
     LOGICAL            :: exists_seed_size = .FALSE.
@@ -341,13 +312,6 @@ CONTAINS
     LOGICAL            :: exists_c0_allom = .FALSE.
     LOGICAL            :: exists_fstore_target = .FALSE.
     LOGICAL            :: exists_k_root_dist = .FALSE.
-    LOGICAL            :: exists_k_som_fast_init = .FALSE.
-    LOGICAL            :: exists_k_som_slow_init = .FALSE.
-    LOGICAL            :: exists_AlbedoLitterVIS = .FALSE.
-    LOGICAL            :: exists_AlbedoLitterNIR = .FALSE.
-    LOGICAL            :: exists_VegRoughness    = .FALSE.
-    LOGICAL            :: exists_MinVegRoughness = .FALSE.
-    LOGICAL            :: exists_MaxVegRoughness = .FALSE.
     ! quincy model - end
     INTEGER            :: i, j
     INTEGER            :: nlct, npft
@@ -430,7 +394,7 @@ CONTAINS
 
           IF(TRIM(key) == "nlct") CYCLE ! nlct already read above
 
-          ! read the jsbach4 lctLib parameter
+          ! read the jsabch4 lctLib parameter
           SELECT CASE (TRIM(key))
           CASE ('lctnumber')
             READ(line(pos:length),*) lctlib(1:nlct)%LctNumber
@@ -455,12 +419,6 @@ CONTAINS
             CASE ('phenology_type')
               READ(line(pos:length),*) lctlib(1:nlct)%phenology_type
               exists_phenology_type = .TRUE.
-            CASE ('lai_max')
-              READ(line(pos:length),*) lctlib(1:nlct)%lai_max
-              exists_lai_max = .TRUE.
-            CASE ('vegetation_height')
-              READ(line(pos:length),*) lctlib(1:nlct)%vegetation_height
-              exists_vegetation_height = .TRUE.
             CASE ('sla')
               READ(line(pos:length),*) lctlib(1:nlct)%sla
               exists_sla = .TRUE.
@@ -556,12 +514,6 @@ CONTAINS
             CASE ('bnf_base')
               READ(line(pos:length),*) lctlib(1:nlct)%bnf_base
               exists_bnf_base = .TRUE.
-            CASE ('vmax_symb_bnf')
-              READ(line(pos:length),*) lctlib(1:nlct)%vmax_symb_bnf
-              exists_vmax_symb_bnf = .TRUE.
-            CASE ('km_symb_bnf')
-              READ(line(pos:length),*) lctlib(1:nlct)%km_symb_bnf
-              exists_km_symb_bnf = .TRUE.
 
             CASE ('lambda_est_light')
               READ(line(pos:length),*) lctlib(1:nlct)%lambda_est_light
@@ -638,28 +590,6 @@ CONTAINS
             CASE ('k_root_dist')
               READ(line(pos:length),*) lctlib(1:nlct)%k_root_dist
               exists_k_root_dist = .TRUE.
-            CASE ('k_som_fast_init')
-              READ(line(pos:length),*) lctlib(1:nlct)%k_som_fast_init
-              exists_k_som_fast_init = .TRUE.
-            CASE ('k_som_slow_init')
-              READ(line(pos:length),*) lctlib(1:nlct)%k_som_slow_init
-              exists_k_som_slow_init = .TRUE.
-
-            CASE ('albedolittervis')
-              READ(line(pos:length),*) lctlib(1:nlct)%AlbedoLitterVIS
-              exists_AlbedoLitterVIS = .TRUE.
-            CASE ('albedolitternir')
-              READ(line(pos:length),*) lctlib(1:nlct)%AlbedoLitterNIR
-              exists_AlbedoLitterNIR = .TRUE.
-            CASE ('vegroughness')
-              READ(line(pos:length),*) lctlib(1:nlct)%VegRoughness
-              exists_VegRoughness = .TRUE.
-            CASE ('minvegroughness')
-              READ(line(pos:length),*) lctlib(1:nlct)%MinVegRoughness
-              exists_MinVegRoughness = .TRUE.
-            CASE ('maxvegroughness')
-              READ(line(pos:length),*) lctlib(1:nlct)%MaxVegRoughness
-              exists_MaxVegRoughness = .TRUE.
             CASE default
               ! nothing to do
             END SELECT
@@ -690,10 +620,6 @@ CONTAINS
           CALL finish('init_lctlib','No data for ps_pathway found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_phenology_type) &
           CALL finish('init_lctlib','No data for phenology_type found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_lai_max) &
-          CALL finish('init_lctlib','No data for lai_max found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_vegetation_height) &
-          CALL finish('init_lctlib','No data for vegetation_height found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_sla) &
           CALL finish('init_lctlib','No data for sla found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_sigma_vis) &
@@ -756,10 +682,6 @@ CONTAINS
           CALL finish('init_lctlib','No data for vmax_uptake_p found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_bnf_base) &
           CALL finish('init_lctlib','No data for bnf_base found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_vmax_symb_bnf) &
-          CALL finish('init_lctlib','No data for vmax_symb_bnf found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_km_symb_bnf) &
-          CALL finish('init_lctlib','No data for km_symb_bnf found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_lambda_est_light) &
           CALL finish('init_lctlib','No data for lambda_est_light found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_k_est_light) &
@@ -808,20 +730,6 @@ CONTAINS
           CALL finish('init_lctlib','No data for fstore_target found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_k_root_dist) &
           CALL finish('init_lctlib','No data for k_root_dist found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_k_som_fast_init) &
-          CALL finish('init_lctlib','No data for k_som_fast_init found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_k_som_slow_init) &
-          CALL finish('init_lctlib','No data for k_som_slow_init found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_AlbedoLitterVIS) &
-          CALL finish('init_lctlib','No data for AlbedoLitterVIS found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_AlbedoLitterNIR) &
-          CALL finish('init_lctlib','No data for AlbedoLitterNIR found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_VegRoughness) &
-          CALL finish('init_lctlib','No data for VegRoughness found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_MinVegRoughness) &
-          CALL finish('init_lctlib','No data for MinVegRoughness found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_MaxVegRoughness) &
-          CALL finish('init_lctlib','No data for MaxVegRoughness found in '//TRIM(lctlib_file_name))
        !END IF
        ! quincy end
 
@@ -883,14 +791,6 @@ CONTAINS
          DO i = j,nlct
           lctlib(i)%bnf_base = lctlib(i)%bnf_base / molar_mass_N / one_day / one_year * 1.e6_wp
          END DO
-       ! vmax_symb_bnf
-         DO i = j,nlct
-          lctlib(i)%vmax_symb_bnf = lctlib(i)%vmax_symb_bnf / (molar_mass_N / molar_mass_C) / one_day / one_year * 1.e6_wp
-         END DO
-       ! km_symb_bnf
-         DO i = j,nlct
-          lctlib(i)%km_symb_bnf = lctlib(i)%km_symb_bnf / (molar_mass_C / molar_mass_N)
-         END DO
        ! t_air_senescence
          DO i = j,nlct
            lctlib(i)%t_air_senescence = lctlib(i)%t_air_senescence + Tzero
@@ -909,14 +809,13 @@ CONTAINS
          END DO
         ! k_rtos
          DO i = j,nlct
-           SELECT CASE (lctlib(i)%growthform)
-             CASE (itree)
-               lctlib(i)%k_rtos = 1.75_wp * (lctlib(4)%sla * lctlib(i)%wood_density) / lctlib(i)%k_latosa
-               !lctlib(i)%k_rtos = SQRT(lctlib(i)%k_root / lctlib(i)%k_sapwood * &
-               !     lctlib(i)%tau_sap_wood / lctlib(i)%tau_fine_root * lctlib(i)%wood_density)
-             CASE (igrass,icrop)
-               lctlib(i)%k_rtos = 0.5_wp / sm2lm_grass
-           END SELECT
+           IF(lctlib(i)%growthform /= igrass) THEN
+              lctlib(i)%k_rtos = 1.75_wp * (lctlib(4)%sla * lctlib(i)%wood_density) / lctlib(i)%k_latosa
+              !lctlib(i)%k_rtos = SQRT(lctlib(i)%k_root / lctlib(i)%k_sapwood * &
+              !     lctlib(i)%tau_sap_wood / lctlib(i)%tau_fine_root * lctlib(i)%wood_density)
+           ELSE
+              lctlib(i)%k_rtos = 0.5_wp / sm2lm_grass
+           END IF
          END DO
          ! c0_allom
          DO i = j,nlct
@@ -928,15 +827,6 @@ CONTAINS
              lctlib(i)%c0_allom = 0.0_wp
            END IF
          END DO
-       ! derive C4flag from ps_pathway
-         DO i = 1,nlct
-            IF ( lctlib(i)%ps_pathway == ic4phot ) THEN
-              lctlib(i)%C4flag = .TRUE.
-            ELSE
-              lctlib(i)%C4flag = .FALSE.
-            END IF
-         END DO
-
        !END IF
        ! quincy
 
@@ -1036,7 +926,6 @@ CONTAINS
 !       CALL p_bcast(lctlib(:)%LakeFlag, p_io)
 !       CALL p_bcast(lctlib(:)%GlacierFlag, p_io)
 !       CALL p_bcast(lctlib(:)%BareSoilFlag, p_io)
-!       CALL p_bcast(lctlib(:)%C4flag, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowVisMin, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowVisMax, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowNirMin, p_io)

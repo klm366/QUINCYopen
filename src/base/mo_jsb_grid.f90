@@ -1,16 +1,10 @@
-!> Contains functions for grid instances
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief mo_jsb_grid from JSBACH4
+!! 
 MODULE mo_jsb_grid
 #ifndef __NO_JSBACH__
 
@@ -54,7 +48,7 @@ CONTAINS
       jsbach_grids(1) = t_jsb_grid_ptr(grid)
     END IF
 
-    CALL message(TRIM(routine), 'registered new QUINCY model grid instance '//TRIM(grid%name))
+    CALL message(TRIM(routine), 'registered new JSBACH grid instance '//TRIM(grid%name))
 
   END SUBROUTINE Register_grid
 

@@ -1,17 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# ICON-Land
-#
-# ---------------------------------------
-# Copyright (C) 2013-2026, MPI-M, MPI-BGC
-#
-# Contact: icon-model.org
-# Authors: AUTHORS.md
-# See LICENSES/ for license information
-# SPDX-License-Identifier: BSD-3-Clause
-# ---------------------------------------
-
 #
 #  dsl4jsb.py
 #
@@ -24,13 +12,13 @@
 #  Nov 10, 2016: Reiner Schnur, MPIM
 #
 
-import fnmatch
-import getopt
-import hashlib
-import io
-import os
-import re
 import sys
+import getopt
+import re
+import os
+import fnmatch
+import io
+import hashlib
 
 # Search pattern to find lines with dsl4jsb macros and extract macro name
 re_function = re.compile(r'dsl4jsb_(.*?) *( *$|,|\)| |\()', re.IGNORECASE)
@@ -116,9 +104,6 @@ macros = {
     'var3d_onchunk': [re.compile(
         r'dsl4jsb_var3D_onChunk *\((.*?)_ *, *(.*?) *\)', re.IGNORECASE),
         r'\1__mem%\2%ptr(ics:ice,:,iblk)'],
-    'var': [re.compile(
-        r'dsl4jsb_var *\((.*?)_ *, *(.*?) *\)', re.IGNORECASE),
-        r'\1__mem%\2'],
     'real2d_ondomain': [re.compile(
         r'dsl4jsb_Real2D_onDomain', re.IGNORECASE),
         r'REAL(wp), POINTER, DIMENSION(:,:)'],
@@ -161,12 +146,6 @@ macros = {
     'pool': [re.compile(
         r'dsl4jsb_pool *\((.*?)_ *, *(.*?) * *\)', re.IGNORECASE),
         r'\1__mem%pools%\2'],
-    'bgcm': [re.compile(
-        r'dsl4jsb_bgcm *\((.*?)_ *, *(.*?) * *\)', re.IGNORECASE),
-        r'\1__mem%\1_bgcm_main%\2'],
-    'elem_of_1l_bgcm': [re.compile(
-        r'dsl4jsb_elem_of_1L_bgcm *\((.*?)_ *, *(.*?) *, *(.*?) *\)', re.IGNORECASE),
-        r'\1__mem%\1_bgcm_main%\2%\3'],
     'def_mt1l2d': [re.compile(
         r'dsl4jsb_Def_mt1L2D', re.IGNORECASE),
         r'REAL(wp), POINTER, DIMENSION(:,:)'],

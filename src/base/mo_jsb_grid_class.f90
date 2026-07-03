@@ -1,16 +1,17 @@
-!> Contains JSBACH grid structure and methods
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @brief Contains JSBACH grid structure and methods
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-04-04)
+!!
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+
 MODULE mo_jsb_grid_class
 #ifndef __NO_JSBACH__
 
@@ -51,7 +52,7 @@ MODULE mo_jsb_grid_class
     REAL(wp), POINTER             :: area(:,:) => NULL()
     LOGICAL,  POINTER             :: lsm(:,:) => NULL()
     REAL(wp), POINTER             :: lsf(:,:) => NULL()
-    INTEGER                       :: nblks = 0
+    INTEGER                       :: nblks = 1
     INTEGER                       :: nproma = 0
     INTEGER                       :: npromz = 0
     INTEGER                       :: ntotal_g              !< Total number of cells in grid

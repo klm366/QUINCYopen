@@ -1,19 +1,27 @@
-!> QUINCY fire-disturbance process memory
 !>
-!> ICON-Land
+!>  @par Copyright
+!>    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!>    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!>    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!>    This file is part of the QUINCY model.
+!>    The QUINCY model is free software: you can redistribute it and/or modify
+!>    it under the terms of the GNU General Public License version 3,
+!>    as published by the Free Software Foundation.
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!>    The QUINCY model is distributed in the hope that it will be useful,
+!>    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!>    GNU General Public License for more details.
 !>
-!> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
+!>    You should have received a copy of the GNU General Public License
+!>    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!> 
+!> @brief Contains the memory class for the dist_fire process.
 !>
-!>#### definition and init of (memory) variables for the fire-disturbance process
+!> @author
+!>  Albert Jornet Puig, MPI-BGC Jena
+!>
 !>
 MODULE mo_dfire_memory_class
 #ifndef __NO_JSBACH__
@@ -49,7 +57,7 @@ CONTAINS
   !>
   !> initialize memory (variables) for the process: dist_fire
   !>
-  SUBROUTINE Init_dfire_memory(mem, prefix, suffix, lct_ids, lib_id, model_id)
+  SUBROUTINE Init_dfire_memory(mem, prefix, suffix, lct_ids, model_id)
     USE mo_jsb_varlist,       ONLY: BASIC, MEDIUM, FULL
     USE mo_jsb_io,            ONLY: grib_bits, t_cf, t_grib1, t_grib2, tables
     USE mo_jsb_grid_class,    ONLY: t_jsb_grid, t_jsb_vgrid
@@ -60,7 +68,6 @@ CONTAINS
     CHARACTER(len=*),     INTENT(in)            :: prefix          !> process name
     CHARACTER(len=*),     INTENT(in)            :: suffix          !> tile name
     INTEGER,              INTENT(in)            :: lct_ids(:)      !< Primary lct (1) and lcts of descendant tiles
-    INTEGER,              INTENT(in)            :: lib_id          !< id of primary lct in lctlib
     INTEGER,              INTENT(in)            :: model_id        !> model ID model\%id
     ! ----------------------------------------------------------------------------------------------------- !
     TYPE(t_jsb_model), POINTER :: model

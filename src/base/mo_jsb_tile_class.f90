@@ -1,47 +1,33 @@
-!> Contains abstract tile class that contains the surface structure and memory state
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
-!>### Definition of abstract class and methods for tiles
-!> The most important components of a tile instance are
-!>
-!> - the fraction of a grid box that the tile occupies
-!> - the memories of all processes (i.e. variables) owned by this tile
-!> - a list of LCT (land cover type) id's that are represented on this tile
-!> - a store pointing to the element variables of all BGC materials across all processes
-!> - a list of actions to be applied on this tile for the different processes
-!> - a list of aggregators used to aggregate variables of the child tiles to this tile
-
-!NEC$ options "-finline-file=externals/jsbach/src/base/mo_jsb_control.pp-jsb.f90"
-
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains abstract tile class that contains the surface structure and memory state
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-04-04)
+!!
 MODULE mo_jsb_tile_class
 #ifndef __NO_JSBACH__
 
-  USE mo_jsb_control,         ONLY: debug_on, acc_stream, acc_async_sync
-  USE mo_kind,                ONLY: wp, dp
-  USE mo_exception,           ONLY: message, finish
-  USE mo_io_units,            ONLY: filename_max
-  USE mo_jsb_impl_constants,  ONLY: SHORT_NAME_LEN
+  USE mo_jsb_control,          ONLY: debug_on
+  USE mo_kind,                 ONLY: wp, dp
+  USE mo_exception,            ONLY: message, finish
+  USE mo_io_units,             ONLY: filename_max
+  USE mo_jsb_impl_constants,   ONLY: SHORT_NAME_LEN
 
-  USE mo_hsm_class,           ONLY: t_Hsm, t_State, t_Message
-  USE mo_jsb_memory_class,    ONLY: t_jsb_memory_p, t_jsb_memory
-  USE mo_jsb_lct_class,       ONLY: t_jsb_lct, &
-    &                               LAND_TYPE, VEG_TYPE, BARE_TYPE, GLACIER_TYPE, LAKE_TYPE
-  USE mo_jsb_var_class,       ONLY: t_jsb_var_p, t_jsb_var, t_jsb_var_real2d, t_jsb_var_real3d
-  ! USE mo_jsb_cqt_class,       ONLY: t_jsb_consQuan_p
-  ! USE mo_jsb_lcc_class,       ONLY: t_jsb_lcc_proc_p
-#ifndef __NO_QUINCY__
-  USE mo_lnd_bgcm_store,      ONLY: t_lnd_bgcm_store
-#endif
+  USE mo_hsm_class,            ONLY: t_Hsm, t_State, t_Message
+  USE mo_jsb_memory_class,     ONLY: t_jsb_memory_p, t_jsb_memory
+  USE mo_jsb_lct_class,        ONLY: t_jsb_lct, &
+    &                                LAND_TYPE, VEG_TYPE, BARE_TYPE, GLACIER_TYPE, LAKE_TYPE
+  USE mo_jsb_var_class,        ONLY: t_jsb_var_p, t_jsb_var, t_jsb_var_real2d, t_jsb_var_real3d
+  ! USE mo_jsb_cqt_class,        ONLY: t_jsb_consQuan_p
+  ! USE mo_jsb_lcc_class,        ONLY: t_jsb_lcc_proc_p
+  USE mo_lnd_bgcm_store,       ONLY: t_lnd_bgcm_store
 
 
   IMPLICIT NONE
@@ -55,13 +41,10 @@ MODULE mo_jsb_tile_class
 
   ! Declarations for aggregators
   TYPE, ABSTRACT :: t_jsb_aggregator
-    CHARACTER(len=25) :: name    !< Aggregators are distinguished by using unique names
+    CHARACTER(len=25) :: name
   CONTAINS
-    ! Begin/End routines enable multi-stream OpenACC aggregation
-    PROCEDURE(begin_interface),        DEFERRED             :: BeginAggregate !< Start  multi-stream aggregation (useful for OpenACC)
-    PROCEDURE(end_interface),          DEFERRED             :: EndAggregate   !< Finish multi-stream aggregation (useful for OpenACC)
-    PROCEDURE(aggregate_interface_2d), DEFERRED             :: Aggregate_2d !< Aggregate operator for 2d variables
-    PROCEDURE(aggregate_interface_3d), DEFERRED             :: Aggregate_3d !< Aggregate operator for 3d variables
+    PROCEDURE(aggregate_interface_2d), DEFERRED             :: Aggregate_2d
+    PROCEDURE(aggregate_interface_3d), DEFERRED             :: Aggregate_3d
     GENERIC                                                 :: Aggregate => Aggregate_2d, Aggregate_3d
   END TYPE t_jsb_aggregator
 
@@ -88,12 +71,14 @@ MODULE mo_jsb_tile_class
     LOGICAL                                :: contains_soil = .FALSE.         !< whether any lct of tile is one that has soil
     !
     INTEGER,                ALLOCATABLE    :: process_action(:)
-    REAL(wp),                     POINTER  :: fract     (:,:)          !< Fraction of this tile (relative to grid box)
-    REAL(wp),                     POINTER  :: fract_old (:,:)          !< Old fractions of this tile (relative to grid box)
-    CHARACTER(LEN=filename_max)            :: fract_filename           !< Name of file to read tile fractions from. The variable
-                                                                       !< names must be either "fract[_max]_"//tile%name,
-                                                                       !< or specified by fract_varname (in the use case).
-    CHARACTER(LEN=20)                      :: fract_varname                 !< Name of variable containing fractions for this tile
+    REAL(wp), PRIVATE,          POINTER    :: fract     (:,:)      !< Fraction of this tile (relative to parent tile)
+    REAL(wp),                   POINTER    :: fract_max (:,:)      !< Maximum potential fraction for this tile (rel. to parent)
+    REAL(wp), PRIVATE,          POINTER    :: fract_old     (:,:)  !< Old fract
+    REAL(wp),                   POINTER    :: fract_max_old (:,:)  !< Old fract_max
+    CHARACTER(LEN=filename_max)            :: fract_filename       !< Name of file to read tile fractions from. The variable names
+                                                                   !! must be either "fract[_max]_"//tile%name, or specified by 
+                                                                   !! fract_varname.
+    CHARACTER(LEN=20)                      :: fract_varname        !< Name of variable containing fractions for this tile
     LOGICAL,                ALLOCATABLE    :: l_fract_children_changed(:,:)
     TYPE(t_jsb_aggregator_p), ALLOCATABLE  :: aggregators(:)
     TYPE(t_lnd_bgcm_store), POINTER        :: bgcm_store => NULL()    !< the bgcm store collecting pools and their elements on this tile
@@ -108,8 +93,6 @@ MODULE mo_jsb_tile_class
     INTEGER                                :: owner_model_id = 0
   CONTAINS
     PROCEDURE                              :: Add_lct
-    PROCEDURE :: Set_process_action => Set_process_action_tile
-    PROCEDURE :: Set_process_action_parents
     PROCEDURE                              :: Register_aggregator
     PROCEDURE                              :: Get_aggregator
     PROCEDURE                              :: Get_fraction_1d
@@ -182,16 +165,6 @@ MODULE mo_jsb_tile_class
   ! END INTERFACE
 
   ABSTRACT INTERFACE
-    SUBROUTINE begin_interface(this)
-      IMPORT :: t_jsb_aggregator
-      CLASS(t_jsb_aggregator),    INTENT(inout), TARGET :: this
-    END SUBROUTINE begin_interface
-    SUBROUTINE end_interface(this)
-      IMPORT :: t_jsb_aggregator
-      CLASS(t_jsb_aggregator),    INTENT(inout), TARGET :: this
-    END SUBROUTINE end_interface
-
-    !> Interface for deferred subroutine `Aggregate_2d` of `t_jsb_aggregator`
     SUBROUTINE aggregate_interface_2d(this, tile, var, ics, ice, iblk, caller)
       IMPORT :: t_jsb_aggregator, t_jsb_tile_abstract, t_jsb_var_real2d
       CLASS(t_jsb_aggregator),    INTENT(inout) :: this
@@ -220,64 +193,25 @@ MODULE mo_jsb_tile_class
     REAL(wp), ALLOCATABLE :: fractions(:,:,:) ! R: (grid%nproma, grid%nblks, no_children))
     REAL(wp), ALLOCATABLE :: fract_sum(:,:)
     REAL(wp), ALLOCATABLE :: data_sum(:,:)
-
-    INTEGER :: stream, original_stream !< OpenACC variables for multi-stream aggregation
   CONTAINS
-    !> Functions to make use of the aggregator
-    PROCEDURE :: BeginAggregate   => BeginAggregate_weighted_by_fract !< Start  multi-stream aggregation (useful for OpenACC)
-    PROCEDURE :: EndAggregate     => EndAggregate_weighted_by_fract   !< Finish multi-stream aggregation (useful for OpenACC)
-    PROCEDURE :: Set_fractions_1d => Set_fractions_aggregator_1d  !< Set fraction field for chunk. TODO: Rename "1d" to "chunk"
-    PROCEDURE :: Set_fractions_2d => Set_fractions_aggregator_2d  !< Set fraction field for entire domain. TODO: "2d"=>"domain"
-    GENERIC   :: Set_fractions    => Set_fractions_1d, Set_fractions_2d !< Generic function to set tile fractions
-    PROCEDURE :: Aggregate_2d     => Aggregate_weighted_by_fract_2d     !< Specific implementation of agg. of 2d vars
-    PROCEDURE :: Aggregate_3d     => Aggregate_weighted_by_fract_3d     !< Specific implementation of agg. of 3d vars
-    FINAL     :: Finalize_aggregator_weighted_by_fract            !< Destructor to deallocate fields when aggregator is deallocated
+  PROCEDURE :: Set_fractions_1d => Set_fractions_aggregator_1d
+  PROCEDURE :: Set_fractions_2d => Set_fractions_aggregator_2d
+  GENERIC   :: Set_fractions => Set_fractions_1d, Set_fractions_2d
+!    PROCEDURE :: Aggregate => Aggregate_weighted_by_fract_2d
+!    PROCEDURE :: Aggregate => Aggregate_weighted_by_fract_3d
+    PROCEDURE :: Aggregate_2d                  => Aggregate_weighted_by_fract_2d
+    PROCEDURE :: Aggregate_3d                  => Aggregate_weighted_by_fract_3d
+    ! PROCEDURE :: Set_aggregator_option_logical => Aggregate_weighted_by_fract_set_option_logical
+    FINAL     :: Finalize_aggregator_weighted_by_fract
   END TYPE t_jsb_aggregator_weighted_by_fract
 
   INTERFACE t_jsb_aggregator_weighted_by_fract
-    PROCEDURE Create_aggregator_weighted_by_fract                 !< Constructor of aggregator (call to initialize)
+    PROCEDURE Create_aggregator_weighted_by_fract
   END INTERFACE
 
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_tile_class'
 
 CONTAINS
-
-  SUBROUTINE Set_process_action_tile(this, iproc, action, action_to_parents)
-
-    CLASS(t_jsb_tile_abstract), INTENT(inout) :: this
-    INTEGER,                    INTENT(in)    :: iproc
-    INTEGER,                    INTENT(in)    :: action
-    INTEGER, OPTIONAL,          INTENT(in)    :: action_to_parents
-
-    CHARACTER(len=*), PARAMETER :: routine = modname//':Set_process_action_tile'
-
-    this%process_action(iproc) = action
-
-    ! Propagate action action_to_parents to all parents of this tile
-    IF (PRESENT(action_to_parents)) CALL this%Set_process_action_parents(iproc, action_to_parents)
-
-  END SUBROUTINE Set_process_action_tile
-
-  SUBROUTINE Set_process_action_parents(this, iproc, action)
-
-    CLASS(t_jsb_tile_abstract), INTENT(inout), TARGET :: this
-    INTEGER,                    INTENT(in)            :: iproc
-    INTEGER,                    INTENT(in)            :: action
-
-    CLASS(t_jsb_tile_abstract), POINTER :: tile
-
-    CHARACTER(len=*), PARAMETER :: routine = modname//':Set_process_action_parents'
-
-    tile => this
-    DO WHILE (ASSOCIATED(tile%parent))
-      SELECT TYPE (parent=>tile%parent)
-      CLASS IS (t_jsb_tile_abstract)
-        parent%process_action(iproc) = action
-        tile => parent
-      END SELECT
-    END DO
-
-  END SUBROUTINE Set_process_action_parents
 
   ! ====================================================================================================== !
   !
@@ -303,11 +237,10 @@ CONTAINS
         SELECT CASE (lct%id)
         CASE (VEG_TYPE)
           this%is_vegetation = .TRUE.
-          this%is_land       = .TRUE.
         CASE (BARE_TYPE)
           this%is_bare = .TRUE.
-        ! CASE (LAND_TYPE)
-        !   this%is_land = .TRUE.
+        CASE (LAND_TYPE)
+          this%is_land = .TRUE.
         CASE (GLACIER_TYPE)
           this%is_glacier = .TRUE.
         CASE (LAKE_TYPE)
@@ -333,11 +266,10 @@ CONTAINS
     SELECT CASE (lct%id)
     CASE (VEG_TYPE)
       this%contains_vegetation = .TRUE.
-      this%contains_land       = .TRUE.
     CASE (BARE_TYPE)
       this%contains_bare = .TRUE.
-    ! CASE (LAND_TYPE)
-    !   this%contains_land = .TRUE.
+    CASE (LAND_TYPE)
+      this%contains_land = .TRUE.
     CASE (GLACIER_TYPE)
       this%contains_glacier = .TRUE.
     CASE (LAKE_TYPE)
@@ -348,20 +280,26 @@ CONTAINS
 
   END SUBROUTINE Add_lct
 
-  SUBROUTINE Get_fraction_1d(this, ics, ice, iblk, fract, fract_old)
+  SUBROUTINE Get_fraction_1d(this, ics, ice, iblk, fract, fract_max, fract_old, fract_max_old)
 
     CLASS(t_jsb_tile_abstract), INTENT(in)    :: this
     INTEGER,                    INTENT(in)    :: ics, ice, iblk
     REAL(wp), OPTIONAL,         INTENT(inout) :: &
       & fract(:),        &
-      & fract_old(:)
+      & fract_max(:),    &
+      & fract_old(:),    &
+      & fract_max_old(:)
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Get_fraction_1d'
 
     IF (PRESENT(fract)) THEN
-       IF (SIZE(fract) /= ice-ics+1) CALL finish(TRIM(routine), 'Dimension mismatch')
-       fract(:) = 1.0_wp
-    !   fract(:) = this%fract(ics:ice, iblk)
+      IF (SIZE(fract) /= ice-ics+1) CALL finish(TRIM(routine), 'Dimension mismatch')
+      fract(:) = this%fract(ics:ice, iblk)
+    END IF
+
+    IF (PRESENT(fract_max)) THEN
+      IF (SIZE(fract_max) /= ice-ics+1) CALL finish(TRIM(routine), 'Dimension mismatch')
+      fract_max(:) = this%fract_max(ics:ice, iblk)
     END IF
 
     IF (PRESENT(fract_old)) THEN
@@ -369,14 +307,21 @@ CONTAINS
       fract_old(:) = this%fract_old(ics:ice, iblk)
     END IF
 
+    IF (PRESENT(fract_max_old)) THEN
+      IF (SIZE(fract_max_old) /= ice-ics+1) CALL finish(TRIM(routine), 'Dimension mismatch')
+      fract_max_old(:) = this%fract_max_old(ics:ice, iblk)
+    END IF
+
   END SUBROUTINE Get_fraction_1d
 
-  SUBROUTINE Get_fraction_2d(this, fract, fract_old)
+  SUBROUTINE Get_fraction_2d(this, fract, fract_max, fract_old, fract_max_old)
 
     CLASS(t_jsb_tile_abstract), INTENT(in)    :: this
     REAL(wp), OPTIONAL,         INTENT(inout) :: &
       & fract(:,:),        &
-      & fract_old(:,:)
+      & fract_max(:,:),    &
+      & fract_old(:,:),    &
+      & fract_max_old(:,:)
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Get_fraction_2d'
 
@@ -386,10 +331,22 @@ CONTAINS
       fract(:,:) = this%fract(:,:)
     END IF
 
+    IF (PRESENT(fract_max)) THEN
+      IF (SIZE(fract_max,1) /= SIZE(this%fract_max,1) .OR. SIZE(fract_max,2) /= SIZE(this%fract_max,2)) &
+        & CALL finish(TRIM(routine), 'Dimension mismatch')
+      fract_max(:,:) = this%fract_max(:,:)
+    END IF
+
     IF (PRESENT(fract_old)) THEN
       IF (SIZE(fract_old,1) /= SIZE(this%fract_old,1) .OR. SIZE(fract_old,2) /= SIZE(this%fract_old,2)) &
         & CALL finish(TRIM(routine), 'Dimension mismatch')
       fract_old(:,:) = this%fract_old(:,:)
+    END IF
+
+    IF (PRESENT(fract_max_old)) THEN
+      IF (SIZE(fract_max_old,1) /= SIZE(this%fract_max_old,1) .OR. SIZE(fract_max_old,2) /= SIZE(this%fract_max_old,2)) &
+        & CALL finish(TRIM(routine), 'Dimension mismatch')
+      fract_max_old(:,:) = this%fract_max_old(:,:)
     END IF
 
   END SUBROUTINE Get_fraction_2d
@@ -485,36 +442,6 @@ CONTAINS
 
   END SUBROUTINE Finalize_aggregator_weighted_by_fract
 
-  SUBROUTINE BeginAggregate_weighted_by_fract(this)
-    CLASS(t_jsb_aggregator_weighted_by_fract),    INTENT(inout), TARGET :: this
-
-    IF (this%stream /= acc_async_sync) THEN
-      this%original_stream = acc_stream
-      this%stream = this%original_stream + 1
-    END IF
-  END SUBROUTINE BeginAggregate_weighted_by_fract
-  SUBROUTINE EndAggregate_weighted_by_fract(this)
-    CLASS(t_jsb_aggregator_weighted_by_fract),    INTENT(inout), TARGET :: this
-    INTEGER :: stream, dummy
-
-    IF (this%original_stream /= -1) THEN
-      DO stream = this%original_stream + 1, this%stream - 1
-        !$ACC WAIT(stream) ASYNC(this%original_stream)
-      END DO
-      ! Dummy kernel for simpler graph dependency resolution
-      !$ACC PARALLEL ASYNC(this%original_stream)
-      dummy = 1
-      !$ACC END PARALLEL
-    END IF
-    this%original_stream = -1
-    this%stream = acc_stream
-  END SUBROUTINE EndAggregate_weighted_by_fract
-
-  ! ====================================================================================================== !
-  !
-  !> Updates the part of the fraction field of an aggregator belonging to the specified chunk for all child tiles
-  !
-  ! TODO: Change name to Set_fractions_aggregator_chunk
   SUBROUTINE Set_fractions_aggregator_1d(this, tile, ics, ice, iblk)
 
     CLASS(t_jsb_aggregator_weighted_by_fract), INTENT(inout) :: this

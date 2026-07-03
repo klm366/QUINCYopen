@@ -1,19 +1,26 @@
-!> QUINCY fire-disturbance process config
 !>
-!> ICON-Land
+!>  @par Copyright
+!>    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!>    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!>    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!>    This file is part of the QUINCY model.
+!>    The QUINCY model is free software: you can redistribute it and/or modify
+!>    it under the terms of the GNU General Public License version 3,
+!>    as published by the Free Software Foundation.
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!>    The QUINCY model is distributed in the hope that it will be useful,
+!>    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!>    GNU General Public License for more details.
 !>
-!> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
+!>    You should have received a copy of the GNU General Public License
+!>    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!> 
+!> @brief Contains structures and methods for config of the dist_fire process
 !>
-!>#### define fire-disturbance config structure, read fire-disturbance namelist and init configuration parameters
+!> @author
+!>  Albert Jornet Puig, MPI-BGC Jena
 !>
 MODULE mo_dfire_config_class
 #ifndef __NO_JSBACH__
@@ -32,7 +39,7 @@ MODULE mo_dfire_config_class
 
   !>
   !> Fire models
-  !>
+  !> 
   !>   spitfire, ..
   !>
   ENUM, BIND(C)
@@ -53,17 +60,18 @@ MODULE mo_dfire_config_class
   CONTAINS
     PROCEDURE :: Init => Init_dfire_config
   END type t_dfire_config
-
+  
   CHARACTER(len=*), PARAMETER :: modname = 'mo_dfire_config_class'
 
 CONTAINS
-
+  
   ! ======================================================================================================= !
   !>
   !> configuration routine of t_dfire_config
   !>
   SUBROUTINE Init_dfire_config(config)
-    USE mo_jsb_namelist_iface,    ONLY: open_nml, POSITIONED, position_nml, close_nml
+    USE mo_namelist,           ONLY: open_nml, POSITIONED, &
+      &                              position_nml, close_nml
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_dfire_config), INTENT(inout) :: config    !< config type for dfire
     ! ----------------------------------------------------------------------------------------------------- !
@@ -78,7 +86,7 @@ CONTAINS
     REAL(wp)                      :: lightning_frequency
     CHARACTER(len=*), PARAMETER   :: routine = TRIM(modname)//':Init_dfire_config'
     ! ----------------------------------------------------------------------------------------------------- !
-    NAMELIST /lnd_dist_fire_nml/        &
+    NAMELIST /dist_fire_ctl/        &
       & active,                     &
       & ic_filename,                &
       & bc_filename,                &
@@ -102,11 +110,11 @@ CONTAINS
     lightning_frequency      = 5.0                ! default for spitfire
     ! ----------------------------------------------------------------------------------------------------- !
     ! read the namelist
-    ! &lnd_dist_fire_nml
+    ! &DIST_FIRE_CTL
     nml_handler = open_nml(TRIM(config%namelist_filename))
     ! ----------------------------------------------------------------------------------------------------- !
-    nml_unit = position_nml('lnd_dist_fire_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_dist_fire_nml)
+    nml_unit = position_nml('DIST_FIRE_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, dist_fire_ctl)
     ! ----------------------------------------------------------------------------------------------------- !
     ! pass values as read from file
     config%active                    = active
@@ -134,7 +142,7 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Get_dfire_model_id'
     ! ----------------------------------------------------------------------------------------------------- !
-    SELECT CASE(tolower(TRIM(name)))
+    SELECT CASE(tolower(TRIM(name)))  
     CASE ('spitfire')
       return_value = DFIRE_MODEL_SF
     CASE DEFAULT

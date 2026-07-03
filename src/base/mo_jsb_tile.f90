@@ -1,28 +1,18 @@
-!> Contains concrete tile class that contains the surface structure and memory state.
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
-!>### Definition of concrete class and methods for tiles
-!> This module implements 't_jsb_tile' as an extension of [[mo_jsb_tile_class:t_jsb_tile_abstract]] and
-!>   implements, among others, the methods
-!>
-!> - Init => [[Init_tile]]
-!> - Init_fractions => [[Init_fractions_on_tile]]
-!> - Init_vars => [[Init_vars_on_tile]]
-!> - Handler => [[Process_task_on_tile]]
-!>
-
-!NEC$ options "-finline-file=externals/jsbach/src/base/mo_jsb_control.pp-jsb.f90"
-
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains concrete tile class that contains the surface structure and memory state.
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-04-04)
+!!
+!! This had to be separated from mo_jsb_tile_class in order to avoid circular dependencies.
+!!
 MODULE mo_jsb_tile
 #ifndef __NO_JSBACH__
 
@@ -252,7 +242,7 @@ CONTAINS
     USE mo_jsb_process_class,   ONLY: Get_process_name
     USE mo_jsb_memory_class,    ONLY: t_jsb_memory
     USE mo_jsb_tile_class,      ONLY: t_jsb_aggregator, t_jsb_aggregator_weighted_by_fract
-    USE mo_jsb_varlist,         ONLY: VARNAME_LEN
+    USE mo_jsb_varlist_iface,   ONLY: VARNAME_LEN
     USE mo_jsb_io,              ONLY: grib_bits, t_cf, t_grib1, t_grib2, tables
 
     CLASS(t_jsb_tile), INTENT(inout) :: this
@@ -326,17 +316,10 @@ CONTAINS
         this%mem(iproc)%p%owner_proc_id = iproc
         this%mem(iproc)%p%no_of_children = no_of_children
         this%mem(iproc)%p%in_var_groups = in_var_groups    ! Must be before CALL to %Init !
-        ! IF (ASSOCIATED(model%processes(iproc)%p%config)) THEN
-        !   IF (this%Has_process_memory(iproc)) THEN
-        !     this%mem(iproc)%p%lrestart_cont = model%processes(iproc)%p%config%lrestart_cont
-        !   END IF
-        ! END IF
         IF (prefix /= '') THEN
-          CALL this%mem(iproc)%p%Init(TRIM(process_name)//'_'//TRIM(prefix), &
-            &     TRIM(suffix), this%lcts(:)%id, this%lcts(1)%lib_id, this%owner_model_id)
+          CALL this%mem(iproc)%p%Init(TRIM(process_name)//'_'//TRIM(prefix), TRIM(suffix), this%lcts(:)%id, this%owner_model_id)
         ELSE
-          CALL this%mem(iproc)%p%Init(TRIM(process_name), &
-            &     TRIM(suffix), this%lcts(:)%id, this%lcts(1)%lib_id, this%owner_model_id)
+          CALL this%mem(iproc)%p%Init(TRIM(process_name), TRIM(suffix), this%lcts(:)%id, this%owner_model_id)
         END IF
         IF (debug_on()) &
           & CALL message(TRIM(routine), 'Created memory for process '//TRIM(process_name)//' on tile '//TRIM(this%name))
@@ -547,7 +530,7 @@ CONTAINS
     hgrid  => Get_grid(this%grid_id)
     nproma = hgrid%nproma
     nblks  = hgrid%nblks
-    vgrid  => Get_vgrid('soil_depth_water')
+    vgrid  => Get_vgrid('soil_layer_sb')
     nsoil  =  vgrid%n_levels
 
     ! Loop over all processes

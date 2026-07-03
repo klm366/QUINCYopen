@@ -29,7 +29,6 @@ PROGRAM example
     & dsl4jsb_var2D_onChunk (SOIL_, var1   ), &
     & dsl4jsb_var2D_onChunk(SOIL_, var2   )  &
     & )
-  dsl4jsb_var(SOIL_,ws)
   dsl4jsb_Real2D_onDomain :: ws
   dsl4jsb_Get_var2D_onDomain(SOIL_,ws)
   dsl4jsb_var2D_onDomain(SOIL_,ws)
@@ -50,8 +49,6 @@ PROGRAM example
   dsl4jsb_Get_pool_var2d_onChunk(CARBON_, pools%soil, soil_respiration)
   dsl4jsb_Use_elements(CARBON_) CARBON
 
-  dsl4jsb_bgcm(VEG_,vegbpool)
-  dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,carbon)
   dsl4jsb_Def_mt2L2D :: veg_pool_mt
   dsl4jsb_Get_mt2L2D(VEG_BGCM_LITTERFALL_ID, veg_litterfall_mt)
   ! veg_litterfall_mt => bgcm_store%Get_matrix_from_store_2l(VEG_BGCM_LITTERFALL_ID, ics, ice, iblk, tile%name)

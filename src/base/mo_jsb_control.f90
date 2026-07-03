@@ -1,16 +1,16 @@
-!> Contains methods for JSBACH master control.
 !>
-!> ICON-Land
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!! @par Copyright
+!! This code is subject to the MPI-M-Software - License - Agreement in it's most recent form.
+!! Please see URL http://www.mpimet.mpg.de/en/science/models/license .
+!!
+!! @brief Contains methods for JSBACH master control.
+!!
+!! @author
+!!  Reiner Schnur, MPI-M Hamburg
+!!
+!! @par Revision History
+!! First version by Reiner Schnur (2013-02-22)
+!!
 MODULE mo_jsb_control
 #ifndef __NO_JSBACH__
 
@@ -24,10 +24,6 @@ MODULE mo_jsb_control
   ! USE mo_jsb_time_iface,     ONLY: l_timer_host !< timers on in host model?
   ! USE mo_jsb_io_iface,       ONLY: ldebugio
 
-#ifdef _OPENACC
-  USE openacc, ONLY: acc_async_sync
-#endif
-
   IMPLICIT NONE
   PRIVATE
 
@@ -38,21 +34,16 @@ MODULE mo_jsb_control
   ! ! t_jsb_model_nml needs to be public for the NEC compiler
   PUBLIC :: t_jsb_model_nml, jsb_models_nml, get_no_of_models
   ! PUBLIC :: timer_jsbach, timer_aggregate, timer_integrate, timer_process_task, timer_process_msg, timer_forcing
-  PUBLIC :: max_no_of_models, acc_stream, acc_async_sync
+  PUBLIC :: max_no_of_models
 
-  LOGICAL,           SAVE :: is_standalone = .TRUE. ! quincy standalone - hardcoded
+  LOGICAL,           SAVE :: is_standalone
   LOGICAL,           SAVE :: restart_jsbach
   CHARACTER(len=99), SAVE :: model_base_dir
-  INTEGER,           SAVE :: debug_level = 0        ! quincy standalone - hardcoded
+  INTEGER,           SAVE :: debug_level = 0      ! quincy standalone - hardcoded
   INTEGER,           SAVE :: debug_io
   INTEGER,           SAVE :: debug_memory_level
   INTEGER,           SAVE :: timer_level
   LOGICAL,           SAVE :: l_force_from_obs
-  INTEGER,           SAVE :: acc_stream = 1
-
-#ifndef _OPENACC
-  INTEGER, PARAMETER      :: acc_async_sync = -42
-#endif
 
   TYPE t_jsb_model_nml
     INTEGER            :: model_id = 0

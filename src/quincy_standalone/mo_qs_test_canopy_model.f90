@@ -1,16 +1,32 @@
-!> Routine for running the test-canopy QUINCY model
 !>
-!> QUINCY standalone
-!>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
-!>
-!> Contact: https://doi.org/10.17871/quincy-model-2019
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
-!> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
-!>
+!!  @par Copyright
+!!    QUINCY terrestrial biosphere model with coupled carbon, nitrogen, and phosphorus cycles
+!!    Copyright (C) 2019 Max Planck Institute for Biogeochemistry (MPI-BGC), Jena, Germany 
+!!    Contributors: Caldararu S., Engel J., Kern M., Pallandt M., Schnur R., Thum T., Yu L., Zaehle S.
+!!
+!!    This file is part of the QUINCY model.
+!!    The QUINCY model is free software: you can redistribute it and/or modify
+!!    it under the terms of the GNU General Public License version 3,
+!!    as published by the Free Software Foundation.
+!!
+!!    The QUINCY model is distributed in the hope that it will be useful,
+!!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!!    GNU General Public License for more details.
+!!
+!!    You should have received a copy of the GNU General Public License
+!!    along with the QUINCY model.  If not, see <https://www.gnu.org/licenses/>.
+!! 
+!! @brief
+!!  routine for running the test_canopy_model \n
+!!  run QUINCY for one time step
+!!
+!! @author
+!!  Sönke Zaehle, MPI-BGC Jena
+!!
+!! @par Revision History
+!!  copy/pasted from mo_qs_model_interface
+!!
 MODULE mo_qs_test_canopy_model
 
   USE mo_kind,                    ONLY: wp
@@ -39,24 +55,25 @@ CONTAINS
     USE mo_jsb_task_class,         ONLY: t_jsb_task_options
     USE mo_jsb_model_class,        ONLY: t_jsb_model
     USE mo_jsb_lctlib_class,       ONLY: t_lctlib_element
-    USE mo_jsb_process_class,      ONLY: Q_ASSIMI_, RAD_, VEG_, TURB_, A2L_
+    USE mo_jsb_process_class,      ONLY: ASSIMI_, RAD_, PHENO_, VEG_, SPQ_
     USE mo_jsb_grid_class,         ONLY: t_jsb_vgrid
     USE mo_jsb_grid,               ONLY: Get_vgrid
     USE mo_rad_parameters,         ONLY: rad2ppfd
     USE mo_atmland_constants,      ONLY: frac_vis_swtot_srf, frac_par_swvis_srf,eps_vpd, standard_press_srf, def_co2_mixing_ratio
-    USE mo_phy_schemes,            ONLY: qsat_mixed
+    USE mo_atmland_util,           ONLY: calc_spec_humidity_sat
     USE mo_veg_util,               ONLY: reset_veg_fluxes
     USE mo_jsb_physical_constants, ONLY: molar_mass_N, Tzero, grav
-    USE mo_q_veg_canopy            ! .. e.g. calc_canopy_layers()
-    USE mo_rad_interface,          ONLY: update_radiation_par
-    USE mo_q_assimi_interface,     ONLY: update_canopy_fluxes, update_reset_q_assimi_fluxes
+    USE mo_veg_canopy              ! .. e.g. calc_canopy_layers()
+    USE mo_atmland_interface       ! update_a2l
+    USE mo_q_rad_process,          ONLY: radiation_quincy
+    USE mo_assimi_interface,       ONLY: update_canopy_fluxes, update_reset_assimi_fluxes
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Use_config(Q_ASSIMI_)
-    dsl4jsb_Use_memory(Q_ASSIMI_)
+    dsl4jsb_Use_config(ASSIMI_)    
+    dsl4jsb_Use_memory(ASSIMI_)
     dsl4jsb_Use_memory(RAD_)
+    dsl4jsb_Use_memory(PHENO_)
     dsl4jsb_Use_memory(VEG_)
-    dsl4jsb_Use_memory(TURB_)
-    dsl4jsb_Use_memory(A2L_)
+    dsl4jsb_Use_memory(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_tile_abstract), INTENT(inout)     :: tile         !< one tile with data structure for one lct
     TYPE(t_jsb_task_options),   INTENT(in)        :: options      !< model options
@@ -66,6 +83,31 @@ CONTAINS
     TYPE(t_lctlib_element), POINTER  :: lctlib            !< land-cover-type library - parameter across pft's
     TYPE(t_jsb_vgrid),      POINTER  :: vgrid_canopy      !< Vertical grid
     INTEGER                          :: ncanopy           !< number of canopy layers
+    REAL(wp), DIMENSION(options%nc)  :: &
+      &                                 t_air            , &
+      &                                 press_srf        , &
+      &                                 q_air            , &
+      &                                 co2_mixing_ratio , &
+      &                                 rain             , &
+      &                                 snow             , &
+      &                                 swvis_srf_down   , &
+      &                                 swnir_srf_down   , &
+      &                                 swpar_srf_down   , &
+      &                                 fract_par_diffuse, &
+      &                                 wind_air       , &
+      &                                 wind_10m       , &
+      &                                 lw_srf_down    , &
+      &                                 drag_srf       , &
+      &                                 t_acoef        , &
+      &                                 t_bcoef        , &
+      &                                 q_acoef        , &
+      &                                 q_bcoef        , &
+      &                                 pch            , &
+      &                                 cos_zenith_angle, &
+      &                                 ga             , &
+      ! &                                 latitude       , &
+      ! &                                 longitude      , &
+      &                                 vpd
     REAL(wp), DIMENSION(options%nc)  :: hlp1
     INTEGER             :: i, lun           !< looping, logical unit number
     INTEGER             :: ref_pft          !< PFT identifier
@@ -90,39 +132,28 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Def_mt2L2D :: veg_pool_mt
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Def_config(Q_ASSIMI_)
-    dsl4jsb_Def_memory(Q_ASSIMI_)
+    dsl4jsb_Def_config(ASSIMI_)
+    dsl4jsb_Def_memory(ASSIMI_)
     dsl4jsb_Def_memory(RAD_)
+    dsl4jsb_Def_memory(PHENO_)
     dsl4jsb_Def_memory(VEG_)
-    dsl4jsb_Def_memory(TURB_)
-    dsl4jsb_Def_memory(A2L_)
+    dsl4jsb_Def_memory(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
-    ! Q_ASSIMI_
+    ! ASSIMI_
     dsl4jsb_Real2D_onChunk      :: net_assimilation 
     dsl4jsb_Real2D_onChunk      :: canopy_cond
     dsl4jsb_Real2D_onChunk      :: co2_conc_leaf
     dsl4jsb_Real2D_onChunk      :: soa_tsoa_mavg
-    dsl4jsb_Real2D_onChunk      :: vpd
-    dsl4jsb_Real2D_onChunk      :: wtr_soil_root_pot
     ! RAD_
     dsl4jsb_Real3D_onChunk      :: ppfd_sunlit_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: ppfd_shaded_tfrac_mavg_cl
-    ! A2L_
-    dsl4jsb_Real2D_onChunk      :: t_air
-    dsl4jsb_Real2D_onChunk      :: q_air
-    dsl4jsb_Real2D_onChunk      :: swpar_srf_down
-    dsl4jsb_Real2D_onChunk      :: cos_zenith_angle
-    dsl4jsb_Real2D_onChunk      :: co2_mixing_ratio
-    dsl4jsb_Real2D_onChunk      :: wind_air
-    dsl4jsb_Real2D_onChunk      :: wind_10m
-    dsl4jsb_Real2D_onChunk      :: swvis_srf_down
-    dsl4jsb_Real2D_onChunk      :: swnir_srf_down
-    dsl4jsb_Real2D_onChunk      :: fract_par_diffuse
-    dsl4jsb_Real2D_onChunk      :: press_srf
-    ! TURB_
-    dsl4jsb_Real2D_onChunk      :: drag_srf_stdalone
+    ! SPQ_
+    dsl4jsb_Real2D_onChunk      :: w_soil_root_pot 
+    ! PHENO_
+    dsl4jsb_Real2D_onChunk      :: lai 
+    dsl4jsb_Real3D_onChunk      :: lai_cl
+    dsl4jsb_Real3D_onChunk      :: cumm_lai_cl
     ! VEG_
-    dsl4jsb_Real2D_onChunk      :: lai
     dsl4jsb_Real2D_onChunk      :: t_jmax_opt_mavg
     dsl4jsb_Real3D_onChunk      :: leaf_nitrogen_cl
     dsl4jsb_Real3D_onChunk      :: fn_rub_cl
@@ -131,8 +162,6 @@ CONTAINS
     dsl4jsb_Real3D_onChunk      :: fn_chl_cl
     dsl4jsb_Real3D_onChunk      :: fn_oth_cl
     dsl4jsb_Real3D_onChunk      :: fleaf_sunlit_tfrac_mavg_cl
-    dsl4jsb_Real3D_onChunk      :: lai_cl
-    dsl4jsb_Real3D_onChunk      :: cumm_lai_cl
     ! ----------------------------------------------------------------------------------------------------- !
     iblk    = options%iblk
     ics     = options%ics
@@ -150,44 +179,33 @@ CONTAINS
     ENDIF
     model  => Get_model(tile%owner_model_id)
     lctlib        => model%lctlib(tile%lcts(1)%lib_id)
-    vgrid_canopy  => Get_vgrid('q_canopy_layer')
+    vgrid_canopy  => Get_vgrid('canopy_layer')
     ncanopy       =  vgrid_canopy%n_levels
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_config(Q_ASSIMI_)
-    dsl4jsb_Get_memory(Q_ASSIMI_)
+    dsl4jsb_Get_config(ASSIMI_)
+    dsl4jsb_Get_memory(ASSIMI_)
     dsl4jsb_Get_memory(RAD_)
+    dsl4jsb_Get_memory(PHENO_)
     dsl4jsb_Get_memory(VEG_)
-    dsl4jsb_Get_memory(TURB_)
-    dsl4jsb_Get_memory(A2L_)
+    dsl4jsb_Get_memory(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
     bgcm_store => tile%bgcm_store
     dsl4jsb_Get_mt2L2D(VEG_BGCM_POOL_ID, veg_pool_mt)
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, net_assimilation)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, canopy_cond)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, co2_conc_leaf)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, soa_tsoa_mavg)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, vpd)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, wtr_soil_root_pot)
+    dsl4jsb_Get_var2D_onChunk(ASSIMI_, net_assimilation)
+    dsl4jsb_Get_var2D_onChunk(ASSIMI_, canopy_cond)
+    dsl4jsb_Get_var2D_onChunk(ASSIMI_, co2_conc_leaf)
+    dsl4jsb_Get_var2D_onChunk(ASSIMI_, soa_tsoa_mavg)
     ! ---------------------------
     dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_sunlit_tfrac_mavg_cl)      ! in
     dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_shaded_tfrac_mavg_cl)      ! in
     ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(TURB_, drag_srf_stdalone)
+    dsl4jsb_Get_var2D_onChunk(SPQ_, w_soil_root_pot)
     ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(A2L_, t_air)
-    dsl4jsb_Get_var2D_onChunk(A2L_, q_air)
-    dsl4jsb_Get_var2D_onChunk(A2L_, swpar_srf_down)
-    dsl4jsb_Get_var2D_onChunk(A2L_, cos_zenith_angle)
-    dsl4jsb_Get_var2D_onChunk(A2L_, co2_mixing_ratio)
-    dsl4jsb_Get_var2D_onChunk(A2L_, wind_air)
-    dsl4jsb_Get_var2D_onChunk(A2L_, wind_10m)
-    dsl4jsb_Get_var2D_onChunk(A2L_, swvis_srf_down)
-    dsl4jsb_Get_var2D_onChunk(A2L_, swnir_srf_down)
-    dsl4jsb_Get_var2D_onChunk(A2L_, fract_par_diffuse)
-    dsl4jsb_Get_var2D_onChunk(A2L_, press_srf)
+    dsl4jsb_Get_var2D_onChunk(PHENO_, lai)
+    dsl4jsb_Get_var3D_onChunk(PHENO_, lai_cl)
+    dsl4jsb_Get_var3D_onChunk(PHENO_, cumm_lai_cl)
     ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(VEG_, lai)
     dsl4jsb_Get_var2D_onChunk(VEG_, t_jmax_opt_mavg)
     dsl4jsb_Get_var3D_onChunk(VEG_, leaf_nitrogen_cl)
     dsl4jsb_Get_var3D_onChunk(VEG_, fn_rub_cl)
@@ -196,8 +214,6 @@ CONTAINS
     dsl4jsb_Get_var3D_onChunk(VEG_, fn_chl_cl)
     dsl4jsb_Get_var3D_onChunk(VEG_, fn_oth_cl)
     dsl4jsb_Get_var3D_onChunk(VEG_, fleaf_sunlit_tfrac_mavg_cl)     ! in
-    dsl4jsb_Get_var3D_onChunk(VEG_, lai_cl)
-    dsl4jsb_Get_var3D_onChunk(VEG_, cumm_lai_cl)
     ! ----------------------------------------------------------------------------------------------------- !
 
     !>0.9 define chunk for output: ipoi 1:nc / ichunk ics:ice
@@ -210,7 +226,7 @@ CONTAINS
 
     !>  1.1 set g1 according to canopy_conductance_scheme
     !>
-    SELECT CASE(TRIM(dsl4jsb_Config(Q_ASSIMI_)%canopy_conductance_scheme))
+    SELECT CASE(TRIM(dsl4jsb_Config(ASSIMI_)%canopy_conductance_scheme))
       CASE ("medlyn")
         lctlib_g1 = lctlib%g1_medlyn
       CASE ("ballberry")
@@ -221,19 +237,46 @@ CONTAINS
     !>
     t_air(:)            = ref_t_air + TZero
     press_srf(:)        = standard_press_srf
-    q_air(:)            = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)            = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
     co2_mixing_ratio(:) = def_co2_mixing_ratio   ! def_co2_mixing_ratio is used instead of ref_co2_mixing_ratio
+    rain(:)             = 0.0_wp
+    snow(:)             = 0.0_wp
     swpar_srf_down(:)   = ref_swdown
     swvis_srf_down(:)   = swpar_srf_down(:) / frac_par_swvis_srf
     swnir_srf_down(:)   = swvis_srf_down(:) * (1._wp - frac_vis_swtot_srf) / frac_vis_swtot_srf
     fract_par_diffuse(:)= ref_fdiffuse
     wind_air(:)         = ref_wind
     wind_10m(:)         = wind_air(:)
-    drag_srf_stdalone(:)     = ref_ga / wind_air(:) * alpha * grav * model%options%dtime
+    lw_srf_down(:)      = 0.0_wp
+    ga(:)               = ref_ga 
+    drag_srf(:)         = ga(:) / wind_air(:) * alpha * grav * model%options%dtime 
+    t_acoef(:)          = 0.0_wp
+    t_bcoef(:)          = 0.0_wp
+    q_acoef(:)          = 0.0_wp
+    q_bcoef(:)          = 0.0_wp
+    pch(:)              = 0.0_wp
     cos_zenith_angle(:) = ref_cos_angle
     soa_tsoa_mavg(:)    = 7.0_wp        ! is initialized in assimi init with -10.0_wp as the model starts in winter
     !latitude                  = 50.0_wp
     !longitude                 = 0.0_wp
+
+
+    CALL update_a2l( &
+           tile                                            , &
+           options                                         , &
+           t_air                   = t_air(:)              , &
+           q_air                   = q_air(:)              , &
+           wind_air                = wind_air(:)           , &
+           wind_10m                = wind_10m(:)           , &
+           swvis_srf_down          = swvis_srf_down(:)     , &
+           swnir_srf_down          = swnir_srf_down(:)     , &
+           swpar_srf_down          = swpar_srf_down(:)     , &
+           fract_par_diffuse       = fract_par_diffuse(:)  , &
+           press_srf               = press_srf(:)          , &
+           drag_srf                = drag_srf(:)           , &
+           cos_zenith_angle        = cos_zenith_angle(:)   , &
+           co2_mixing_ratio        = co2_mixing_ratio(:)   , &
+           ga                      = ga(:)                 )
 
     !> 1.2 Initialisation of soil and vegetation (so far relevant)
     !!
@@ -247,7 +290,6 @@ CONTAINS
     ENDIF
     CALL calc_canopy_layers(nc                                                        , & ! in
                             ncanopy                                                   , &
-                            model%options%dtime                                       , &
                             vgrid_canopy%dz(:)                                        , &
                             vgrid_canopy%lbounds(:)                                   , &
                             vgrid_canopy%ubounds(:)                                   , &
@@ -260,8 +302,8 @@ CONTAINS
                             lctlib%g0                                                 , &
                             lctlib_g1                                                 , &
                             lctlib%t_jmax_omega                                       , &
-                            dsl4jsb_Config(Q_ASSIMI_)%flag_optimal_Nfraction            , &
-                            TRIM(dsl4jsb_Config(Q_ASSIMI_)%canopy_conductance_scheme)   , &
+                            dsl4jsb_Config(ASSIMI_)%flag_optimal_Nfraction            , &
+                            TRIM(dsl4jsb_Config(ASSIMI_)%canopy_conductance_scheme)   , &
                             leaf_nitrogen       = veg_pool_mt(ix_leaf, ixN, :)        , &
                             lai                 = lai(:)                              , & ! in
                             ppfd_sunlit_cl      = ppfd_sunlit_tfrac_mavg_cl(:,:)      , & ! inout
@@ -294,12 +336,18 @@ CONTAINS
        swpar_srf_down(:) = swpar_srf_down(:) + 100.0_wp / rad2ppfd
        swvis_srf_down(:) = swpar_srf_down(:) / frac_par_swvis_srf
        swnir_srf_down(:) = swvis_srf_down(:) * (1._wp - frac_vis_swtot_srf) / frac_vis_swtot_srf
+       CALL update_a2l(tile, &
+             options            , &
+             swvis_srf_down = swvis_srf_down(:), &
+             swnir_srf_down = swnir_srf_down(:), &
+             swpar_srf_down = swpar_srf_down(:), &
+             cos_zenith_angle = cos_zenith_angle(:))
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(4F16.7)') swpar_srf_down(ipoi) * rad2ppfd, &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
@@ -312,8 +360,14 @@ CONTAINS
     swpar_srf_down(:) = ref_swdown
     swvis_srf_down(:) = swpar_srf_down(:) / frac_par_swvis_srf
     swnir_srf_down(:) = swvis_srf_down(:) * (1._wp - frac_vis_swtot_srf) / frac_vis_swtot_srf
+    CALL update_a2l(tile, &
+             options            , &
+             swvis_srf_down = swvis_srf_down, &
+             swnir_srf_down = swnir_srf_down, &
+             swpar_srf_down = swpar_srf_down, &
+             cos_zenith_angle = cos_zenith_angle(:))
   
-    !> 2.2 Temperature (-5,60 degC)
+    !> 2.2 Temperature (-5,60 °C)
     !!
     !!
     lun = lun + 1
@@ -324,14 +378,20 @@ CONTAINS
     DO i = 1,70
   
        t_air(:) = t_air(:) + 1.0_wp
-       q_air(:) = 0.8_wp * qsat_mixed(t_air(:),press_srf(:))
+       q_air(:) = 0.8_wp * calc_spec_humidity_sat(t_air(:),press_srf(:))
        t_jmax_opt_mavg(:) = 20._wp+0.35_wp*(t_air(:) - Tzero)
+       CALL update_a2l(tile, &
+             options            , &
+             t_air = t_air, &
+             q_air = q_air, &
+             swpar_srf_down   = swpar_srf_down(:), &
+             cos_zenith_angle = cos_zenith_angle(:))
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(5F16.7)') t_air(ipoi), &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
@@ -339,7 +399,13 @@ CONTAINS
   
     END DO
     t_air(:)    = ref_t_air + Tzero
-    q_air(:)    = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)    = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    CALL update_a2l(tile, &
+          options            , &
+          t_air = t_air, &
+          q_air = q_air, &
+          swpar_srf_down   = swpar_srf_down(:), &
+          cos_zenith_angle = cos_zenith_angle(:))
     t_jmax_opt_mavg(:) = hlp1(:)
   
     !> 2.3 atmospheric CO2 (175 - 1000 ppm)
@@ -349,13 +415,19 @@ CONTAINS
     WRITE(lun,*) 'CO2 A GC CI'
     co2_mixing_ratio(:) = 150._wp
     DO i = 1,34
+  
        co2_mixing_ratio(:) = co2_mixing_ratio(:) + 25._wp
+       CALL update_a2l(tile, &
+             options            , &
+             co2_mixing_ratio = co2_mixing_ratio, &
+             swpar_srf_down   = swpar_srf_down(:), &
+             cos_zenith_angle = cos_zenith_angle(:))
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(4F16.7)') co2_mixing_ratio(ipoi), &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
@@ -363,6 +435,11 @@ CONTAINS
   
     END DO
     co2_mixing_ratio(:) = ref_co2_mixing_ratio
+    CALL update_a2l(tile    , &
+                         options , &
+                         co2_mixing_ratio = co2_mixing_ratio, &
+                         swpar_srf_down   = swpar_srf_down(:), &
+                         cos_zenith_angle = cos_zenith_angle(:))
   
     !> 2.4 VPD (0-3.3 kPa)
     !!
@@ -370,46 +447,56 @@ CONTAINS
     lun = lun + 1
     WRITE(lun,*) 'VPD A GC CI'
     DO i = 1,30
-       q_air(:) = qsat_mixed(t_air(:),press_srf(:)) - i * 100.0_wp / press_srf(:) * eps_vpd
+       q_air(:) = calc_spec_humidity_sat(t_air(:),press_srf(:)) - i * 100.0_wp / press_srf(:) * eps_vpd
+       CALL update_a2l(tile    , &
+                            options , &
+                            q_air = q_air, &
+                            swpar_srf_down   = swpar_srf_down(:), &
+                            cos_zenith_angle = cos_zenith_angle(:))
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
-       vpd(:) = ( qsat_mixed(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
+       vpd(:) = ( calc_spec_humidity_sat(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
   
        WRITE(lun,'(4F16.7)') vpd(ipoi), &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
              co2_conc_leaf(ipoi)/co2_mixing_ratio(ipoi)
   
     END DO
-    q_air(:) = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
-    vpd(:) = ( qsat_mixed(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
+    q_air(:) = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    vpd(:) = ( calc_spec_humidity_sat(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
+       CALL update_a2l(tile    , &
+                            options , &
+                            q_air = q_air, &
+                            swpar_srf_down   = swpar_srf_down(:), &
+                            cos_zenith_angle = cos_zenith_angle(:))
   
     !> 2.5 soil water potential (0 to -4)
     !!
     !!
     lun = lun + 1
     WRITE(lun,*) 'SW_pot A GC CI'
-    wtr_soil_root_pot(:) = ref_soil_root_pot
+    w_soil_root_pot(:) = ref_soil_root_pot
     DO i = 1,80
   
-       wtr_soil_root_pot(:) = wtr_soil_root_pot(:) - 0.05_wp
+       w_soil_root_pot(:) = w_soil_root_pot(:) - 0.05_wp
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
-       WRITE(lun,'(4F16.7)') wtr_soil_root_pot(ipoi) *100._wp, &
+       WRITE(lun,'(4F16.7)') w_soil_root_pot(ipoi) *100._wp, &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
              co2_conc_leaf(ipoi)/co2_mixing_ratio(ipoi)
   
     END DO
-    wtr_soil_root_pot(:) = ref_soil_root_pot
+    w_soil_root_pot(:) = ref_soil_root_pot
   
     !> 2.6 LAI (increase from 0 to 11)
     !!
@@ -423,7 +510,6 @@ CONTAINS
        veg_pool_mt(ix_leaf, ixN, :) = ref_nleaf / molar_mass_N * lai(:)
        CALL calc_canopy_layers( nc                                             , &   ! in
                                 ncanopy                                        , &
-                                model%options%dtime                            , &
                                 vgrid_canopy%dz(:)                             , &
                                 vgrid_canopy%lbounds(:)                        , &
                                 vgrid_canopy%ubounds(:)                        , &
@@ -436,8 +522,8 @@ CONTAINS
                                 lctlib%g0                                      , &
                                 lctlib_g1                                      , &
                                 lctlib%t_jmax_omega                            , &
-                                dsl4jsb_Config(Q_ASSIMI_)%flag_optimal_Nfraction , &
-                                TRIM(dsl4jsb_Config(Q_ASSIMI_)%canopy_conductance_scheme)       , &
+                                dsl4jsb_Config(ASSIMI_)%flag_optimal_Nfraction , &
+                                TRIM(dsl4jsb_Config(ASSIMI_)%canopy_conductance_scheme)       , &
                                 leaf_nitrogen       = veg_pool_mt(ix_leaf, ixN, :)    , &
                                 lai                 = lai(:)                          , & ! in
                                 ppfd_sunlit_cl      = ppfd_sunlit_tfrac_mavg_cl(:,:)  , & ! inout
@@ -455,9 +541,9 @@ CONTAINS
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(4F16.7)') lai(ipoi), &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
@@ -476,7 +562,6 @@ CONTAINS
        veg_pool_mt(ix_leaf, ixN, :) = 0.125_wp * (i) / molar_mass_N * lai(:)
        CALL calc_canopy_layers( nc                                             , &   ! in
                                 ncanopy                                        , &
-                                model%options%dtime                            , &
                                 vgrid_canopy%dz(:)                             , &
                                 vgrid_canopy%lbounds(:)                        , &
                                 vgrid_canopy%ubounds(:)                        , &
@@ -489,8 +574,8 @@ CONTAINS
                                 lctlib%g0                                      , &
                                 lctlib_g1                                      , &
                                 lctlib%t_jmax_omega                            , &
-                                dsl4jsb_Config(Q_ASSIMI_)%flag_optimal_Nfraction , &
-                                TRIM(dsl4jsb_Config(Q_ASSIMI_)%canopy_conductance_scheme)       , &
+                                dsl4jsb_Config(ASSIMI_)%flag_optimal_Nfraction , &
+                                TRIM(dsl4jsb_Config(ASSIMI_)%canopy_conductance_scheme)       , &
                                 leaf_nitrogen       = veg_pool_mt(ix_leaf, ixN, :)    , &
                                 lai                 = lai(:)                          , & ! in
                                 ppfd_sunlit_cl      = ppfd_sunlit_tfrac_mavg_cl(:,:)  , & ! inout
@@ -508,9 +593,9 @@ CONTAINS
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(4F16.7)') veg_pool_mt(ix_leaf, ixN, ichunk) / lai(ipoi) * molar_mass_N, &
              net_assimilation(ipoi), canopy_cond(ipoi) * 1000._wp, &
@@ -533,7 +618,6 @@ CONTAINS
        lctlib  => model%lctlib(tile%lcts(1)%lib_id)
        CALL calc_canopy_layers( nc                                             , &   ! in
                                 ncanopy                                        , &
-                                model%options%dtime                            , &
                                 vgrid_canopy%dz(:)                             , &
                                 vgrid_canopy%lbounds(:)                        , &
                                 vgrid_canopy%ubounds(:)                        , &
@@ -546,8 +630,8 @@ CONTAINS
                                 lctlib%g0                                      , &
                                 lctlib_g1                                      , &
                                 lctlib%t_jmax_omega                            , &
-                                dsl4jsb_Config(Q_ASSIMI_)%flag_optimal_Nfraction , &
-                                TRIM(dsl4jsb_Config(Q_ASSIMI_)%canopy_conductance_scheme) , &
+                                dsl4jsb_Config(ASSIMI_)%flag_optimal_Nfraction , &
+                                TRIM(dsl4jsb_Config(ASSIMI_)%canopy_conductance_scheme) , &
                                 leaf_nitrogen       = veg_pool_mt(ix_leaf, ixN, :)      , &
                                 lai                 = lai(:)                            , & ! in
                                 ppfd_sunlit_cl      = ppfd_sunlit_tfrac_mavg_cl(:,:)    , & ! inout
@@ -565,9 +649,9 @@ CONTAINS
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
-       CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
-       CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
+       CALL update_reset_assimi_fluxes(tile, model%options)
+       CALL radiation_quincy(tile,options)      !< mo_rad_update_radiation
+       CALL update_canopy_fluxes(tile,options)  !< mo_assimi_update_canopy_fluxes
   
        WRITE(lun,'(I1,3F16.7)') i, &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
