@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -34,7 +34,6 @@ mo_quincy_model_config.o: \
 mo_jsb_time.o: \
   mo_kind.o \
   mo_exception.o \
-  mo_jsb_math_constants.o \
   mo_qs_icon_adapter.o
 
 mo_jsb_config_class.o: \
@@ -102,15 +101,18 @@ mo_jsb_process_factory.o: \
   mo_dfire_memory_class.o \
   mo_dfire_config_class.o \
   mo_dfire_interface.o \
+  mo_dinsect_memory_class.o \
+  mo_dinsect_config_class.o \
+  mo_dinsect_interface.o \
   mo_rad_memory_class.o \
   mo_rad_config_class.o \
   mo_rad_interface.o \
   mo_turb_memory_class.o \
   mo_turb_config_class.o \
   mo_turb_interface.o \
-  mo_q_syl_memory_class.o \
-  mo_q_syl_config_class.o \
-  mo_q_syl_interface.o \
+  mo_q_sh_memory_class.o \
+  mo_q_sh_config_class.o \
+  mo_q_sh_interface.o \
   mo_q_agr_memory_class.o \
   mo_q_agr_config_class.o \
   mo_q_agr_interface.o \
@@ -128,8 +130,7 @@ mo_jsb_process_factory.o: \
   mo_seb_memory_class.o \
   mo_seb_config_class.o \
   mo_hydro_memory_class.o \
-  mo_hydro_config_class.o \
-  mo_icon_land_dependency_dummies.o
+  mo_hydro_config_class.o
 
 mo_jsb_model_init.o: \
   mo_kind.o \
@@ -145,9 +146,7 @@ mo_jsb_model_init.o: \
   mo_qs_forcing.o \
   mo_jsb_process_class.o \
   mo_jsb_math_constants.o \
-  mo_time_config.o \
   mo_util.o \
-  mo_jsb4_forcing.o \
   mo_veg_init.o \
   mo_spq_init.o \
   mo_hydro_init.o \
@@ -157,10 +156,11 @@ mo_jsb_model_init.o: \
   mo_rad_init.o \
   mo_q_assimi_init.o \
   mo_q_pheno_init.o \
+  mo_dinsect_init.o \
   mo_phyd_init.o \
   mo_turb_init.o \
   mo_dfire_init.o \
-  mo_q_syl_init.o \
+  mo_q_sh_init.o \
   mo_q_agr_init.o
 
 mo_jsb_io.o: \
@@ -190,9 +190,15 @@ mo_jsb_model_class.o: \
   mo_jsb_tile_class.o \
   mo_jsb_lctlib_class.o \
   mo_jsb_process_class.o \
-  mo_qs_nc_output_class.o
+  mo_quincy_output_class.o
 
-mo_quincy_output_class.o:
+mo_quincy_output_class.o: \
+  mo_exception.o \
+  mo_kind.o \
+  mo_io_units.o \
+  mo_util.o \
+  mo_jsb_var_class.o \
+  mo_qs_icon_adapter.o
 
 mo_jsb_grid_class.o: \
   mo_kind.o \
@@ -229,6 +235,7 @@ mo_jsb_base.o: \
   mo_rad_parameters.o \
   mo_phyd_parameters.o \
   mo_dfire_constants.o \
+  mo_dinsect_constants.o \
   mo_veg_constants.o \
   mo_spq_constants.o \
   mo_turb_constants.o \
@@ -315,10 +322,5 @@ mo_lnd_bgcm_store.o: \
   mo_lnd_bgcm_store_class.o \
   mo_jsb_pool_class.o \
   mo_lnd_bgcm_class.o
-
-mo_jsb_cqt_class.o: \
-  mo_util.o \
-  mo_exception.o \
-  mo_jsb_var_class.o
 
 mo_jsb_parallel.o:

@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -435,24 +435,6 @@ CONTAINS
 
 END MODULE mo_jsb_io_iface
 
-
-!------------------------------------------------------------------------------------------------------------
-!> Contains interfaces to different ICON utilities for JSBACH
-!
-MODULE mo_jsb_utils_iface
-
-!  USE mo_fortran_tools, ONLY: assign_if_present, assign_if_present_allocatable
-  USE mo_util_string,   ONLY: toupper, tolower, int2string, real2string, logical2string, separator, one_of_str => one_of
-
-  IMPLICIT NONE
-  PRIVATE
-
-!  PUBLIC :: assign_if_present, assign_if_present_allocatable
-  PUBLIC :: toupper, tolower, int2string, real2string, logical2string, separator, one_of_str
-
-END MODULE mo_jsb_utils_iface
-
-
 !------------------------------------------------------------------------------------------------------------
 !> Contains interfaces to ICON varlists for JSBACH
 !
@@ -760,8 +742,7 @@ MODULE mo_jsb_time_iface
   USE mo_kind,               ONLY: wp
   USE mo_exception,          ONLY: finish, message, message_text
 
-  USE mo_jsb_math_constants, ONLY: one_year, one_month, seconds_per_day, one_day
-  USE mo_time_config,        ONLY: t_datetime, time_config
+  USE mo_jsb_math_constants, ONLY: one_year, seconds_per_day, one_day
 
   ! USE mtime,                     ONLY: t_datetime => datetime, newDatetime, deallocateDatetime,      &
   !   &                                  timedelta, getPTStringFromSeconds, max_timedelta_str_len,     &
@@ -788,9 +769,7 @@ MODULE mo_jsb_time_iface
   PUBLIC :: is_time_experiment_start, is_time_ltrig_rad_m1, get_time_previous
   PUBLIC :: t_datetime, deallocateDatetime
   PUBLIC :: get_date_components, get_year_day, get_year_length
-  PUBLIC :: get_time_start
-  PUBLIC :: get_month_length, get_day_length
-
+  ! PUBLIC :: get_month_length, get_day_length
   ! PUBLIC :: get_time_dt, get_time_nsteps, &
   !           get_time_start, get_time_stop, get_time_experiment_start, &
   !           get_time_next, is_time_experiment_start, is_time_restart, &
@@ -799,14 +778,19 @@ MODULE mo_jsb_time_iface
   ! PUBLIC :: start_timestep, finish_timestep
   ! PUBLIC :: configure_time_and_events
   ! PUBLIC :: get_time_interpolation_weights
-  PUBLIC :: get_asselin_coef
+  ! PUBLIC :: get_asselin_coef
   ! PUBLIC :: l_timer_host
 
-  ! quincy
-  PUBLIC :: get_is_time_experiment_start, set_is_time_experiment_start
-  LOGICAL, SAVE :: l_is_time_experiment_start = .TRUE.  !< return value of is_time_experiment_start()
-
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_time_iface'
+
+  ! ======================================================================================================= !
+  !>
+  !> type emulating mtime datetime for use in QS
+  !> -- might need to be extended depending on requirements
+  TYPE :: t_datetime
+    REAL(wp) time_day  !< displays the 'real time' in days; time_day == 1.0 after one day has passed in QS
+    INTEGER  time_year !< displays the 'real time' in years; the 1st year of a simulation == 1 (not zero)
+  END TYPE t_datetime
 
 CONTAINS
 
@@ -995,15 +979,13 @@ CONTAINS
 
 !   END FUNCTION get_time_experiment_start
 
-  FUNCTION get_time_start()
+!   FUNCTION get_time_start()
 
-    TYPE(t_datetime), POINTER :: get_time_start
+!     TYPE(t_datetime), POINTER :: get_time_start
 
-    ! get_time_start => newDatetime(time_config%tc_startdate)
-    ! quincy
-    get_time_start => time_config%tc_startdate
+!     get_time_start => newDatetime(time_config%tc_startdate)
 
-  END FUNCTION get_time_start
+!   END FUNCTION get_time_start
 
 !   FUNCTION get_time_stop()
 
@@ -1109,36 +1091,15 @@ CONTAINS
 
   END FUNCTION is_time_ltrig_rad_m1
 
-  !> quincy - set logical
-  !>
-  SUBROUTINE set_is_time_experiment_start(set_l_is_time_experiment_start)
-    
-    LOGICAL, INTENT(in) :: set_l_is_time_experiment_start
-
-    l_is_time_experiment_start = set_l_is_time_experiment_start
-
-    PRINT *, " l_is_time_experiment_start was set to [T,F] ", l_is_time_experiment_start
-
-  END SUBROUTINE set_is_time_experiment_start
-
-  !> quincy - get logical
-  !>
-  LOGICAL FUNCTION get_is_time_experiment_start()
-
-    get_is_time_experiment_start = l_is_time_experiment_start
-
-  END FUNCTION get_is_time_experiment_start
-
-  !> quincy - simplified re-implementation of icon function
-  !>
   LOGICAL FUNCTION is_time_experiment_start(current)
 
     ! USE mo_initicon_config, ONLY: timeshift
     ! USE mo_master_control,  ONLY: get_my_process_name
 
-    TYPE(t_datetime), POINTER, INTENT(in) :: current
+    ! TYPE(t_datetime), POINTER, INTENT(in) :: current
     ! quincy
-    is_time_experiment_start = l_is_time_experiment_start
+    REAL(wp),                    INTENT(in) :: current
+    is_time_experiment_start = .FALSE.
 
     ! ! take care of possibe IAU-Timeshift
     ! IF (TRIM(get_my_process_name()) == 'atm' .AND. timeshift%dt_shift < 0._wp) THEN
@@ -1219,37 +1180,32 @@ CONTAINS
 
 !   END FUNCTION get_year_length
 
-  ! Get length of month
-  !
-  ! Function returns the length of a month in days
-  !
-  INTEGER FUNCTION get_month_length(yr, mo)
-    INTEGER, INTENT(in) :: yr, mo
+!   ! Get length of month
+!   !
+!   ! Function returns the length of a month in days
+!   !
+!   INTEGER FUNCTION get_month_length(yr, mo)
+!     INTEGER, INTENT(in) :: yr, mo
 
-    ! TYPE(t_datetime), POINTER :: datetime_tmp
+!     TYPE(t_datetime), POINTER :: datetime_tmp
 
-    ! datetime_tmp => newDatetime(yr, mo, 1, 0, 0, 0, 0)
+!     datetime_tmp => newDatetime(yr, mo, 1, 0, 0, 0, 0)
 
-    ! get_month_length = getNoOfDaysInMonthDateTime(datetime_tmp)
+!     get_month_length = getNoOfDaysInMonthDateTime(datetime_tmp)
 
-    ! CALL deallocateDatetime(datetime_tmp)
+!     CALL deallocateDatetime(datetime_tmp)
 
-    ! quincy
-    get_month_length = INT(one_month)
+!   END FUNCTION get_month_length
 
-  END FUNCTION get_month_length
+!   ! Get length of day
+!   !
+!   ! Function returns the length of a day in seconds
+!   !
+!   REAL(wp) FUNCTION get_day_length()
 
-  ! Get length of day
-  !
-  ! Function returns the length of a day in seconds
-  !
-  REAL(wp) FUNCTION get_day_length()
+!     get_day_length = REAL(no_of_sec_in_a_day,wp)
 
-    ! get_day_length = REAL(no_of_sec_in_a_day,wp)
-    ! quincy
-    get_day_length = one_day
-
-  END FUNCTION get_day_length
+!   END FUNCTION get_day_length
 
 !   ! Get day in year
 !   !
@@ -1287,12 +1243,12 @@ CONTAINS
 
 !   END SUBROUTINE get_time_interpolation_weights
 
-  REAL(wp) FUNCTION get_asselin_coef()
-    CHARACTER(len=*), PARAMETER :: routine = modname//':get_asselin_coef'
+!   REAL(wp) FUNCTION get_asselin_coef()
+!     CHARACTER(len=*), PARAMETER :: routine = modname//':get_asselin_coef'
 
-    get_asselin_coef = 0._wp
+!     get_asselin_coef = 0._wp
 
-  END FUNCTION get_asselin_coef
+!   END FUNCTION get_asselin_coef
 
 END MODULE mo_jsb_time_iface
 
@@ -1320,16 +1276,16 @@ MODULE mo_jsb_io_netcdf_iface
     LOGICAL           :: is_open = .FALSE.
     ! TYPE(t_stream_id) :: stream_id  ! ICON stream_id structure (for > 1D)
     INTEGER :: file_id              ! netcdf file id (for 1D)
-  CONTAINS
+  ! CONTAINS
   !   PROCEDURE :: Close          => netcdf_close_file
   !   PROCEDURE :: Read_1d        => netcdf_read_real_1d
-    PROCEDURE :: Read_2d        => netcdf_read_real_2d
+  !   PROCEDURE :: Read_2d        => netcdf_read_real_2d
   !   PROCEDURE :: Read_2d_time   => netcdf_read_real_2d_time
   !   PROCEDURE :: Read_2d_1lev_1time   => netcdf_read_real_2d_1lev_1time
-    PROCEDURE :: Read_2d_extdim => netcdf_read_real_2d_extdim
+  !   PROCEDURE :: Read_2d_extdim => netcdf_read_real_2d_extdim
   !   PROCEDURE :: Read_2d_int    => netcdf_read_int_2d
   !   PROCEDURE :: Has_dim        => netcdf_file_has_dim
-    PROCEDURE :: Has_var        => netcdf_file_has_var
+  !   PROCEDURE :: Has_var        => netcdf_file_has_var
   !   PROCEDURE :: Get_dimlen     => netcdf_file_get_dimlen
   END TYPE t_input_file
 
@@ -1338,17 +1294,17 @@ MODULE mo_jsb_io_netcdf_iface
     MODULE PROCEDURE netcdf_open_input_patch
   END INTERFACE netcdf_open_input
 
-  INTERFACE netcdf_read_2d
-    MODULE PROCEDURE netcdf_read_real_2d
-  END INTERFACE netcdf_read_2d
+  ! INTERFACE netcdf_read_2d
+  !   MODULE PROCEDURE netcdf_read_real_2d
+  ! END INTERFACE netcdf_read_2d
 
   ! INTERFACE netcdf_read_2d_time
   !   MODULE PROCEDURE netcdf_read_real_2d_time
   ! END INTERFACE netcdf_read_2d_time
 
-  INTERFACE netcdf_read_2d_extdim
-    MODULE PROCEDURE netcdf_read_real_2d_extdim
-  END INTERFACE netcdf_read_2d_extdim
+  ! INTERFACE netcdf_read_2d_extdim
+  !   MODULE PROCEDURE netcdf_read_real_2d_extdim
+  ! END INTERFACE netcdf_read_2d_extdim
 
   INTEGER, PARAMETER :: MAX_VAR_DIMS = 16 ! NF90_MAX_VAR_DIMS
 
@@ -1429,26 +1385,26 @@ CONTAINS
 
   ! END FUNCTION netcdf_read_real_1d
 
-  FUNCTION netcdf_read_real_2d(input_file, variable_name, fill_array)
+  ! FUNCTION netcdf_read_real_2d(input_file, variable_name, fill_array)
 
-    CLASS(t_input_file), INTENT(inout) :: input_file
-    CHARACTER(LEN=*),   INTENT(in)    :: variable_name
-    REAL(wp), TARGET, OPTIONAL        :: fill_array(:,:)
-    REAL(wp), POINTER                 :: netcdf_read_real_2d(:,:)
+  !   CLASS(t_input_file), INTENT(inout) :: input_file
+  !   CHARACTER(LEN=*),   INTENT(in)    :: variable_name
+  !   REAL(wp), TARGET, OPTIONAL        :: fill_array(:,:)
+  !   REAL(wp), POINTER                 :: netcdf_read_real_2d(:,:)
 
-    CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d'
+  !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d'
 
-    NULLIFY(netcdf_read_real_2d)
+  !   NULLIFY(netcdf_read_real_2d)
 
-    IF (input_file%type == 1) THEN
-      ! CALL read_2D(input_file%stream_id, on_cells, TRIM(variable_name), fill_array, netcdf_read_real_2d)
-    ELSE IF (input_file%type == 2) THEN
-      CALL finish(TRIM(routine), 'Incompatible input file type')
-    ELSE
-      CALL finish(TRIM(routine), 'Input file type not recognized.')
-    END IF
+  !   IF (input_file%type == 1) THEN
+  !     CALL read_2D(input_file%stream_id, on_cells, TRIM(variable_name), fill_array, netcdf_read_real_2d)
+  !   ELSE IF (input_file%type == 2) THEN
+  !     CALL finish(TRIM(routine), 'Incompatible input file type')
+  !   ELSE
+  !     CALL finish(TRIM(routine), 'Input file type not recognized.')
+  !   END IF
 
-  END FUNCTION netcdf_read_real_2d
+  ! END FUNCTION netcdf_read_real_2d
 
   ! FUNCTION netcdf_read_real_2d_time(input_file, variable_name, fill_array, &
   !   start_time_step, end_time_step)
@@ -1481,30 +1437,30 @@ CONTAINS
 
   ! END FUNCTION netcdf_read_real_2d_1lev_1time
 
-  FUNCTION netcdf_read_real_2d_extdim(input_file, variable_name, fill_array, &
-    start_extdim, end_extdim, extdim_name)
+  ! FUNCTION netcdf_read_real_2d_extdim(input_file, variable_name, fill_array, &
+  !   start_extdim, end_extdim, extdim_name)
 
-    CLASS(t_input_file),         INTENT(inout) :: input_file
-    CHARACTER(LEN=*),           INTENT(in)    :: variable_name
-    REAL(wp), TARGET, OPTIONAL                :: fill_array(:,:,:)
-    INTEGER, OPTIONAL,          INTENT(in)    :: start_extdim, end_extdim
-    CHARACTER(LEN=*), OPTIONAL, INTENT(in)    :: extdim_name
-    REAL(wp), POINTER                         :: netcdf_read_real_2d_extdim(:,:,:)
+  !   CLASS(t_input_file),         INTENT(inout) :: input_file
+  !   CHARACTER(LEN=*),           INTENT(in)    :: variable_name
+  !   REAL(wp), TARGET, OPTIONAL                :: fill_array(:,:,:)
+  !   INTEGER, OPTIONAL,          INTENT(in)    :: start_extdim, end_extdim
+  !   CHARACTER(LEN=*), OPTIONAL, INTENT(in)    :: extdim_name
+  !   REAL(wp), POINTER                         :: netcdf_read_real_2d_extdim(:,:,:)
 
-    CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d_extdim'
+  !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d_extdim'
 
-    NULLIFY(netcdf_read_real_2d_extdim)
+  !   NULLIFY(netcdf_read_real_2d_extdim)
 
-    IF (input_file%type == 1) THEN
-      ! CALL read_2D_extdim(input_file%stream_id, on_cells, TRIM(variable_name), fill_array, netcdf_read_real_2d_extdim, &
-      !                     start_extdim=start_extdim, end_extdim=end_extdim, extdim_name=extdim_name)
-    ELSE IF (input_file%type == 2) THEN
-      CALL finish(TRIM(routine), 'Incompatible input file type')
-    ELSE
-      CALL finish(TRIM(routine), 'Input file type not recognized.')
-    END IF
+  !   IF (input_file%type == 1) THEN
+  !     CALL read_2D_extdim(input_file%stream_id, on_cells, TRIM(variable_name), fill_array, netcdf_read_real_2d_extdim, &
+  !                         start_extdim=start_extdim, end_extdim=end_extdim, extdim_name=extdim_name)
+  !   ELSE IF (input_file%type == 2) THEN
+  !     CALL finish(TRIM(routine), 'Incompatible input file type')
+  !   ELSE
+  !     CALL finish(TRIM(routine), 'Input file type not recognized.')
+  !   END IF
 
-  END FUNCTION netcdf_read_real_2d_extdim
+  ! END FUNCTION netcdf_read_real_2d_extdim
 
   ! FUNCTION netcdf_read_int_2d(input_file, variable_name, fill_array)
 
@@ -1547,25 +1503,25 @@ CONTAINS
 
   ! END FUNCTION netcdf_file_has_dim
 
-  LOGICAL FUNCTION netcdf_file_has_var(input_file, varname)
+  ! LOGICAL FUNCTION netcdf_file_has_var(input_file, varname)
 
-    CLASS(t_input_file), INTENT(in) :: input_file
-    CHARACTER(LEN=*),    INTENT(in) :: varname
+  !   CLASS(t_input_file), INTENT(in) :: input_file
+  !   CHARACTER(LEN=*),    INTENT(in) :: varname
 
-    INTEGER :: varid, status
+  !   INTEGER :: varid, status
 
-    CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_file_has_var'
+  !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_file_has_var'
 
-    ! IF (my_process_is_stdio()) THEN
-    !   IF(.NOT. input_file%is_open) CALL finish(TRIM(routine), 'NetCDF file not open')
+  !   IF (my_process_is_stdio()) THEN
+  !     IF(.NOT. input_file%is_open) CALL finish(TRIM(routine), 'NetCDF file not open')
 
-    !   status = nf90_inq_varid(input_file%file_id, TRIM(varname), varid)
-    !   netcdf_file_has_var = (status == NF90_NOERR)
-    ! END IF
+  !     status = nf90_inq_varid(input_file%file_id, TRIM(varname), varid)
+  !     netcdf_file_has_var = (status == NF90_NOERR)
+  !   END IF
 
-    ! CALL p_bcast(netcdf_file_has_var, p_io, mpi_comm)
+  !   CALL p_bcast(netcdf_file_has_var, p_io, mpi_comm)
 
-  END FUNCTION netcdf_file_has_var
+  ! END FUNCTION netcdf_file_has_var
 
   ! INTEGER FUNCTION netcdf_file_get_dimlen(input_file, dimname)
 
@@ -1590,226 +1546,20 @@ CONTAINS
 END MODULE mo_jsb_io_netcdf_iface
 
 !------------------------------------------------------------------------------------------------------------
-!> Contains interfaces to thermodynamic functions from ICON
-!>
-!> Thermodynamic function interfaces for ICON-Land
-!>
-!> QUINCY standalone: hardcoded to use NWP (see 'i_atmo_physics') and DWD coefficients (i.e., parameter values)
-!>
-!> This module provides thermodynamic function interfaces that allow ICON-Land to access
-!> thermodynamic functions from different atmospheric physics packages (NWP or AES) in a unified way.
-!>
-!> The module serves as an abstraction layer that:
-!> - Allows runtime switching between NWP and AES physics implementations
-!> - Maintains compatibility with different atmospheric forcing configurations
-!> - Provides GPU-accelerated thermodynamic calculations
-!> - Ensures consistency between land and atmosphere thermodynamic calculations
-!>
-!> Note for `sat_pres_mixed`: If the input temperature is outside the valid range, the function returns -1.0_wp.
-!>
-MODULE mo_jsb_thermo_iface
+!> Contains interfaces to ICON convect_tables
+!
+MODULE mo_jsb_convect_tables_iface
 
-  USE mo_kind,               ONLY: wp
-  USE mo_physical_constants, ONLY: tmelt, rdv
-
-  USE mo_aes_thermo, ONLY:                        &
-    & potential_temperature,                      &
-    & sat_pres_water_aes    => sat_pres_water,    &
-    & sat_pres_ice_aes      => sat_pres_ice,      &
-    & specific_humidity_aes => specific_humidity
-  USE mo_thdyn_functions, ONLY:                   &
-    & sat_pres_water_nwp    => sat_pres_water,    &
-    & sat_pres_ice_nwp      => sat_pres_ice,      &
-    & specific_humidity_nwp => spec_humi
+  USE mo_kind,                 ONLY: wp
+  USE mo_aes_convect_tables,   ONLY: init_convect_tables, tlucua, jptlucu1, jptlucu2
 
   IMPLICIT NONE
-  PUBLIC :: potential_temperature, &
-    &       sat_pres_water, sat_pres_ice, sat_pres_mixed, specific_humidity
+  PRIVATE
 
-  INTEGER, PARAMETER :: iaes           =  2 !   - AES physics
-  INTEGER, PARAMETER :: inwp           =  3 !   - NWP physics
+  PUBLIC :: init_convect_tables, tlucua, jptlucu1, jptlucu2
 
-  INTEGER :: i_atmo_physics = inwp             !< Atmospheric physics package in use for thermodynamic functions (iaes or inwp)
-  ! INTEGER :: i_atmo_physics = 0             !< Atmospheric physics package in use for thermodynamic functions (iaes or inwp)
-  LOGICAL :: l_aes_convect_tables = .FALSE. !< Use convection tables for AES physics?
+  CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_convect_tables_iface'
 
-  !$ACC DECLARE COPYIN(i_atmo_physics, l_aes_convect_tables)
+! CONTAINS
 
-  CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_thermo_iface'
-
-CONTAINS
-
-  !> Initialize the thermodynamic interface
-  !>
-  !> This subroutine initializes the thermodynamic interface by determining
-  !> which atmospheric physics package to use for thermodynamic calculations.
-  !> It sets the internal i_atmo_physics flag and updates GPU device memory
-  !> for OpenACC acceleration.
-  !>
-  !> is_standalone Flag to indicate standalone mode. If .TRUE., the standalone model will use
-  !>               the thermodynamic functions from NWP physics by default.
-  !>               Set `iforcing = iaes = 2` in `run_nml` to switch to AES functions.
-  !>               If, for standalone runs, `iforcing` is not set in the namelist (i.e. = 0 = default)
-  !>               or is anything else than iaes=2 for standalone runs, the NWP functions will be used.
-  !>
-  !> This subroutine must be called before using any thermodynamic functions
-  !> Terminates execution with error for unsupported forcing types
-  !>
-  ! SUBROUTINE init_jsb_thermo_iface(is_standalone)
-
-  !   LOGICAL, INTENT(IN) :: is_standalone
-
-  !   INTEGER :: iforcing_local
-
-  !   CHARACTER(len=*), PARAMETER :: routine = modname//':init_jsb_thermo_iface'
-
-  !   IF (is_standalone) THEN
-  !     SELECT CASE (iforcing)
-  !     CASE (iaes)
-  !       iforcing_local = iaes
-  !     CASE (inwp)
-  !       iforcing_local = inwp
-  !     CASE DEFAULT
-  !       iforcing_local = inwp
-  !     END SELECT
-  !     iforcing = 0 ! Reset iforcing to 0 (default; no atmosphere) for standalone model
-  !   ELSE
-  !     iforcing_local = iforcing
-  !   END IF
-
-  !   IF (iforcing_local /= inwp .AND. iforcing_local /= iaes) THEN
-  !       CALL finish(routine, 'Unsupported value of iforcing_local: '//TRIM(int2string(iforcing_local))// &
-  !         & '. Supported values are '//TRIM(int2string(inwp))//' (NWP physics) and '// &
-  !         & TRIM(int2string(iaes))//' (AES physics).')
-  !   END IF
-
-  !   IF (iforcing_local == inwp) THEN
-  !     i_atmo_physics = inwp ! NWP physics
-  !     l_aes_convect_tables = .FALSE.
-  !     IF (is_standalone) THEN
-  !       CALL init_satpres_coeffs(atm_phy_nwp_config(1)%itype_satpres_coeffs)
-  !     END IF
-  !     CALL message(routine, 'Using thermodynamic functions from NWP physics')
-  !     IF (atm_phy_nwp_config(1)%itype_satpres_coeffs == 1) THEN
-  !       CALL message(routine, '... using old coefficients inherited from the COSMO model')
-  !     ELSE IF (atm_phy_nwp_config(1)%itype_satpres_coeffs == 2) THEN
-  !       CALL message(routine, '... using more accurate coefficients used in IFS')
-  !     ELSE
-  !       CALL finish(routine, 'Unsupported value for itype_satpres_coeffs:'// &
-  !         & TRIM(int2string(atm_phy_nwp_config(1)%itype_satpres_coeffs)))
-  !     END IF
-  !   ELSE IF (iforcing_local == iaes) THEN
-  !     i_atmo_physics = iaes ! AES physics
-  !     l_aes_convect_tables = .NOT. aes_vdf_config(1)%use_tmx ! Don't use convect_tables with tmx
-  !     IF (n_dom >= 2) THEN
-  !       IF (ANY(aes_vdf_config(2:n_dom)%use_tmx .EQV. l_aes_convect_tables)) THEN
-  !         CALL finish(routine, 'Inconsistent aes_vdf_config%use_tmx across domains')
-  !       END IF
-  !     END IF
-  !     IF (l_aes_convect_tables) THEN
-  !       CALL message(routine, 'Using thermodynamic functions from AES physics (with convect_tables)')
-  !       IF (is_standalone) THEN
-  !         CALL init_aes_convect_tables()
-  !       END IF
-  !     ELSE
-  !       CALL message(routine, 'Using thermodynamic functions from AES physics (with aes_thermo)')
-  !     END IF
-  !   ELSE
-  !     CALL finish(routine, 'Unsupported value of iforcing: '//TRIM(int2string(iforcing_local)))
-  !   END IF
-
-  !   ! Update device copies of i_atmo_physics and l_aes_convect_tables so that GPU-accelerated routines
-  !   ! use the correct atmospheric physics configuration and convection table flag.
-  !   !$ACC UPDATE DEVICE(i_atmo_physics, l_aes_convect_tables)
-
-  ! END SUBROUTINE init_jsb_thermo_iface
-
-#ifndef _OPENACC
-ELEMENTAL &
-#endif
-  FUNCTION sat_pres_water(temp) RESULT(esat)
-
-    REAL(wp), INTENT(IN) :: temp ! Temperature [K]
-    REAL(wp) :: esat             ! Saturation vapor pressure over water [Pa]
-
-    !$ACC ROUTINE SEQ
-
-    IF (i_atmo_physics == inwp) THEN
-      esat = sat_pres_water_nwp(temp)
-    ELSE IF (i_atmo_physics == iaes) THEN
-      esat = sat_pres_water_aes(temp)
-    END IF
-
-  END FUNCTION sat_pres_water
-
-#ifndef _OPENACC
-ELEMENTAL &
-#endif
-  FUNCTION sat_pres_ice(temp) RESULT(esat)
-
-    REAL(wp), INTENT(IN) :: temp !< Temperature [K]
-    REAL(wp) :: esat             !< Saturation vapor pressure over ice [Pa]
-
-    !$ACC ROUTINE SEQ
-
-    IF (i_atmo_physics == inwp) THEN
-      esat = sat_pres_ice_nwp(temp)
-    ELSE IF (i_atmo_physics == iaes) THEN
-      esat = sat_pres_ice_aes(temp)
-    END IF
-
-  END FUNCTION sat_pres_ice
-
-#ifndef _OPENACC
-ELEMENTAL &
-#endif
-  FUNCTION sat_pres_mixed(temp) RESULT(esat)
-
-    REAL(wp), INTENT(IN) :: temp !< Temperature [K]
-    REAL(wp) :: esat             !< Saturation vapor pressure over water/ice [Pa]
-
-    ! INTEGER :: it
-
-    !$ACC ROUTINE SEQ
-
-    ! IF (l_aes_convect_tables) THEN
-    !   it = NINT(temp * 1000._wp)
-    !   ! NOTE convection tables work within [50,400] Kelvin
-
-    !   IF (it >= jptlucu1 .AND. it <= jptlucu2) THEN
-    !     esat = tlucua(it) / rdv
-    !   ELSE
-    !     esat = -1.0_wp ! Return a clearly invalid value
-    !   END IF
-    ! ELSE
-      IF (temp >= tmelt .AND. temp <= 400._wp) THEN
-        esat = sat_pres_water(temp)
-      ELSE IF (temp < tmelt .AND. temp >= 50._wp) THEN
-        esat = sat_pres_ice(temp)
-      ELSE
-        esat = -1.0_wp ! Return a clearly invalid value
-      END IF
-    ! END IF
-
-  END FUNCTION sat_pres_mixed
-
-#ifndef _OPENACC
-ELEMENTAL &
-#endif
-  FUNCTION specific_humidity(pvapor, ptotal)
-
-    REAL (wp), INTENT(IN)  :: ptotal            !< Total pressure [Pa]
-    REAL (wp), INTENT(IN)  :: pvapor            !< Vapor pressure [Pa]
-    REAL (wp)              :: specific_humidity !< Specific humidity [kg/kg]
-
-    !$ACC ROUTINE SEQ
-
-    IF (i_atmo_physics == inwp) THEN
-      specific_humidity = specific_humidity_nwp(pvapor, ptotal)
-    ELSE IF (i_atmo_physics == iaes) THEN
-      specific_humidity = specific_humidity_aes(pvapor, ptotal)
-    END IF
-
-  END FUNCTION specific_humidity
-
-END MODULE mo_jsb_thermo_iface
+END MODULE mo_jsb_convect_tables_iface

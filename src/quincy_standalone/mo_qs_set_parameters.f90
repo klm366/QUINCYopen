@@ -3,7 +3,7 @@
 !> QUINCY standalone
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: https://doi.org/10.17871/quincy-model-2019
 !> Authors: AUTHORS.md
@@ -24,12 +24,12 @@ MODULE mo_qs_set_parameters
 
   !-----------------------------------------------------------------------------------------------------
   !> QUINCY process parameter values from file parameter_slm_run.list - replacing the values from mo_PROC_constants
-  !!
+  !! 
   !-----------------------------------------------------------------------------------------------------
   TYPE t_parameters_slm_from_file
     !LOGICAL            :: active   ! de/activate this TYPE (this is non-functional for now 20161004)
-    CHARACTER(LEN=30)  :: filename = 'parameter_slm_run.list'                 ! filename
-    ! lnd_q_assimi_nml
+    CHARACTER(LEN=30)  :: filename = 'parameter_slm_run.list'                 ! filename 
+    ! ASSIMILATION_CTL
     REAL(wp)           :: jmax2n
     REAL(wp)           :: vcmax2n
     REAL(wp)           :: pepc2n
@@ -68,10 +68,9 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: kn
     REAL(wp)           :: soa_b
     REAL(wp)           :: soa_t_s
-    ! lnd_q_pheno_nml
+    ! PHENOLOGY_CTL
     REAL(wp)           :: gdd_t_air_threshold
-    REAL(wp)           :: k_leafon_canopy
-    ! jsb_rad_nml
+    ! RADIATION_CTL
     REAL(wp)           :: kbl0_vis
     REAL(wp)           :: kdf0_vis
     REAL(wp)           :: kbl0_nir
@@ -80,7 +79,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: k_csf
     REAL(wp)           :: min_cos_zenith_angle_rad
     REAL(wp)           :: rad2ppfd
-    ! qs_shared_nml
+    ! SHARED_CTL
     REAL(wp)           :: mavg_period_weekly
     REAL(wp)           :: mavg_period_monthly
     REAL(wp)           :: mavg_period_yearly
@@ -98,7 +97,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: mavg_period_tmic
     REAL(wp)           :: mavg_period_tgrowth
     REAL(wp)           :: mavg_period_tvegdyn
-    ! lnd_spq_nml
+    ! SPQ_CTL
     REAL(wp)           :: soil_heat_cap
     REAL(wp)           :: soil_therm_cond
     REAL(wp)           :: InterceptionEfficiency
@@ -135,7 +134,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: f_psensi_soil_silt
     REAL(wp)           :: f_psensi_soil_awc_prescribe
     REAL(wp)           :: f_psensi_bulk_density
-    ! lnd_veg_nml
+    ! VEGETATION_CTL
     REAL(wp)           :: fresp_growth
     REAL(wp)           :: fmaint_rate_base
     REAL(wp)           :: fmaint_rate_wood
@@ -190,6 +189,8 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: transform_cost_org
     REAL(wp)           :: f_nacq_nh4
     REAL(wp)           :: f_nacq_no3
+    REAL(wp)           :: vmax_symb_bnf
+    REAL(wp)           :: km_symb_bnf
     REAL(wp)           :: eta_nfixation
     REAL(wp)           :: k0_fn_chl_C3
     REAL(wp)           :: k0_fn_chl_C4
@@ -199,6 +200,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: min_lai
     REAL(wp)           :: target_lai_max
     REAL(wp)           :: max_leaf_shedding_rate
+    REAL(wp)           :: k_leafon_canopy
     REAL(wp)           :: background_mort_rate_tree
     REAL(wp)           :: background_mort_rate_grass
     REAL(wp)           :: lambda_mort_light
@@ -223,7 +225,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: k1_fruit_alloc
     REAL(wp)           :: k3_fruit_alloc
     REAL(wp)           :: k4_fruit_alloc
-    REAL(wp)           :: k1_root_alloc
+    REAL(wp)           :: w_root_lim_max
     REAL(wp)           :: leaf2root_min_ratio
     REAL(wp)           :: leaf2root_max_ratio
     REAL(wp)           :: delta_n_fraction
@@ -232,7 +234,7 @@ MODULE mo_qs_set_parameters
     REAL(wp)           :: f_mycorrhization_max
     REAL(wp)           :: rfr_ratio_toc
     REAL(wp)           :: k_r2fr_chl
-    ! lnd_sb_nml
+    ! SB_CTL
     REAL(wp)           :: tau_soluable_litter
     REAL(wp)           :: tau_metabolic_litter
     REAL(wp)           :: tau_structural_litter
@@ -419,11 +421,11 @@ MODULE mo_qs_set_parameters
 
   !-----------------------------------------------------------------------------------------------------
   !> lctlib parameter values from file parameter_slm_run.list - replacing the values from lctlib_slm_*.def file
-  !!
+  !! 
   !-----------------------------------------------------------------------------------------------------
   TYPE t_parameters_lctlib_from_file
-    !LOGICAL            :: active
-    CHARACTER(LEN=30)   :: filename = 'parameter_slm_run.list'                 ! filename
+    !LOGICAL            :: active   
+    CHARACTER(LEN=30)   :: filename = 'parameter_slm_run.list'                 ! filename 
 
     REAL(wp)            :: sla
     REAL(wp)            :: sigma_vis
@@ -458,8 +460,6 @@ MODULE mo_qs_set_parameters
     REAL(wp)            :: vmax_uptake_n
     REAL(wp)            :: vmax_uptake_p
     REAL(wp)            :: bnf_base
-    REAL(wp)            :: vmax_symb_bnf
-    REAL(wp)            :: km_symb_bnf
     ! Vegetation dynamics parameters
     REAL(wp)            :: lambda_est_light
     REAL(wp)            :: k_est_light
@@ -509,8 +509,8 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> read SLM parameter values from file
-  !!
-  !!
+  !! 
+  !! 
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE read_parameter_slm_list(this)
 
@@ -522,7 +522,7 @@ CONTAINS
     CLASS(t_parameters_slm_from_file), INTENT(inout) :: this
     ! ---------------------------
     ! 0.2 Local
-    ! lnd_q_assimi_nml
+    ! ASSIMILATION_CTL
     REAL(wp)           :: jmax2n
     REAL(wp)           :: vcmax2n
     REAL(wp)           :: pepc2n
@@ -561,10 +561,9 @@ CONTAINS
     REAL(wp)           :: kn
     REAL(wp)           :: soa_b
     REAL(wp)           :: soa_t_s
-    ! lnd_q_pheno_nml
+    ! PHENOLOGY_CTL
     REAL(wp)           :: gdd_t_air_threshold
-    REAL(wp)           :: k_leafon_canopy
-    ! jsb_rad_nml
+    ! RADIATION_CTL
     REAL(wp)           :: kbl0_vis
     REAL(wp)           :: kdf0_vis
     REAL(wp)           :: kbl0_nir
@@ -573,7 +572,7 @@ CONTAINS
     REAL(wp)           :: k_csf
     REAL(wp)           :: min_cos_zenith_angle_rad
     REAL(wp)           :: rad2ppfd
-    ! qs_shared_nml
+    ! SHARED_CTL
     REAL(wp)           :: mavg_period_weekly
     REAL(wp)           :: mavg_period_monthly
     REAL(wp)           :: mavg_period_yearly
@@ -591,7 +590,7 @@ CONTAINS
     REAL(wp)           :: mavg_period_tmic
     REAL(wp)           :: mavg_period_tgrowth
     REAL(wp)           :: mavg_period_tvegdyn
-    ! lnd_spq_nml
+    ! SPQ_CTL
     REAL(wp)           :: soil_heat_cap
     REAL(wp)           :: soil_therm_cond
     REAL(wp)           :: InterceptionEfficiency
@@ -628,7 +627,7 @@ CONTAINS
     REAL(wp)           :: f_psensi_soil_silt
     REAL(wp)           :: f_psensi_soil_awc_prescribe
     REAL(wp)           :: f_psensi_bulk_density
-    ! lnd_veg_nml
+    ! VEGETATION_CTL
     REAL(wp)           :: fresp_growth
     REAL(wp)           :: fmaint_rate_base
     REAL(wp)           :: fmaint_rate_wood
@@ -683,6 +682,8 @@ CONTAINS
     REAL(wp)           :: transform_cost_org
     REAL(wp)           :: f_nacq_nh4
     REAL(wp)           :: f_nacq_no3
+    REAL(wp)           :: vmax_symb_bnf
+    REAL(wp)           :: km_symb_bnf
     REAL(wp)           :: eta_nfixation
     REAL(wp)           :: k0_fn_chl_C3
     REAL(wp)           :: k0_fn_chl_C4
@@ -692,6 +693,7 @@ CONTAINS
     REAL(wp)           :: min_lai
     REAL(wp)           :: target_lai_max
     REAL(wp)           :: max_leaf_shedding_rate
+    REAL(wp)           :: k_leafon_canopy
     REAL(wp)           :: background_mort_rate_tree
     REAL(wp)           :: background_mort_rate_grass
     REAL(wp)           :: lambda_mort_light
@@ -716,7 +718,7 @@ CONTAINS
     REAL(wp)           :: k1_fruit_alloc
     REAL(wp)           :: k3_fruit_alloc
     REAL(wp)           :: k4_fruit_alloc
-    REAL(wp)           :: k1_root_alloc
+    REAL(wp)           :: w_root_lim_max
     REAL(wp)           :: leaf2root_min_ratio
     REAL(wp)           :: leaf2root_max_ratio
     REAL(wp)           :: delta_n_fraction
@@ -725,7 +727,7 @@ CONTAINS
     REAL(wp)           :: f_mycorrhization_max
     REAL(wp)           :: rfr_ratio_toc
     REAL(wp)           :: k_r2fr_chl
-    ! lnd_sb_nml
+    ! SB_CTL
     REAL(wp)           :: tau_soluable_litter
     REAL(wp)           :: tau_metabolic_litter
     REAL(wp)           :: tau_structural_litter
@@ -906,8 +908,8 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':read_parameter_slm_list'
 
     ! Namelist definition of section parameters
-    !
-    NAMELIST /lnd_q_assimi_nml/     &
+    ! 
+    NAMELIST /assimilation_ctl/   &
         jmax2n                    , &
         vcmax2n                   , &
         pepc2n                    , &
@@ -945,13 +947,12 @@ CONTAINS
         ka                        , &
         kn                        , &
         soa_b                     , &
-        soa_t_s
+        soa_t_s              
 
-    NAMELIST /lnd_q_pheno_nml/      &
-        gdd_t_air_threshold       , &
-        k_leafon_canopy
+    NAMELIST /phenology_ctl/      &
+        gdd_t_air_threshold
 
-    NAMELIST /jsb_rad_nml/          &
+    NAMELIST /radiation_ctl/      &
         kbl0_vis                  , &
         kdf0_vis                  , &
         kbl0_nir                  , &
@@ -961,7 +962,7 @@ CONTAINS
         min_cos_zenith_angle_rad  , &
         rad2ppfd
 
-    NAMELIST /qs_shared_nml/        &
+    NAMELIST /shared_ctl/         &
         mavg_period_weekly        , &
         mavg_period_monthly       , &
         mavg_period_yearly        , &
@@ -978,9 +979,9 @@ CONTAINS
         mavg_period_tacclim       , &
         mavg_period_tmic          , &
         mavg_period_tgrowth       , &
-        mavg_period_tvegdyn
+        mavg_period_tvegdyn       
 
-    NAMELIST /lnd_spq_nml/          &
+    NAMELIST /spq_ctl/            &  
         soil_heat_cap             , &
         soil_therm_cond           , &
         InterceptionEfficiency    , &
@@ -1016,9 +1017,9 @@ CONTAINS
         f_psensi_soil_sand        , &
         f_psensi_soil_silt        , &
         f_psensi_soil_awc_prescribe, &
-        f_psensi_bulk_density
+        f_psensi_bulk_density     
 
-    NAMELIST /lnd_veg_nml/          &
+    NAMELIST /vegetation_ctl/     &  
         fresp_growth              , &
         fmaint_rate_base          , &
         fmaint_rate_wood          , &
@@ -1073,6 +1074,8 @@ CONTAINS
         transform_cost_org        , &
         f_nacq_nh4                , &
         f_nacq_no3                , &
+        vmax_symb_bnf             , &
+        km_symb_bnf               , &
         eta_nfixation             , &
         k0_fn_chl_C3              , &
         k0_fn_chl_C4              , &
@@ -1082,6 +1085,7 @@ CONTAINS
         min_lai                   , &
         target_lai_max            , &
         max_leaf_shedding_rate    , &
+        k_leafon_canopy           , &
         background_mort_rate_tree , &
         background_mort_rate_grass, &
         lambda_mort_light         , &
@@ -1106,7 +1110,7 @@ CONTAINS
         k1_fruit_alloc            , &
         k3_fruit_alloc            , &
         k4_fruit_alloc            , &
-        k1_root_alloc             , &
+        w_root_lim_max            , &
         leaf2root_min_ratio       , &
         leaf2root_max_ratio       , &
         delta_n_fraction          , &
@@ -1116,7 +1120,7 @@ CONTAINS
         rfr_ratio_toc             , &
         k_r2fr_chl
 
-    NAMELIST /lnd_sb_nml/               &
+    NAMELIST /sb_ctl/             &
         tau_soluable_litter           , &
         tau_metabolic_litter          , &
         tau_structural_litter         , &
@@ -1286,24 +1290,24 @@ CONTAINS
         f_fast_som_cn                 , &
         k_slow_som_cn                 , &
         k_fast_som_np                 , &
-        k_slow_som_np                 , &
+        k_slow_som_np                 , & 
         f_psensi_soil_p_depth         , &
         f_psensi_soil_p_labile        , &
         f_psensi_soil_p_slow          , &
         f_psensi_soil_p_occluded      , &
         f_psensi_soil_p_primary       , &
-        f_psensi_qmax_org_fine_particle
-
+        f_psensi_qmax_org_fine_particle 
+        
 
     ! variables for reading model-options from namelist
-    !
+    ! 
     INTEGER  :: nml_handler, nml_unit, istat
 
     CALL message(TRIM(routine), 'Starting to read parameter list')
 
     ! Set defaults
-    !
-    ! lnd_q_assimi_nml
+    ! 
+    ! ASSIMILATION_CTL
     jmax2n                      = missval
     vcmax2n                     = missval
     pepc2n                      = missval
@@ -1342,10 +1346,9 @@ CONTAINS
     kn                          = missval
     soa_b                       = missval
     soa_t_s                     = missval
-    ! lnd_q_pheno_nml
+    ! PHENOLOGY_CTL
     gdd_t_air_threshold = missval
-    k_leafon_canopy             = missval
-    ! jsb_rad_nml
+    ! RADIATION_CTL
     kbl0_vis                    = missval
     kdf0_vis                    = missval
     kbl0_nir                    = missval
@@ -1354,7 +1357,7 @@ CONTAINS
     k_csf                       = missval
     min_cos_zenith_angle_rad    = missval
     rad2ppfd                    = missval
-    ! qs_shared_nml
+    ! SHARED_CTL
     mavg_period_weekly          = missval
     mavg_period_monthly         = missval
     mavg_period_yearly          = missval
@@ -1372,7 +1375,7 @@ CONTAINS
     mavg_period_tmic            = missval
     mavg_period_tgrowth         = missval
     mavg_period_tvegdyn         = missval
-    ! lnd_spq_nml
+    ! SPQ_CTL
     soil_heat_cap               = missval
     soil_therm_cond             = missval
     InterceptionEfficiency      = missval
@@ -1409,7 +1412,7 @@ CONTAINS
     f_psensi_soil_silt          = missval
     f_psensi_soil_awc_prescribe = missval
     f_psensi_bulk_density       = missval
-    ! lnd_veg_nml
+    ! VEGETATION_CTL
     fresp_growth                = missval
     fmaint_rate_base            = missval
     fmaint_rate_wood            = missval
@@ -1464,6 +1467,8 @@ CONTAINS
     transform_cost_org          = missval
     f_nacq_nh4                  = missval
     f_nacq_no3                  = missval
+    vmax_symb_bnf               = missval
+    km_symb_bnf                 = missval
     eta_nfixation               = missval
     k0_fn_chl_C3                = missval
     k0_fn_chl_C4                = missval
@@ -1473,6 +1478,7 @@ CONTAINS
     min_lai                     = missval
     target_lai_max              = missval
     max_leaf_shedding_rate      = missval
+    k_leafon_canopy             = missval
     background_mort_rate_tree   = missval
     background_mort_rate_grass  = missval
     lambda_mort_light           = missval
@@ -1497,7 +1503,7 @@ CONTAINS
     k1_fruit_alloc              = missval
     k3_fruit_alloc              = missval
     k4_fruit_alloc              = missval
-    k1_root_alloc               = missval
+    w_root_lim_max              = missval
     leaf2root_min_ratio         = missval
     leaf2root_max_ratio         = missval
     delta_n_fraction            = missval
@@ -1506,7 +1512,7 @@ CONTAINS
     f_mycorrhization_max        = missval
     rfr_ratio_toc               = missval
     k_r2fr_chl                  = missval
-    ! lnd_sb_nml
+    ! SB_CTL
     tau_soluable_litter           = missval
     tau_metabolic_litter          = missval
     tau_structural_litter         = missval
@@ -1685,88 +1691,87 @@ CONTAINS
     f_psensi_qmax_org_fine_particle = missval
 
     ! read the namelist
-    !
-    ! &lnd_q_assimi_nml
+    ! 
+    ! &ASSIMILATION_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_q_assimi_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_q_assimi_nml)
+    nml_unit = position_nml('ASSIMILATION_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, assimilation_ctl)
     CALL close_nml(nml_handler)
-    ! &lnd_q_pheno_nml
+    ! &PHENOLOGY_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_q_pheno_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_q_pheno_nml)
+    nml_unit = position_nml('PHENOLOGY_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, phenology_ctl)
     CALL close_nml(nml_handler)
-    ! &jsb_rad_nml
+    ! &RADIATION_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('jsb_rad_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, jsb_rad_nml)
+    nml_unit = position_nml('RADIATION_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, radiation_ctl)
     CALL close_nml(nml_handler)
-    ! &qs_shared_nml
+    ! &SHARED_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('qs_shared_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, qs_shared_nml)
+    nml_unit = position_nml('SHARED_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, shared_ctl)
     CALL close_nml(nml_handler)
-    ! &lnd_spq_nml
+    ! &SPQ_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_spq_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_spq_nml)
+    nml_unit = position_nml('SPQ_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, spq_ctl)
     CALL close_nml(nml_handler)
-    ! &lnd_veg_nml
+    ! &VEGETATION_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_veg_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_veg_nml)
+    nml_unit = position_nml('VEGETATION_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, vegetation_ctl)
     CALL close_nml(nml_handler)
-    ! &lnd_sb_nml
+    ! &SB_CTL
     nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_sb_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_sb_nml)
+    nml_unit = position_nml('SB_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, sb_ctl)
     CALL close_nml(nml_handler)
 
     ! pass values as read from file
-    !
-    ! lnd_q_assimi_nml
-    this%jmax2n                      = jmax2n
-    this%vcmax2n                     = vcmax2n
-    this%pepc2n                      = pepc2n
-    this%chl2n                       = chl2n
-    this%k1_fn_struc                 = k1_fn_struc
-    this%E0kc                        = E0kc
-    this%E1kc                        = E1kc
-    this%E0ko                        = E0ko
-    this%E1ko                        = E1ko
-    this%E0pcp                       = E0pcp
-    this%E1pcp                       = E1pcp
-    this%E0v                         = E0v
-    this%E1v                         = E1v
-    this%t_jmax_offset               = t_jmax_offset
-    this%t_jmax_slope                = t_jmax_slope
-    this%t_jmax_opt_min              = t_jmax_opt_min
-    this%t_jmax_opt_max              = t_jmax_opt_max
-    this%Tref_pepc                   = Tref_pepc
-    this%Tbase_pepc                  = Tbase_pepc
-    this%alpha_i                     = alpha_i
-    this%pO2                         = pO2
-    this%CiCa_default_C3             = CiCa_default_C3
-    this%CiCa_default_C4             = CiCa_default_C4
-    this%ps_it_max                   = ps_it_max
-    this%ci_max                      = ci_max
-    this%Dwv2co2_air                 = Dwv2co2_air
-    this%Dwv2co2_turb                = Dwv2co2_turb
-    this%discr_ps_a_C13              = discr_ps_a_C13
-    this%discr_ps_b_C13              = discr_ps_b_C13
-    this%discr_ps_c_C13              = discr_ps_c_C13
-    this%discr_ps_a_C14              = discr_ps_a_C14
-    this%discr_ps_b_C14              = discr_ps_b_C14
-    this%discr_ps_c_C14              = discr_ps_c_C14
-    this%discr_ps_phi                = discr_ps_phi
-    this%ka                          = ka
-    this%kn                          = kn
-    this%soa_b                       = soa_b
-    this%soa_t_s                     = soa_t_s
-    ! lnd_q_pheno_nml
+    ! 
+    ! ASSIMILATION_CTL
+    this%jmax2n                      = jmax2n          
+    this%vcmax2n                     = vcmax2n         
+    this%pepc2n                      = pepc2n          
+    this%chl2n                       = chl2n           
+    this%k1_fn_struc                 = k1_fn_struc     
+    this%E0kc                        = E0kc            
+    this%E1kc                        = E1kc            
+    this%E0ko                        = E0ko            
+    this%E1ko                        = E1ko            
+    this%E0pcp                       = E0pcp           
+    this%E1pcp                       = E1pcp           
+    this%E0v                         = E0v             
+    this%E1v                         = E1v             
+    this%t_jmax_offset               = t_jmax_offset   
+    this%t_jmax_slope                = t_jmax_slope    
+    this%t_jmax_opt_min              = t_jmax_opt_min  
+    this%t_jmax_opt_max              = t_jmax_opt_max  
+    this%Tref_pepc                   = Tref_pepc       
+    this%Tbase_pepc                  = Tbase_pepc      
+    this%alpha_i                     = alpha_i         
+    this%pO2                         = pO2             
+    this%CiCa_default_C3             = CiCa_default_C3 
+    this%CiCa_default_C4             = CiCa_default_C4 
+    this%ps_it_max                   = ps_it_max       
+    this%ci_max                      = ci_max          
+    this%Dwv2co2_air                 = Dwv2co2_air     
+    this%Dwv2co2_turb                = Dwv2co2_turb    
+    this%discr_ps_a_C13              = discr_ps_a_C13  
+    this%discr_ps_b_C13              = discr_ps_b_C13  
+    this%discr_ps_c_C13              = discr_ps_c_C13  
+    this%discr_ps_a_C14              = discr_ps_a_C14  
+    this%discr_ps_b_C14              = discr_ps_b_C14  
+    this%discr_ps_c_C14              = discr_ps_c_C14  
+    this%discr_ps_phi                = discr_ps_phi    
+    this%ka                          = ka              
+    this%kn                          = kn              
+    this%soa_b                       = soa_b    
+    this%soa_t_s                     = soa_t_s    
+    ! PHENOLOGY_CTL
     this%gdd_t_air_threshold = gdd_t_air_threshold
-    this%k_leafon_canopy             = k_leafon_canopy
-    ! jsb_rad_nml
+    ! RADIATION_CTL
     this%kbl0_vis                    = kbl0_vis
     this%kdf0_vis                    = kdf0_vis
     this%kbl0_nir                    = kbl0_nir
@@ -1775,7 +1780,7 @@ CONTAINS
     this%k_csf                       = k_csf
     this%min_cos_zenith_angle_rad    = min_cos_zenith_angle_rad
     this%rad2ppfd                    = rad2ppfd
-    ! qs_shared_nml
+    ! SHARED_CTL
     this%mavg_period_weekly          = mavg_period_weekly
     this%mavg_period_monthly         = mavg_period_monthly
     this%mavg_period_yearly          = mavg_period_yearly
@@ -1793,7 +1798,7 @@ CONTAINS
     this%mavg_period_tmic            = mavg_period_tmic
     this%mavg_period_tgrowth         = mavg_period_tgrowth
     this%mavg_period_tvegdyn         = mavg_period_tvegdyn
-    ! lnd_spq_nml
+    ! SPQ_CTL
     this%soil_heat_cap               = soil_heat_cap
     this%soil_therm_cond             = soil_therm_cond
     this%InterceptionEfficiency      = InterceptionEfficiency
@@ -1830,7 +1835,7 @@ CONTAINS
     this%f_psensi_soil_silt          = f_psensi_soil_silt
     this%f_psensi_soil_awc_prescribe = f_psensi_soil_awc_prescribe
     this%f_psensi_bulk_density       = f_psensi_bulk_density
-    ! lnd_veg_nml
+    ! VEGETATION_CTL
     this%fresp_growth                = fresp_growth
     this%fmaint_rate_base            = fmaint_rate_base
     this%fmaint_rate_wood            = fmaint_rate_wood
@@ -1885,6 +1890,8 @@ CONTAINS
     this%transform_cost_org          = transform_cost_org
     this%f_nacq_nh4                  = f_nacq_nh4
     this%f_nacq_no3                  = f_nacq_no3
+    this%vmax_symb_bnf               = vmax_symb_bnf
+    this%km_symb_bnf                 = km_symb_bnf
     this%eta_nfixation               = eta_nfixation
     this%k0_fn_chl_C3                = k0_fn_chl_C3
     this%k0_fn_chl_C4                = k0_fn_chl_C4
@@ -1894,6 +1901,7 @@ CONTAINS
     this%min_lai                     = min_lai
     this%target_lai_max              = target_lai_max
     this%max_leaf_shedding_rate      = max_leaf_shedding_rate
+    this%k_leafon_canopy             = k_leafon_canopy
     this%background_mort_rate_tree   = background_mort_rate_tree
     this%background_mort_rate_grass  = background_mort_rate_grass
     this%lambda_mort_light           = lambda_mort_light
@@ -1918,16 +1926,16 @@ CONTAINS
     this%k1_fruit_alloc              = k1_fruit_alloc
     this%k3_fruit_alloc              = k3_fruit_alloc
     this%k4_fruit_alloc              = k4_fruit_alloc
-    this%k1_root_alloc               = k1_root_alloc
+    this%w_root_lim_max              = w_root_lim_max
     this%leaf2root_min_ratio         = leaf2root_min_ratio
     this%leaf2root_max_ratio         = leaf2root_max_ratio
     this%delta_n_fraction            = delta_n_fraction
     this%delta_n_leaf                = delta_n_leaf
-    this%f_myc_exudation_max         = f_myc_exudation_max
+    this%f_myc_exudation_max         = f_myc_exudation_max 
     this%f_mycorrhization_max        = f_mycorrhization_max
     this%rfr_ratio_toc               = rfr_ratio_toc
     this%k_r2fr_chl                  = k_r2fr_chl
-    ! lnd_sb_nml
+    ! SB_CTL
     this%tau_soluable_litter           = tau_soluable_litter
     this%tau_metabolic_litter          = tau_metabolic_litter
     this%tau_structural_litter         = tau_structural_litter
@@ -2062,7 +2070,7 @@ CONTAINS
     this%fnit_nmin                     = fnit_nmin
     this%fleach_nh4                    = fleach_nh4
     this%fleach_po4                    = fleach_po4
-    this%km_asymb_bnf                  = km_asymb_bnf
+    this%km_asymb_bnf                  = km_asymb_bnf 
     this%vmax_asymb_bnf                = vmax_asymb_bnf
     this%eta_mic_uptake_nh4            = eta_mic_uptake_nh4
     this%eta_mic_uptake_no3            = eta_mic_uptake_no3
@@ -2094,7 +2102,7 @@ CONTAINS
     this%vmax_uptake_norg              = vmax_uptake_norg
     this%k_fast_som_cn_max             = k_fast_som_cn_max
     this%k_fast_som_cn_min             = k_fast_som_cn_min
-    this%f_fast_som_cn                 = f_fast_som_cn
+    this%f_fast_som_cn                 = f_fast_som_cn 
     this%k_slow_som_cn                 = k_slow_som_cn
     this%k_fast_som_np                 = k_fast_som_np
     this%k_slow_som_np                 = k_slow_som_np
@@ -2110,15 +2118,15 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> replace hard coded SLM parameter values with values from file
-  !!
-  !!
+  !! 
+  !! 
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE set_parameter_slm_values_with_list_values(this, model)
 
     USE mo_jsb_math_constants,              ONLY: one_day, one_year, eps8
     USE mo_q_assimi_parameters
     USE mo_q_assimi_constants,              ONLY: Dwv2co2_air, Dwv2co2_turb
-    USE mo_q_pheno_parameters
+    USE mo_q_pheno_parameters,              ONLY: gdd_t_air_threshold
     USE mo_rad_parameters
     USE mo_jsb_physical_constants,          ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero
     USE mo_lnd_time_averages                ! includes the mavg_period_* parameters
@@ -2149,7 +2157,7 @@ CONTAINS
 
 
     !> 1.0 read parameter values from file
-    !!
+    !! 
     CALL this%read_param
 
 
@@ -2161,14 +2169,14 @@ CONTAINS
 
 
     !> 3.0 replace parameter values from mo_PROC_constants for parameters provided by parameter_slm_run.list
-    !!
-    !!
+    !! 
+    !! 
     !! routine:  SUBROUTINE Set_quincy_parameter_value(nml_abs_val, nml_prop_chng, proportional, def_val)
     !!    CALL Set_quincy_parameter_value(this%xyz, &         ! or "this%xyz */+- any other parameter"
     !!                                    this%xyz, &         ! just the parameter as defined in the namelist parameter_slm_run.list
     !!                                    "parameter name", proportional_parameter_changes, &
     !!                                    xyz)                ! the original/default parameter variable as declared in mo_PROC_constants
-    !!
+    !! 
     !!
     !! routine: SUBROUTINE Modify_quincy_namelist_parameter(nml_param_factor, param_name, nml_param)
     !!    CALL Modify_quincy_namelist_parameter(this%f_psensi_nmlp, &       ! factor for multiplication of the namelist parameter defined in the namelist parameter_slm_run.list
@@ -2176,134 +2184,134 @@ CONTAINS
     !!                                          dsl4jsb_Config(PROC_)%nmlp) ! namelist parameter from the process config it is stored in
     !!
 
-    ! lnd_q_assimi_nml
+    ! ASSIMILATION_CTL
     CALL Set_quincy_parameter_value(this%jmax2n / 4.0_wp, &
                                     this%jmax2n, &
                                     "jmax2n", proportional_parameter_changes, &
                                     jmax2n)
-
+                                    
     CALL Set_quincy_parameter_value(this%vcmax2n, &
                                     this%vcmax2n, &
                                     "vcmax2n", proportional_parameter_changes, &
                                     vcmax2n)
-
+                                    
     CALL Set_quincy_parameter_value(this%pepc2n, &
                                     this%pepc2n, &
                                     "pepc2n", proportional_parameter_changes, &
                                     pepc2n)
-
+                                    
     CALL Set_quincy_parameter_value(this%chl2n / 39.8_wp, &
                                     this%chl2n, &
                                     "chl2n", proportional_parameter_changes, &
                                     chl2n)
-
+                                    
     CALL Set_quincy_parameter_value(this%k1_fn_struc * molar_mass_N / 1000000._wp, &
                                     this%k1_fn_struc, &
                                     "k1_fn_struc", proportional_parameter_changes, &
                                     k1_fn_struc)
-
+                                    
     CALL Set_quincy_parameter_value(this%E0kc, &
                                     this%E0kc, &
                                     "E0kc", proportional_parameter_changes, &
                                     E0kc)
-
+                                    
     CALL Set_quincy_parameter_value(this%E1kc, &
                                     this%E1kc, &
                                     "E1kc", proportional_parameter_changes, &
                                     E1kc)
-
+                                    
     CALL Set_quincy_parameter_value(this%E0ko, &
                                     this%E0ko, &
                                     "E0ko", proportional_parameter_changes, &
                                     E0ko)
-
+                                    
     CALL Set_quincy_parameter_value(this%E1ko, &
                                     this%E1ko, &
                                     "E1ko", proportional_parameter_changes, &
                                     E1ko)
-
+                                    
     CALL Set_quincy_parameter_value(this%E0pcp, &
                                     this%E0pcp, &
                                     "E0pcp", proportional_parameter_changes, &
                                     E0pcp)
-
+                                    
     CALL Set_quincy_parameter_value(this%E1pcp, &
                                     this%E1pcp, &
                                     "E1pcp", proportional_parameter_changes, &
                                     E1pcp)
-
+                                    
     CALL Set_quincy_parameter_value(this%E0v, &
                                     this%E0v, &
                                     "E0v", proportional_parameter_changes, &
                                     E0v)
-
+                                    
     CALL Set_quincy_parameter_value(this%E1v, &
                                     this%E1v, &
                                     "E1v", proportional_parameter_changes, &
                                     E1v)
-
+                                    
     CALL Set_quincy_parameter_value(this%t_jmax_offset, &
                                     this%t_jmax_offset, &
                                     "t_jmax_offset", proportional_parameter_changes, &
                                     t_jmax_offset)
-
+                                    
     CALL Set_quincy_parameter_value(this%t_jmax_slope, &
                                     this%t_jmax_slope, &
                                     "t_jmax_slope", proportional_parameter_changes, &
                                     t_jmax_slope)
-
+    
     ! is always recalculated in case any of its dependencies has changed
     t_jmax_opt_min = t_jmax_offset   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(t_jmax_offset, &   ! default: t_jmax_opt_min = t_jmax_offset | t_jmax_opt_min may be changed only via proportional changes
                                     this%t_jmax_opt_min, &
                                     "t_jmax_opt_min", proportional_parameter_changes, &
                                     t_jmax_opt_min)
-
+                                    
     CALL Set_quincy_parameter_value(this%t_jmax_opt_max, &
                                     this%t_jmax_opt_max, &
                                     "t_jmax_opt_max", proportional_parameter_changes, &
                                     t_jmax_opt_max)
-
+                                    
     CALL Set_quincy_parameter_value(this%Tref_pepc, &
                                     this%Tref_pepc, &
                                     "Tref_pepc", proportional_parameter_changes, &
                                     Tref_pepc)
-
+                                    
     CALL Set_quincy_parameter_value(this%Tbase_pepc, &
                                     this%Tbase_pepc, &
                                     "Tbase_pepc", proportional_parameter_changes, &
                                     Tbase_pepc)
-
+                                    
     CALL Set_quincy_parameter_value(this%alpha_i, &
                                     this%alpha_i, &
                                     "alpha_i", proportional_parameter_changes, &
                                     alpha_i)
-
+                                    
     CALL Set_quincy_parameter_value(this%pO2, &
                                     this%pO2, &
                                     "pO2", proportional_parameter_changes, &
                                     pO2)
-
+                                    
     CALL Set_quincy_parameter_value(this%CiCa_default_C3, &
                                     this%CiCa_default_C3, &
                                     "CiCa_default_C3", proportional_parameter_changes, &
                                     CiCa_default_C3)
-
+                                    
     CALL Set_quincy_parameter_value(this%CiCa_default_C4, &
                                     this%CiCa_default_C4, &
                                     "CiCa_default_C4", proportional_parameter_changes, &
                                     CiCa_default_C4)
-
+                                    
     CALL Set_quincy_parameter_value(this%ps_it_max, &
                                     this%ps_it_max, &
                                     "ps_it_max", proportional_parameter_changes, &
                                     ps_it_max)
-
+                                    
     CALL Set_quincy_parameter_value(this%ci_max, &
                                     this%ci_max, &
                                     "ci_max", proportional_parameter_changes, &
                                     ci_max)
-
+                                    
     ! current assumption: parameters from mo_jsb_physical_constants are not modified (this%Dwv & this%Dco2)
     CALL Set_quincy_parameter_value(Dwv / Dco2, &                       ! default: Dwv2co2_air = Dwv / Dco2 | Dwv2co2_air may be changed only via proportional changes
                                     this%Dwv2co2_air, &
@@ -2315,90 +2323,85 @@ CONTAINS
                                     this%Dwv2co2_turb, &
                                     "Dwv2co2_turb", proportional_parameter_changes, &
                                     Dwv2co2_turb)
-
+                                    
     CALL Set_quincy_parameter_value(this%discr_ps_a_C13, &
                                     this%discr_ps_a_C13, &
                                     "discr_ps_a_C13", proportional_parameter_changes, &
                                     discr_ps_a_C13)
-
+                                    
     CALL Set_quincy_parameter_value(this%discr_ps_b_C13, &
                                     this%discr_ps_b_C13, &
                                     "discr_ps_b_C13", proportional_parameter_changes, &
                                     discr_ps_b_C13)
-
+                                    
     CALL Set_quincy_parameter_value(this%discr_ps_c_C13, &
                                     this%discr_ps_c_C13, &
                                     "discr_ps_c_C13", proportional_parameter_changes, &
                                     discr_ps_c_C13)
-
+    
     ! is always recalculated in case any of its dependencies has changed
     discr_ps_a_C14 = 1.97_wp * discr_ps_a_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_a_C14 * discr_ps_a_C13, &
                                     this%discr_ps_a_C14, &
                                     "discr_ps_a_C14", proportional_parameter_changes, &
                                     discr_ps_a_C14)
-
+    
     ! is always recalculated in case any of its dependencies has changed
     discr_ps_b_C14 = 1.89_wp * discr_ps_b_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_b_C14 * discr_ps_b_C13, &
                                     this%discr_ps_b_C14, &
                                     "discr_ps_b_C14", proportional_parameter_changes, &
                                     discr_ps_b_C14)
-
+    
     ! is always recalculated in case any of its dependencies has changed
     discr_ps_c_C14 = 1.89_wp * discr_ps_c_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_c_C14 * discr_ps_c_C13, &
                                     this%discr_ps_c_C14, &
                                     "discr_ps_c_C14", proportional_parameter_changes, &
                                     discr_ps_c_C14)
-
+                                    
     CALL Set_quincy_parameter_value(this%discr_ps_phi, &
                                     this%discr_ps_phi, &
                                     "discr_ps_phi", proportional_parameter_changes, &
                                     discr_ps_phi)
-
+                                    
     CALL Set_quincy_parameter_value(this%ka, &
                                     this%ka, &
                                     "ka", proportional_parameter_changes, &
                                     ka)
-
+                                    
     CALL Set_quincy_parameter_value(this%kn, &
                                     this%kn, &
                                     "kn", proportional_parameter_changes, &
                                     kn)
-
+                                    
     CALL Set_quincy_parameter_value(this%soa_b, &
                                     this%soa_b, &
                                     "soa_b", proportional_parameter_changes, &
                                     soa_b)
-
+                                    
     CALL Set_quincy_parameter_value(this%soa_t_s, &
                                     this%soa_t_s, &
                                     "soa_t_s", proportional_parameter_changes, &
                                     soa_t_s)
 
-    ! lnd_q_pheno_nml
+    ! PHENOLOGY_CTL
     CALL Set_quincy_parameter_value(this%gdd_t_air_threshold + Tzero, &
                                     this%gdd_t_air_threshold, &
                                     "gdd_t_air_threshold", proportional_parameter_changes, &
                                     gdd_t_air_threshold)
 
-    CALL Set_quincy_parameter_value(this%k_leafon_canopy, &
-                                    this%k_leafon_canopy, &
-                                    "k_leafon_canopy", proportional_parameter_changes, &
-                                    k_leafon_canopy)
-
-    ! jsb_rad_nml
+    ! RADIATION_CTL
     CALL Set_quincy_parameter_value(this%kbl0_vis, &
                                     this%kbl0_vis, &
                                     "kbl0_vis", proportional_parameter_changes, &
                                     kbl0_vis)
-
+    
     CALL Set_quincy_parameter_value(this%kdf0_vis, &
                                     this%kdf0_vis, &
                                     "kdf0_vis", proportional_parameter_changes, &
                                     kdf0_vis)
-
+    
     CALL Set_quincy_parameter_value(this%kbl0_nir, &
                                     this%kbl0_nir, &
                                     "kbl0_nir", proportional_parameter_changes, &
@@ -2408,12 +2411,12 @@ CONTAINS
                                     this%kdf0_nir, &
                                     "kdf0_nir", proportional_parameter_changes, &
                                     kdf0_nir)
-
+    
     CALL Set_quincy_parameter_value(this%rho2sbeta, &
                                     this%rho2sbeta, &
                                     "rho2sbeta", proportional_parameter_changes, &
                                     rho2sbeta)
-
+    
     CALL Set_quincy_parameter_value(this%k_csf, &
                                     this%k_csf, &
                                     "k_csf", proportional_parameter_changes, &
@@ -2423,23 +2426,23 @@ CONTAINS
                                     this%min_cos_zenith_angle_rad, &
                                     "min_cos_zenith_angle_rad", proportional_parameter_changes, &
                                     min_cos_zenith_angle_rad)
-
+    
     CALL Set_quincy_parameter_value(this%rad2ppfd, &
                                     this%rad2ppfd, &
                                     "rad2ppfd", proportional_parameter_changes, &
                                     rad2ppfd)
-
-    ! qs_shared_nml
+    
+    ! SHARED_CTL
     CALL Set_quincy_parameter_value(this%mavg_period_weekly, &
                                     this%mavg_period_weekly, &
                                     "mavg_period_weekly", proportional_parameter_changes, &
                                     mavg_period_weekly)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_monthly, &
                                     this%mavg_period_monthly, &
                                     "mavg_period_monthly", proportional_parameter_changes, &
                                     mavg_period_monthly)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_yearly, &
                                     this%mavg_period_yearly, &
                                     "mavg_period_yearly", proportional_parameter_changes, &
@@ -2449,12 +2452,12 @@ CONTAINS
                                     this%mavg_period_tsoa, &
                                     "mavg_period_tsoa", proportional_parameter_changes, &
                                     mavg_period_tsoa)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tuptake, &
                                     this%mavg_period_tuptake, &
                                     "mavg_period_tuptake", proportional_parameter_changes, &
                                     mavg_period_tuptake)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tlabile, &
                                     this%mavg_period_tlabile, &
                                     "mavg_period_tlabile", proportional_parameter_changes, &
@@ -2474,12 +2477,12 @@ CONTAINS
                                     this%mavg_period_tresidual, &
                                     "mavg_period_tresidual", proportional_parameter_changes, &
                                     mavg_period_tresidual)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tfrac, &
                                     this%mavg_period_tfrac, &
                                     "mavg_period_tfrac", proportional_parameter_changes, &
                                     mavg_period_tfrac)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tcnl, &
                                     this%mavg_period_tcnl, &
                                     "mavg_period_tcnl", proportional_parameter_changes, &
@@ -2489,12 +2492,12 @@ CONTAINS
                                     this%mavg_period_talloc, &
                                     "mavg_period_talloc", proportional_parameter_changes, &
                                     mavg_period_talloc)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_talloc_dynamic * 365.0_wp, &  ! default value: 30.0_wp * 365.0_wp (i.e., 30 years)
                                     this%mavg_period_talloc_dynamic, &
                                     "mavg_period_talloc_dynamic", proportional_parameter_changes, &
                                     mavg_period_talloc_dynamic)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tacclim, &
                                     this%mavg_period_tacclim, &
                                     "mavg_period_tacclim", proportional_parameter_changes, &
@@ -2504,18 +2507,18 @@ CONTAINS
                                     this%mavg_period_tmic, &
                                     "mavg_period_tmic", proportional_parameter_changes, &
                                     mavg_period_tmic)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tgrowth, &
                                     this%mavg_period_tgrowth, &
                                     "mavg_period_tgrowth", proportional_parameter_changes, &
                                     mavg_period_tgrowth)
-
+    
     CALL Set_quincy_parameter_value(this%mavg_period_tvegdyn, &
                                     this%mavg_period_tvegdyn, &
                                     "mavg_period_tvegdyn", proportional_parameter_changes, &
                                     mavg_period_tvegdyn)
 
-    ! lnd_spq_nml
+    ! SPQ_CTL
     CALL Set_quincy_parameter_value(this%soil_heat_cap, &
                                     this%soil_heat_cap, &
                                     "soil_heat_cap", proportional_parameter_changes, &
@@ -2525,12 +2528,12 @@ CONTAINS
                                     this%soil_therm_cond, &
                                     "soil_therm_cond", proportional_parameter_changes, &
                                     soil_therm_cond)
-
+    
     CALL Set_quincy_parameter_value(this%InterceptionEfficiency, &
                                     this%InterceptionEfficiency, &
                                     "InterceptionEfficiency", proportional_parameter_changes, &
                                     InterceptionEfficiency)
-
+    
     CALL Set_quincy_parameter_value(this%w_skin_max, &
                                     this%w_skin_max, &
                                     "w_skin_max", proportional_parameter_changes, &
@@ -2550,7 +2553,7 @@ CONTAINS
                                     this%height_wind, &
                                     "height_wind", proportional_parameter_changes, &
                                     height_wind)
-
+    
     CALL Set_quincy_parameter_value(this%wpot_pwp, &
                                     this%wpot_pwp, &
                                     "wpot_pwp", proportional_parameter_changes, &
@@ -2565,7 +2568,7 @@ CONTAINS
                                     this%wpot_min, &
                                     "wpot_min", proportional_parameter_changes, &
                                     wpot_min)
-
+    
     CALL Set_quincy_parameter_value(this%k_pwp_a, &
                                     this%k_pwp_a, &
                                     "k_pwp_a", proportional_parameter_changes, &
@@ -2580,7 +2583,7 @@ CONTAINS
                                     this%k_pwp_s, &
                                     "k_pwp_s", proportional_parameter_changes, &
                                     k_pwp_s)
-
+    
     CALL Set_quincy_parameter_value(this%k_pwp_sc, &
                                     this%k_pwp_sc, &
                                     "k_pwp_sc", proportional_parameter_changes, &
@@ -2595,7 +2598,7 @@ CONTAINS
                                     this%k_pwp_bt, &
                                     "k_pwp_bt", proportional_parameter_changes, &
                                     k_pwp_bt)
-
+    
     CALL Set_quincy_parameter_value(this%k_fc_a, &
                                     this%k_fc_a, &
                                     "k_fc_a", proportional_parameter_changes, &
@@ -2610,7 +2613,7 @@ CONTAINS
                                     this%k_fc_s, &
                                     "k_fc_s", proportional_parameter_changes, &
                                     k_fc_s)
-
+    
     CALL Set_quincy_parameter_value(this%k_fc_sc, &
                                     this%k_fc_sc, &
                                     "k_fc_sc", proportional_parameter_changes, &
@@ -2625,7 +2628,7 @@ CONTAINS
                                     this%k_fc_bt, &
                                     "k_fc_bt", proportional_parameter_changes, &
                                     k_fc_bt)
-
+    
     CALL Set_quincy_parameter_value(this%k_fc_ct, &
                                     this%k_fc_ct, &
                                     "k_fc_ct", proportional_parameter_changes, &
@@ -2640,7 +2643,7 @@ CONTAINS
                                     this%k_sat_c, &
                                     "k_sat_c", proportional_parameter_changes, &
                                     k_sat_c)
-
+    
     CALL Set_quincy_parameter_value(this%k_sat_s, &
                                     this%k_sat_s, &
                                     "k_sat_s", proportional_parameter_changes, &
@@ -2655,7 +2658,7 @@ CONTAINS
                                     this%k_sat_at, &
                                     "k_sat_at", proportional_parameter_changes, &
                                     k_sat_at)
-
+    
     CALL Set_quincy_parameter_value(this%k_sat_bt, &
                                     this%k_sat_bt, &
                                     "k_sat_bt", proportional_parameter_changes, &
@@ -2675,11 +2678,11 @@ CONTAINS
                                     this%kdiff_sat_max, &
                                     "kdiff_sat_max", proportional_parameter_changes, &
                                     kdiff_sat_max)
-
+                                    
     CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_sand, &
                                           "soil_sand", &
                                           dsl4jsb_Config(SPQ_)%soil_sand)
-
+    
     CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_silt, &
                                           "soil_silt", &
                                           dsl4jsb_Config(SPQ_)%soil_silt)
@@ -2687,22 +2690,22 @@ CONTAINS
     CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_awc_prescribe, &
                                           "soil_awc_prescribe", &
                                           dsl4jsb_Config(SPQ_)%soil_awc_prescribe)
-
+                                          
     CALL Modify_quincy_namelist_parameter(this%f_psensi_bulk_density, &
                                           "bulk_density", &
                                           dsl4jsb_Config(SPQ_)%bulk_density)
 
-    ! lnd_veg_nml
+    ! VEGETATION_CTL
     CALL Set_quincy_parameter_value(this%fresp_growth, &
                                     this%fresp_growth, &
                                     "fresp_growth", proportional_parameter_changes, &
                                     fresp_growth)
-
+    
     CALL Set_quincy_parameter_value(this%fmaint_rate_base, &
                                     this%fmaint_rate_base, &
                                     "fmaint_rate_base", proportional_parameter_changes, &
                                     fmaint_rate_base)
-
+    
     ! is always recalculated in case any of its dependencies has changed
     fmaint_rate_wood = 0.25_wp * fmaint_rate_base   ! copied from mo_veg_constants
     CALL Set_quincy_parameter_value(this%fmaint_rate_wood * fmaint_rate_base, &
@@ -2714,12 +2717,12 @@ CONTAINS
                                     this%t_maint_k1, &
                                     "t_maint_k1", proportional_parameter_changes, &
                                     t_maint_k1)
-
+    
     CALL Set_quincy_parameter_value(this%t_maint_k2, &
                                     this%t_maint_k2, &
                                     "t_maint_k2", proportional_parameter_changes, &
                                     t_maint_k2)
-
+    
     CALL Set_quincy_parameter_value(this%t_maint_k3, &
                                     this%t_maint_k3, &
                                     "t_maint_k3", proportional_parameter_changes, &
@@ -2729,12 +2732,12 @@ CONTAINS
                                     this%f_resp_acclim, &
                                     "f_resp_acclim", proportional_parameter_changes, &
                                     f_resp_acclim)
-
+    
     CALL Set_quincy_parameter_value(this%t_acclim_zero, &
                                     this%t_acclim_zero, &
                                     "t_acclim_zero", proportional_parameter_changes, &
                                     t_acclim_zero)
-
+    
     CALL Set_quincy_parameter_value(this%k0_fn_pepc_C3, &
                                     this%k0_fn_pepc_C3, &
                                     "k0_fn_pepc_C3", proportional_parameter_changes, &
@@ -2749,12 +2752,12 @@ CONTAINS
                                     this%jmax2vcmax_C3, &
                                     "jmax2vcmax_C3", proportional_parameter_changes, &
                                     jmax2vcmax_C3)
-
+    
     CALL Set_quincy_parameter_value(this%jmax2vcmax_C4, &
                                     this%jmax2vcmax_C4, &
                                     "jmax2vcmax_C4", proportional_parameter_changes, &
                                     jmax2vcmax_C4)
-
+    
     CALL Set_quincy_parameter_value(this%tau_labile, &
                                     this%tau_labile, &
                                     "tau_labile", proportional_parameter_changes, &
@@ -2764,12 +2767,12 @@ CONTAINS
                                     this%lambda_labile_temp, &
                                     "lambda_labile_temp", proportional_parameter_changes, &
                                     lambda_labile_temp)
-
+    
     CALL Set_quincy_parameter_value(this%k_labile_temp, &
                                     this%k_labile_temp, &
                                     "k_labile_temp", proportional_parameter_changes, &
                                     k_labile_temp)
-
+    
     CALL Set_quincy_parameter_value(this%lambda_labile_theta, &
                                     this%lambda_labile_theta, &
                                     "lambda_labile_theta", proportional_parameter_changes, &
@@ -2779,12 +2782,12 @@ CONTAINS
                                     this%k_labile_theta, &
                                     "k_labile_theta", proportional_parameter_changes, &
                                     k_labile_theta)
-
+    
     CALL Set_quincy_parameter_value(this%lambda_phiphen, &
                                     this%lambda_phiphen, &
                                     "lambda_phiphen", proportional_parameter_changes, &
                                     lambda_phiphen)
-
+    
     CALL Set_quincy_parameter_value(this%k_phiphen, &
                                     this%k_phiphen, &
                                     "k_phiphen", proportional_parameter_changes, &
@@ -2799,12 +2802,12 @@ CONTAINS
                                     this%k_phimaint, &
                                     "k_phimaint", proportional_parameter_changes, &
                                     k_phimaint)
-
+    
     CALL Set_quincy_parameter_value(this%lambda_phimaint_nut, &
                                     this%lambda_phimaint_nut, &
                                     "lambda_phimaint_nut", proportional_parameter_changes, &
                                     lambda_phimaint_nut)
-
+    
     CALL Set_quincy_parameter_value(this%k_phimaint_nut, &
                                     this%k_phimaint_nut, &
                                     "k_phimaint_nut", proportional_parameter_changes, &
@@ -2814,12 +2817,12 @@ CONTAINS
                                     this%lambda_phistore, &
                                     "lambda_phistore", proportional_parameter_changes, &
                                     lambda_phistore)
-
+    
     CALL Set_quincy_parameter_value(this%k_phistore, &
                                     this%k_phistore, &
                                     "k_phistore", proportional_parameter_changes, &
                                     k_phistore)
-
+    
     CALL Set_quincy_parameter_value(this%knut_labile, &
                                     this%knut_labile, &
                                     "knut_labile", proportional_parameter_changes, &
@@ -2829,12 +2832,12 @@ CONTAINS
                                     this%lambda_sinklim_ps, &
                                     "lambda_sinklim_ps", proportional_parameter_changes, &
                                     lambda_sinklim_ps)
-
+    
     CALL Set_quincy_parameter_value(this%k_sinklim_ps, &
                                     this%k_sinklim_ps, &
                                     "k_sinklim_ps", proportional_parameter_changes, &
                                     k_sinklim_ps)
-
+    
     CALL Set_quincy_parameter_value(this%k_cnp_sinklim_ps, &
                                     this%k_cnp_sinklim_ps, &
                                     "k_cnp_sinklim_ps", proportional_parameter_changes, &
@@ -2849,12 +2852,12 @@ CONTAINS
                                     this%fstore_leaf_max, &
                                     "fstore_leaf_max", proportional_parameter_changes, &
                                     fstore_leaf_max)
-
+    
     CALL Set_quincy_parameter_value(this%fstore_fine_root_max, &
                                     this%fstore_fine_root_max, &
                                     "fstore_fine_root_max", proportional_parameter_changes, &
                                     fstore_fine_root_max)
-
+    
     CALL Set_quincy_parameter_value(this%fstore_sap_wood_max, &
                                     this%fstore_sap_wood_max, &
                                     "fstore_sap_wood_max", proportional_parameter_changes, &
@@ -2864,12 +2867,12 @@ CONTAINS
                                     this%k_phi_interact, &
                                     "k_phi_interact", proportional_parameter_changes, &
                                     k_phi_interact)
-
+    
     CALL Set_quincy_parameter_value(this%resorp_fract_leaf, &
                                     this%resorp_fract_leaf, &
                                     "resorp_fract_leaf", proportional_parameter_changes, &
                                     resorp_fract_leaf)
-
+    
     CALL Set_quincy_parameter_value(this%resorp_fract_wood, &
                                     this%resorp_fract_wood, &
                                     "resorp_fract_wood", proportional_parameter_changes, &
@@ -2879,12 +2882,12 @@ CONTAINS
                                     this%root2leaf_cn, &
                                     "root2leaf_cn", proportional_parameter_changes, &
                                     root2leaf_cn)
-
+    
     CALL Set_quincy_parameter_value(this%wood2leaf_cn, &
                                     this%wood2leaf_cn, &
                                     "wood2leaf_cn", proportional_parameter_changes, &
                                     wood2leaf_cn)
-
+    
     CALL Set_quincy_parameter_value(this%root2leaf_np, &
                                     this%root2leaf_np, &
                                     "root2leaf_np", proportional_parameter_changes, &
@@ -2899,12 +2902,12 @@ CONTAINS
                                     this%tau_nutrient_recycling, &
                                     "tau_nutrient_recycling", proportional_parameter_changes, &
                                     tau_nutrient_recycling)
-
+    
     CALL Set_quincy_parameter_value(this%kappa_f_demand_nc, &
                                     this%kappa_f_demand_nc, &
                                     "kappa_f_demand_nc", proportional_parameter_changes, &
                                     kappa_f_demand_nc)
-
+    
     CALL Set_quincy_parameter_value(this%kappa_f_demand_pn, &
                                     this%kappa_f_demand_pn, &
                                     "kappa_f_demand_pn", proportional_parameter_changes, &
@@ -2914,7 +2917,7 @@ CONTAINS
                                     this%k_f_demand, &
                                     "k_f_demand", proportional_parameter_changes, &
                                     k_f_demand)
-
+    
     CALL Set_quincy_parameter_value(this%k_cost_symb_bnf / (molar_mass_C / molar_mass_N), &
                                     this%k_cost_symb_bnf, &
                                     "k_cost_symb_bnf", proportional_parameter_changes, &
@@ -2924,12 +2927,12 @@ CONTAINS
                                     this%k1_temp_bnf, &
                                     "k1_temp_bnf", proportional_parameter_changes, &
                                     k1_temp_bnf)
-
+    
     CALL Set_quincy_parameter_value(this%k2_temp_bnf, &
                                     this%k2_temp_bnf, &
                                     "k2_temp_bnf", proportional_parameter_changes, &
                                     k2_temp_bnf)
-
+    
     CALL Set_quincy_parameter_value(this%k3_temp_bnf, &
                                     this%k3_temp_bnf, &
                                     "k3_temp_bnf", proportional_parameter_changes, &
@@ -2944,12 +2947,12 @@ CONTAINS
                                     this%transform_cost_nh4, &
                                     "transform_cost_nh4", proportional_parameter_changes, &
                                     transform_cost_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%transform_cost_no3 / (molar_mass_C / molar_mass_N), &
                                     this%transform_cost_no3, &
                                     "transform_cost_no3", proportional_parameter_changes, &
                                     transform_cost_no3)
-
+    
     CALL Set_quincy_parameter_value(this%transform_cost_org / (molar_mass_C / molar_mass_N), &
                                     this%transform_cost_org, &
                                     "transform_cost_org", proportional_parameter_changes, &
@@ -2968,6 +2971,16 @@ CONTAINS
                                     this%f_nacq_no3, &
                                     "f_nacq_no3", proportional_parameter_changes, &
                                     f_nacq_no3)
+    
+    CALL Set_quincy_parameter_value(this%vmax_symb_bnf / (molar_mass_N / molar_mass_C) / (one_day * one_year) * 1.0e6_wp, &
+                                    this%vmax_symb_bnf, &
+                                    "vmax_symb_bnf", proportional_parameter_changes, &
+                                    vmax_symb_bnf)
+
+    CALL Set_quincy_parameter_value(this%km_symb_bnf / (molar_mass_C/molar_Mass_N), &
+                                    this%km_symb_bnf, &
+                                    "km_symb_bnf", proportional_parameter_changes, &
+                                    km_symb_bnf)
 
     CALL Set_quincy_parameter_value(this%eta_nfixation, &
                                     this%eta_nfixation, &
@@ -2983,12 +2996,12 @@ CONTAINS
                                     this%k0_fn_chl_C4, &
                                     "k0_fn_chl_C4", proportional_parameter_changes, &
                                     k0_fn_chl_C4)
-
+    
     CALL Set_quincy_parameter_value(this%k1_fn_chl_C3, &
                                     this%k1_fn_chl_C3, &
                                     "k1_fn_chl_C3", proportional_parameter_changes, &
                                     k1_fn_chl_C3)
-
+    
     CALL Set_quincy_parameter_value(this%k1_fn_chl_C4, &
                                     this%k1_fn_chl_C4, &
                                     "k1_fn_chl_C4", proportional_parameter_changes, &
@@ -2998,12 +3011,12 @@ CONTAINS
                                     this%kfn_chl, &
                                     "kfn_chl", proportional_parameter_changes, &
                                     kfn_chl)
-
+    
     CALL Set_quincy_parameter_value(this%min_lai, &
                                     this%min_lai, &
                                     "min_lai", proportional_parameter_changes, &
                                     min_lai)
-
+    
     CALL Set_quincy_parameter_value(this%target_lai_max, &
                                     this%target_lai_max, &
                                     "target_lai_max", proportional_parameter_changes, &
@@ -3013,7 +3026,12 @@ CONTAINS
                                     this%max_leaf_shedding_rate, &
                                     "max_leaf_shedding_rate", proportional_parameter_changes, &
                                     max_leaf_shedding_rate)
-
+    
+    CALL Set_quincy_parameter_value(this%k_leafon_canopy, &
+                                    this%k_leafon_canopy, &
+                                    "k_leafon_canopy", proportional_parameter_changes, &
+                                    k_leafon_canopy)
+    
     CALL Set_quincy_parameter_value(this%background_mort_rate_tree, &
                                     this%background_mort_rate_tree, &
                                     "background_mort_rate_tree", proportional_parameter_changes, &
@@ -3028,12 +3046,12 @@ CONTAINS
                                     this%lambda_mort_light, &
                                     "lambda_mort_light", proportional_parameter_changes, &
                                     lambda_mort_light)
-
+    
     CALL Set_quincy_parameter_value(this%k_mort_light, &
                                     this%k_mort_light, &
                                     "k_mort_light", proportional_parameter_changes, &
                                     k_mort_light)
-
+    
     CALL Set_quincy_parameter_value(this%lambda_est_temp, &
                                     this%lambda_est_temp, &
                                     "lambda_est_temp", proportional_parameter_changes, &
@@ -3043,17 +3061,17 @@ CONTAINS
                                     this%k_est_temp, &
                                     "k_est_temp", proportional_parameter_changes, &
                                     k_est_temp)
-
+    
     CALL Set_quincy_parameter_value(this%lambda_est_moist, &
                                     this%lambda_est_moist, &
                                     "lambda_est_moist", proportional_parameter_changes, &
                                     lambda_est_moist)
-
+    
     CALL Set_quincy_parameter_value(this%k_est_moist, &
                                     this%k_est_moist, &
                                     "k_est_moist", proportional_parameter_changes, &
                                     k_est_moist)
-
+    
     CALL Set_quincy_parameter_value(this%k2_mort_greff, &
                                     this%k2_mort_greff, &
                                     "k2_mort_greff", proportional_parameter_changes, &
@@ -3068,12 +3086,12 @@ CONTAINS
                                     this%min_greff, &
                                     "min_greff", proportional_parameter_changes, &
                                     min_greff)
-
+    
     CALL Set_quincy_parameter_value(this%max_crown_area, &
                                     this%max_crown_area, &
                                     "max_crown_area", proportional_parameter_changes, &
                                     max_crown_area)
-
+    
     CALL Set_quincy_parameter_value(this%min_diameter, &
                                     this%min_diameter, &
                                     "min_diameter", proportional_parameter_changes, &
@@ -3083,12 +3101,12 @@ CONTAINS
                                     this%k_crown_area, &
                                     "k_crown_area", proportional_parameter_changes, &
                                     k_crown_area)
-
+    
     CALL Set_quincy_parameter_value(this%k_rp, &
                                     this%k_rp, &
                                     "k_rp", proportional_parameter_changes, &
                                     k_rp)
-
+    
     CALL Set_quincy_parameter_value(this%k_fpc, &
                                     this%k_fpc, &
                                     "k_fpc", proportional_parameter_changes, &
@@ -3098,12 +3116,12 @@ CONTAINS
                                     this%fpc_max, &
                                     "fpc_max", proportional_parameter_changes, &
                                     fpc_max)
-
+    
     CALL Set_quincy_parameter_value(this%carbon_per_dryweight_leaf, &
                                     this%carbon_per_dryweight_leaf, &
                                     "carbon_per_dryweight_leaf", proportional_parameter_changes, &
                                     carbon_per_dryweight_leaf)
-
+    
     CALL Set_quincy_parameter_value(this%min_height, &
                                     this%min_height, &
                                     "min_height", proportional_parameter_changes, &
@@ -3118,12 +3136,12 @@ CONTAINS
                                     this%lambda_fruit_alloc, &
                                     "lambda_fruit_alloc", proportional_parameter_changes, &
                                     lambda_fruit_alloc)
-
+    
     CALL Set_quincy_parameter_value(this%k1_fruit_alloc, &
                                     this%k1_fruit_alloc, &
                                     "k1_fruit_alloc", proportional_parameter_changes, &
                                     k1_fruit_alloc)
-
+    
     CALL Set_quincy_parameter_value(this%k3_fruit_alloc, &
                                     this%k3_fruit_alloc, &
                                     "k3_fruit_alloc", proportional_parameter_changes, &
@@ -3133,12 +3151,12 @@ CONTAINS
                                     this%k4_fruit_alloc, &
                                     "k4_fruit_alloc", proportional_parameter_changes, &
                                     k4_fruit_alloc)
-
-    CALL Set_quincy_parameter_value(this%k1_root_alloc, &
-                                    this%k1_root_alloc, &
-                                    "k1_root_alloc", proportional_parameter_changes, &
-                                    k1_root_alloc)
-
+    
+    CALL Set_quincy_parameter_value(this%w_root_lim_max, &
+                                    this%w_root_lim_max, &
+                                    "w_root_lim_max", proportional_parameter_changes, &
+                                    w_root_lim_max)
+    
     CALL Set_quincy_parameter_value(this%leaf2root_min_ratio, &
                                     this%leaf2root_min_ratio, &
                                     "leaf2root_min_ratio", proportional_parameter_changes, &
@@ -3148,48 +3166,48 @@ CONTAINS
                                     this%leaf2root_max_ratio, &
                                     "leaf2root_max_ratio", proportional_parameter_changes, &
                                     leaf2root_max_ratio)
-
+    
     CALL Set_quincy_parameter_value(this%delta_n_fraction, &
                                     this%delta_n_fraction, &
                                     "delta_n_fraction", proportional_parameter_changes, &
                                     delta_n_fraction)
-
+    
     CALL Set_quincy_parameter_value(this%delta_n_leaf, &
                                     this%delta_n_leaf, &
                                     "delta_n_leaf", proportional_parameter_changes, &
                                     delta_n_leaf)
-
+    
     CALL Set_quincy_parameter_value(this%f_myc_exudation_max, &
                                     this%f_myc_exudation_max, &
                                     "f_myc_exudation_max", proportional_parameter_changes, &
                                     f_myc_exudation_max)
-
+    
     CALL Set_quincy_parameter_value(this%f_mycorrhization_max, &
                                     this%f_mycorrhization_max, &
                                     "f_mycorrhization_max", proportional_parameter_changes, &
                                     f_mycorrhization_max)
-
+    
     CALL Set_quincy_parameter_value(this%rfr_ratio_toc, &
                                     this%rfr_ratio_toc, &
                                     "rfr_ratio_toc", proportional_parameter_changes, &
                                     rfr_ratio_toc)
-
+    
     CALL Set_quincy_parameter_value(this%k_r2fr_chl - 0.012_wp, &
                                     this%k_r2fr_chl, &
                                     "k_r2fr_chl", proportional_parameter_changes, &
                                     k_r2fr_chl)
 
-    ! lnd_sb_nml
+    ! SB_CTL
     CALL Set_quincy_parameter_value(this%tau_soluable_litter * one_day, &
                                     this%tau_soluable_litter, &
                                     "tau_soluable_litter", proportional_parameter_changes, &
                                     tau_soluable_litter)
-
+    
     CALL Set_quincy_parameter_value(this%tau_metabolic_litter * one_year * one_day, &
                                     this%tau_metabolic_litter, &
                                     "tau_metabolic_litter", proportional_parameter_changes, &
                                     tau_metabolic_litter)
-
+    
     CALL Set_quincy_parameter_value(this%tau_structural_litter * one_year * one_day, &
                                     this%tau_structural_litter, &
                                     "tau_structural_litter", proportional_parameter_changes, &
@@ -3199,12 +3217,12 @@ CONTAINS
                                     this%tau_woody_litter, &
                                     "tau_woody_litter", proportional_parameter_changes, &
                                     tau_woody_litter)
-
+    
     CALL Set_quincy_parameter_value(this%tau_fast * one_year * one_day, &
                                     this%tau_fast, &
                                     "tau_fast", proportional_parameter_changes, &
                                     tau_fast)
-
+    
     CALL Set_quincy_parameter_value(this%tau_slow * one_year * one_day, &
                                     this%tau_slow, &
                                     "tau_slow", proportional_parameter_changes, &
@@ -3214,7 +3232,7 @@ CONTAINS
                                     this%tau_biomineralisation, &
                                     "tau_biomineralisation", proportional_parameter_changes, &
                                     tau_biomineralisation)
-
+    
     CALL Set_quincy_parameter_value(this%temp_ref_tresponse, &
                                     this%temp_ref_tresponse, &
                                     "temp_ref_tresponse", proportional_parameter_changes, &
@@ -3224,12 +3242,12 @@ CONTAINS
                                     this%ea_depolymerisation, &
                                     "ea_depolymerisation", proportional_parameter_changes, &
                                     ea_depolymerisation)
-
+    
     CALL Set_quincy_parameter_value(this%ea_mic_uptake, &
                                     this%ea_mic_uptake, &
                                     "ea_mic_uptake", proportional_parameter_changes, &
                                     ea_mic_uptake)
-
+    
     CALL Set_quincy_parameter_value(this%ea_sorption, &
                                     this%ea_sorption, &
                                     "ea_sorption", proportional_parameter_changes, &
@@ -3239,7 +3257,7 @@ CONTAINS
                                     this%ea_desorption, &
                                     "ea_desorption", proportional_parameter_changes, &
                                     ea_desorption)
-
+    
     CALL Set_quincy_parameter_value(this%ea_hsc, &
                                     this%ea_hsc, &
                                     "ea_hsc", proportional_parameter_changes, &
@@ -3249,12 +3267,12 @@ CONTAINS
                                     this%ea_decomposition, &
                                     "ea_decomposition", proportional_parameter_changes, &
                                     ea_decomposition)
-
+    
     CALL Set_quincy_parameter_value(this%ed_decomposition, &
                                     this%ed_decomposition, &
                                     "ed_decomposition", proportional_parameter_changes, &
                                     ed_decomposition)
-
+    
     CALL Set_quincy_parameter_value(this%t_ref_decomposition, &   ! in function calculated for proportional changes as:
                                     this%t_ref_decomposition, &   ! def_val = 273.15 + (def_val - 273.15) * nml_prop_chng
                                     "t_ref_decomposition", proportional_parameter_changes, &
@@ -3269,7 +3287,7 @@ CONTAINS
                                     this%k2_afps, &
                                     "k2_afps", proportional_parameter_changes, &
                                     k2_afps)
-
+    
     CALL Set_quincy_parameter_value(this%kmr_depolymerisation, &
                                     this%kmr_depolymerisation, &
                                     "kmr_depolymerisation", proportional_parameter_changes, &
@@ -3279,12 +3297,12 @@ CONTAINS
                                     this%kmr_mic_uptake, &
                                     "kmr_mic_uptake", proportional_parameter_changes, &
                                     kmr_mic_uptake)
-
+    
     CALL Set_quincy_parameter_value(this%kmr_hsc, &
                                     this%kmr_hsc, &
                                     "kmr_hsc", proportional_parameter_changes, &
                                     kmr_hsc)
-
+    
     CALL Set_quincy_parameter_value(this%kmr_sorption, &
                                     this%kmr_sorption, &
                                     "kmr_sorption", proportional_parameter_changes, &
@@ -3294,7 +3312,7 @@ CONTAINS
                                     this%kmr_decomposition, &
                                     "kmr_decomposition", proportional_parameter_changes, &
                                     kmr_decomposition)
-
+    
     CALL Set_quincy_parameter_value(this%k_diff_org / one_year / one_day, &
                                     this%k_diff_org, &
                                     "k_diff_org", proportional_parameter_changes, &
@@ -3304,7 +3322,7 @@ CONTAINS
                                     this%rho_bulk_org, &
                                     "rho_bulk_org", proportional_parameter_changes, &
                                     rho_bulk_org)
-
+    
     CALL Set_quincy_parameter_value(this%carbon_per_dryweight_SOM, &
                                     this%carbon_per_dryweight_SOM, &
                                     "carbon_per_dryweight_SOM", proportional_parameter_changes, &
@@ -3314,7 +3332,7 @@ CONTAINS
                                     this%k_adsorpt_dom, &
                                     "k_adsorpt_dom", proportional_parameter_changes, &
                                     k_adsorpt_dom)
-
+    
     CALL Set_quincy_parameter_value(this%k_desorpt_dom / one_year / one_day / 1000._wp, &
                                     this%k_desorpt_dom, &
                                     "k_desorpt_dom", proportional_parameter_changes, &
@@ -3324,12 +3342,12 @@ CONTAINS
                                     this%k_adsorpt_det, &
                                     "k_adsorpt_det", proportional_parameter_changes, &
                                     k_adsorpt_det)
-
+    
     CALL Set_quincy_parameter_value(this%k_desorpt_det / one_year / one_day / 1000._wp, &
                                     this%k_desorpt_det, &
                                     "k_desorpt_det", proportional_parameter_changes, &
                                     k_desorpt_det)
-
+    
     CALL Set_quincy_parameter_value(this%k_adsorpt_nh4, &
                                     this%k_adsorpt_nh4, &
                                     "k_adsorpt_nh4", proportional_parameter_changes, &
@@ -3339,7 +3357,7 @@ CONTAINS
                                     this%k_desorpt_nh4, &
                                     "k_desorpt_nh4", proportional_parameter_changes, &
                                     k_desorpt_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%k_adsorpt_po4 * 8.0_wp / 9.0_wp / 30.0_wp / one_day, &
                                     this%k_adsorpt_po4, &
                                     "k_adsorpt_po4", proportional_parameter_changes, &
@@ -3349,12 +3367,12 @@ CONTAINS
                                     this%k_desorpt_po4, &
                                     "k_desorpt_po4", proportional_parameter_changes, &
                                     k_desorpt_po4)
-
+    
     CALL Set_quincy_parameter_value(this%k_adsorpt_f_po4 / 3600._wp, &
                                     this%k_adsorpt_f_po4, &
                                     "k_adsorpt_f_po4", proportional_parameter_changes, &
                                     k_adsorpt_f_po4)
-
+    
     CALL Set_quincy_parameter_value(this%k_desorpt_f_po4 / 3600._wp / 10._wp, &
                                     this%k_desorpt_f_po4, &
                                     "k_desorpt_f_po4", proportional_parameter_changes, &
@@ -3364,12 +3382,12 @@ CONTAINS
                                     this%microbial_cn, &
                                     "microbial_cn", proportional_parameter_changes, &
                                     microbial_cn)
-
+    
     CALL Set_quincy_parameter_value(this%microbial_np * molar_mass_P / molar_mass_N, &
                                     this%microbial_np, &
                                     "microbial_np", proportional_parameter_changes, &
                                     microbial_np)
-
+    
     CALL Set_quincy_parameter_value(this%microbial_nue, &
                                     this%microbial_nue, &
                                     "microbial_nue", proportional_parameter_changes, &
@@ -3379,7 +3397,7 @@ CONTAINS
                                     this%microbial_pue, &
                                     "microbial_pue", proportional_parameter_changes, &
                                     microbial_pue)
-
+    
     CALL Set_quincy_parameter_value(this%microbial_cue, &
                                     this%microbial_cue, &
                                     "microbial_cue", proportional_parameter_changes, &
@@ -3389,22 +3407,22 @@ CONTAINS
                                     this%microbial_cue_max, &
                                     "microbial_cue_max", proportional_parameter_changes, &
                                     microbial_cue_max)
-
+    
     CALL Set_quincy_parameter_value(this%microbial_cue_min, &
                                     this%microbial_cue_min, &
                                     "microbial_cue_min", proportional_parameter_changes, &
                                     microbial_cue_min)
-
+    
     CALL Set_quincy_parameter_value(this%frac_woody2dec_litter, &
                                     this%frac_woody2dec_litter, &
                                     "frac_woody2dec_litter", proportional_parameter_changes, &
                                     frac_woody2dec_litter)
-
+    
     CALL Set_quincy_parameter_value(this%frac_litter2fast_som, &
                                     this%frac_litter2fast_som, &
                                     "frac_litter2fast_som", proportional_parameter_changes, &
                                     frac_litter2fast_som)
-
+    
     CALL Set_quincy_parameter_value(this%frac_fast2slow_som, &
                                     this%frac_fast2slow_som, &
                                     "frac_fast2slow_som", proportional_parameter_changes, &
@@ -3414,7 +3432,7 @@ CONTAINS
                                     this%frac_slow2fast_som, &
                                     "frac_slow2fast_som", proportional_parameter_changes, &
                                     frac_slow2fast_som)
-
+    
     CALL Set_quincy_parameter_value(this%fc_woody2polymeric, &
                                     this%fc_woody2polymeric, &
                                     "fc_woody2polymeric", proportional_parameter_changes, &
@@ -3424,12 +3442,12 @@ CONTAINS
                                     this%fc_soluable2dom, &
                                     "fc_soluable2dom", proportional_parameter_changes, &
                                     fc_soluable2dom)
-
+    
     CALL Set_quincy_parameter_value(this%k_mort_microbial * 1.0e-8_wp, &
                                     this%k_mort_microbial, &
                                     "k_mort_microbial", proportional_parameter_changes, &
                                     k_mort_microbial)
-
+    
     CALL Set_quincy_parameter_value(this%min_mic_biomass, &
                                     this%min_mic_biomass, &
                                     "min_mic_biomass", proportional_parameter_changes, &
@@ -3439,7 +3457,7 @@ CONTAINS
                                     this%vmax_mic_uptake, &
                                     "vmax_mic_uptake", proportional_parameter_changes, &
                                     vmax_mic_uptake)
-
+    
     CALL Set_quincy_parameter_value(this%km_mic_uptake / molar_mass_C * 1000.0_wp, &
                                     this%km_mic_uptake, &
                                     "km_mic_uptake", proportional_parameter_changes, &
@@ -3449,12 +3467,12 @@ CONTAINS
                                     this%km_depolymerisation, &
                                     "km_depolymerisation", proportional_parameter_changes, &
                                     km_depolymerisation)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_depolymerisation_residue / one_year / one_day, &
                                     this%vmax_depolymerisation_residue, &
                                     "vmax_depolymerisation_residue", proportional_parameter_changes, &
                                     vmax_depolymerisation_residue)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_depolymerisation_litter / one_year / one_day, &
                                     this%vmax_depolymerisation_litter, &
                                     "vmax_depolymerisation_litter", proportional_parameter_changes, &
@@ -3464,7 +3482,7 @@ CONTAINS
                                     this%f_soluable_residue, &
                                     "f_soluable_residue", proportional_parameter_changes, &
                                     f_soluable_residue)
-
+    
     CALL Set_quincy_parameter_value(this%f_soluable_leaf, &
                                     this%f_soluable_leaf, &
                                     "f_soluable_leaf", proportional_parameter_changes, &
@@ -3474,12 +3492,12 @@ CONTAINS
                                     this%f_soluable_fine_root, &
                                     "f_soluable_fine_root", proportional_parameter_changes, &
                                     f_soluable_fine_root)
-
+    
     CALL Set_quincy_parameter_value(this%f_soluable_fruit, &
                                     this%f_soluable_fruit, &
                                     "f_soluable_fruit", proportional_parameter_changes, &
                                     f_soluable_fruit)
-
+    
     CALL Set_quincy_parameter_value(this%f_soluable_seed_bed, &
                                     this%f_soluable_seed_bed, &
                                     "f_soluable_seed_bed", proportional_parameter_changes, &
@@ -3489,7 +3507,7 @@ CONTAINS
                                     this%fc_soluable_max, &
                                     "fc_soluable_max", proportional_parameter_changes, &
                                     fc_soluable_max)
-
+    
     CALL Set_quincy_parameter_value(this%k_fc_soluable, &
                                     this%k_fc_soluable, &
                                     "k_fc_soluable", proportional_parameter_changes, &
@@ -3499,12 +3517,12 @@ CONTAINS
                                     this%k_fn_soluable, &
                                     "k_fn_soluable", proportional_parameter_changes, &
                                     k_fn_soluable)
-
+    
     CALL Set_quincy_parameter_value(this%k_fp_soluable, &
                                     this%k_fp_soluable, &
                                     "k_fp_soluable", proportional_parameter_changes, &
                                     k_fp_soluable)
-
+    
     CALL Set_quincy_parameter_value(this%lc_leaf_max / molar_mass_C * molar_mass_N, &
                                     this%lc_leaf_max, &
                                     "lc_leaf_max", proportional_parameter_changes, &
@@ -3514,7 +3532,7 @@ CONTAINS
                                     this%lc_leaf2sla, &
                                     "lc_leaf2sla", proportional_parameter_changes, &
                                     lc_leaf2sla)
-
+    
     CALL Set_quincy_parameter_value(this%lc_fine_root / molar_mass_C * molar_mass_N, &
                                     this%lc_fine_root, &
                                     "lc_fine_root", proportional_parameter_changes, &
@@ -3524,12 +3542,12 @@ CONTAINS
                                     this%lc_coarse_root, &
                                     "lc_coarse_root", proportional_parameter_changes, &
                                     lc_coarse_root)
-
+    
     CALL Set_quincy_parameter_value(this%lc_woody_litter / molar_mass_C * molar_mass_N, &
                                     this%lc_woody_litter, &
                                     "lc_woody_litter", proportional_parameter_changes, &
                                     lc_woody_litter)
-
+    
     CALL Set_quincy_parameter_value(this%lc_fruit / molar_mass_C * molar_mass_N, &
                                     this%lc_fruit, &
                                     "lc_fruit", proportional_parameter_changes, &
@@ -3539,7 +3557,7 @@ CONTAINS
                                     this%lc_seed_bed, &
                                     "lc_seed_bed", proportional_parameter_changes, &
                                     lc_seed_bed)
-
+    
     CALL Set_quincy_parameter_value(this%mycorrhiza_cue, &
                                     this%mycorrhiza_cue, &
                                     "mycorrhiza_cue", proportional_parameter_changes, &
@@ -3549,12 +3567,12 @@ CONTAINS
                                     this%mycorrhiza_cn, &
                                     "mycorrhiza_cn", proportional_parameter_changes, &
                                     mycorrhiza_cn)
-
+    
     CALL Set_quincy_parameter_value(this%mycorrhiza_np * molar_mass_P / molar_mass_N, &
                                     this%mycorrhiza_np, &
                                     "mycorrhiza_np", proportional_parameter_changes, &
                                     mycorrhiza_np)
-
+    
     CALL Set_quincy_parameter_value(this%f_maxresp_myc, &
                                     this%f_maxresp_myc, &
                                     "f_maxresp_myc", proportional_parameter_changes, &
@@ -3564,7 +3582,7 @@ CONTAINS
                                     this%f_surface_myc2fineroot, &
                                     "f_surface_myc2fineroot", proportional_parameter_changes, &
                                     f_surface_myc2fineroot)
-
+    
     CALL Set_quincy_parameter_value(this%km1_up_nh4, &
                                     this%km1_up_nh4, &
                                     "km1_up_nh4", proportional_parameter_changes, &
@@ -3574,12 +3592,12 @@ CONTAINS
                                     this%km2_up_nh4, &
                                     "km2_up_nh4", proportional_parameter_changes, &
                                     km2_up_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%km1_up_no3, &
                                     this%km1_up_no3, &
                                     "km1_up_no3", proportional_parameter_changes, &
                                     km1_up_no3)
-
+    
     CALL Set_quincy_parameter_value(this%km2_up_no3, &
                                     this%km2_up_no3, &
                                     "km2_up_no3", proportional_parameter_changes, &
@@ -3589,7 +3607,7 @@ CONTAINS
                                     this%km1_up_po4, &
                                     "km1_up_po4", proportional_parameter_changes, &
                                     km1_up_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km2_up_po4 / 1000000.0_wp, &
                                     this%km2_up_po4, &
                                     "km2_up_po4", proportional_parameter_changes, &
@@ -3599,12 +3617,12 @@ CONTAINS
                                     this%vmax_mic_uptake_nh4, &
                                     "vmax_mic_uptake_nh4", proportional_parameter_changes, &
                                     vmax_mic_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%km_mic_uptake_nh4 / molar_mass_N, &
                                     this%km_mic_uptake_nh4, &
                                     "km_mic_uptake_nh4", proportional_parameter_changes, &
                                     km_mic_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_mic_uptake_no3 / 3600.0_wp * molar_mass_C, &
                                     this%vmax_mic_uptake_no3, &
                                     "vmax_mic_uptake_no3", proportional_parameter_changes, &
@@ -3614,7 +3632,7 @@ CONTAINS
                                     this%km_mic_uptake_no3, &
                                     "km_mic_uptake_no3", proportional_parameter_changes, &
                                     km_mic_uptake_no3)
-
+    
     CALL Set_quincy_parameter_value(this%f_mic_carrier_n / 1000.0_wp, &
                                     this%f_mic_carrier_n, &
                                     "f_mic_carrier_n", proportional_parameter_changes, &
@@ -3624,12 +3642,12 @@ CONTAINS
                                     this%vmax_plant_uptake_nh4, &
                                     "vmax_plant_uptake_nh4", proportional_parameter_changes, &
                                     vmax_plant_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%km_plant_uptake_nh4 / molar_mass_N, &
                                     this%km_plant_uptake_nh4, &
                                     "km_plant_uptake_nh4", proportional_parameter_changes, &
                                     km_plant_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_plant_uptake_no3 / 3600.0_wp * molar_mass_C, &
                                     this%vmax_plant_uptake_no3, &
                                     "vmax_plant_uptake_no3", proportional_parameter_changes, &
@@ -3639,7 +3657,7 @@ CONTAINS
                                     this%km_plant_uptake_no3, &
                                     "km_plant_uptake_no3", proportional_parameter_changes, &
                                     km_plant_uptake_no3)
-
+    
     CALL Set_quincy_parameter_value(this%f_plant_carrier_n / 10000.0_wp, &
                                     this%f_plant_carrier_n, &
                                     "f_plant_carrier_n", proportional_parameter_changes, &
@@ -3649,12 +3667,12 @@ CONTAINS
                                     this%vmax_mic_uptake_po4, &
                                     "vmax_mic_uptake_po4", proportional_parameter_changes, &
                                     vmax_mic_uptake_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_mic_uptake_po4 / molar_mass_P, &
                                     this%km_mic_uptake_po4, &
                                     "km_mic_uptake_po4", proportional_parameter_changes, &
                                     km_mic_uptake_po4)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_plant_uptake_po4 / 60.0_wp * molar_mass_C, &
                                     this%vmax_plant_uptake_po4, &
                                     "vmax_plant_uptake_po4", proportional_parameter_changes, &
@@ -3664,7 +3682,7 @@ CONTAINS
                                     this%km_plant_uptake_po4, &
                                     "km_plant_uptake_po4", proportional_parameter_changes, &
                                     km_plant_uptake_po4)
-
+    
     CALL Set_quincy_parameter_value(this%k_mic_uptake_nh4 * 24._wp / one_day, &
                                     this%k_mic_uptake_nh4, &
                                     "k_mic_uptake_nh4", proportional_parameter_changes, &
@@ -3674,12 +3692,12 @@ CONTAINS
                                     this%k_plant_uptake_nh4, &
                                     "k_plant_uptake_nh4", proportional_parameter_changes, &
                                     k_plant_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%k_mic_uptake_no3 * 24._wp / one_day, &
                                     this%k_mic_uptake_no3, &
                                     "k_mic_uptake_no3", proportional_parameter_changes, &
                                     k_mic_uptake_no3)
-
+    
     CALL Set_quincy_parameter_value(this%k_plant_uptake_no3 * 24._wp / one_day, &
                                     this%k_plant_uptake_no3, &
                                     "k_plant_uptake_no3", proportional_parameter_changes, &
@@ -3689,7 +3707,7 @@ CONTAINS
                                     this%k_mic_uptake_po4, &
                                     "k_mic_uptake_po4", proportional_parameter_changes, &
                                     k_mic_uptake_po4)
-
+    
     CALL Set_quincy_parameter_value(this%k_plant_uptake_po4 / one_day, &
                                     this%k_plant_uptake_po4, &
                                     "k_plant_uptake_po4", proportional_parameter_changes, &
@@ -3699,7 +3717,7 @@ CONTAINS
                                     this%f_mic_carrier_po4, &
                                     "f_mic_carrier_po4", proportional_parameter_changes, &
                                     f_mic_carrier_po4)
-
+    
     CALL Set_quincy_parameter_value(this%f_plant_carrier_po4 / 10000.0_wp, &
                                     this%f_plant_carrier_po4, &
                                     "f_plant_carrier_po4", proportional_parameter_changes, &
@@ -3734,7 +3752,7 @@ CONTAINS
                                     this%f_denit_carrier_no3, &
                                     "f_denit_carrier_no3", proportional_parameter_changes, &
                                     f_denit_carrier_no3)
-
+    
     CALL Set_quincy_parameter_value(this%qmax_po4_mineral / molar_mass_P, &
                                     this%qmax_po4_mineral, &
                                     "qmax_po4_mineral", proportional_parameter_changes, &
@@ -3749,7 +3767,7 @@ CONTAINS
                                     this%km_adsorpt_mineral_po4, &
                                     "km_adsorpt_mineral_po4", proportional_parameter_changes, &
                                     km_adsorpt_mineral_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_adsorpt_OM_po4 / 1000._wp / molar_mass_P, &
                                     this%km_adsorpt_OM_po4, &
                                     "km_adsorpt_OM_po4", proportional_parameter_changes, &
@@ -3759,12 +3777,12 @@ CONTAINS
                                     this%ea_nitrification, &
                                     "ea_nitrification", proportional_parameter_changes, &
                                     ea_nitrification)
-
+    
     CALL Set_quincy_parameter_value(this%ed_nitrification, &
                                     this%ed_nitrification, &
                                     "ed_nitrification", proportional_parameter_changes, &
                                     ed_nitrification)
-
+    
     CALL Set_quincy_parameter_value(this%t_opt_nitrification, &   ! in function calculated for proportional changes as:
                                     this%t_opt_nitrification, &   ! def_val = 273.15 + (def_val - 273.15) * nml_prop_chng
                                     "t_opt_nitrification", proportional_parameter_changes, &
@@ -3774,7 +3792,7 @@ CONTAINS
                                     this%f_nit_noy, &
                                     "f_nit_noy", proportional_parameter_changes, &
                                     f_nit_noy)
-
+    
     CALL Set_quincy_parameter_value(this%f_nit_n2o, &
                                     this%f_nit_n2o, &
                                     "f_nit_n2o", proportional_parameter_changes, &
@@ -3784,12 +3802,12 @@ CONTAINS
                                     this%ea_denitrification, &
                                     "ea_denitrification", proportional_parameter_changes, &
                                     ea_denitrification)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_nitrification / one_day * 1.0e6_wp, &
                                     this%vmax_nitrification, &
                                     "vmax_nitrification", proportional_parameter_changes, &
                                     vmax_nitrification)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_denitrification / one_day * 1.0e6_wp, &
                                     this%vmax_denitrification, &
                                     "vmax_denitrification", proportional_parameter_changes, &
@@ -3799,7 +3817,7 @@ CONTAINS
                                     this%km_denitrification_c, &
                                     "km_denitrification_c", proportional_parameter_changes, &
                                     km_denitrification_c)
-
+    
     CALL Set_quincy_parameter_value(this%km_denitrification_no3 * 1000.0_wp / molar_mass_N, &
                                     this%km_denitrification_no3, &
                                     "km_denitrification_no3", proportional_parameter_changes, &
@@ -3809,12 +3827,12 @@ CONTAINS
                                     this%f_denit_noy, &
                                     "f_denit_noy", proportional_parameter_changes, &
                                     f_denit_noy)
-
+    
     CALL Set_quincy_parameter_value(this%f_denit_n2o, &
                                     this%f_denit_n2o, &
                                     "f_denit_n2o", proportional_parameter_changes, &
                                     f_denit_n2o)
-
+    
     CALL Set_quincy_parameter_value(this%ea_gasdiffusion, &
                                     this%ea_gasdiffusion, &
                                     "ea_gasdiffusion", proportional_parameter_changes, &
@@ -3824,7 +3842,7 @@ CONTAINS
                                     this%lambda_anvf, &
                                     "lambda_anvf", proportional_parameter_changes, &
                                     lambda_anvf)
-
+    
     CALL Set_quincy_parameter_value(this%k_anvf, &
                                     this%k_anvf, &
                                     "k_anvf", proportional_parameter_changes, &
@@ -3834,12 +3852,12 @@ CONTAINS
                                     this%floss_nmin, &
                                     "floss_nmin", proportional_parameter_changes, &
                                     floss_nmin)
-
+    
     CALL Set_quincy_parameter_value(this%fnit_nmin, &
                                     this%fnit_nmin, &
                                     "fnit_nmin", proportional_parameter_changes, &
                                     fnit_nmin)
-
+    
     CALL Set_quincy_parameter_value(this%fleach_nh4, &
                                     this%fleach_nh4, &
                                     "fleach_nh4", proportional_parameter_changes, &
@@ -3849,7 +3867,7 @@ CONTAINS
                                     this%fleach_po4, &
                                     "fleach_po4", proportional_parameter_changes, &
                                     fleach_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_asymb_bnf, &
                                     this%km_asymb_bnf, &
                                     "km_asymb_bnf", proportional_parameter_changes, &
@@ -3859,12 +3877,12 @@ CONTAINS
                                     this%vmax_asymb_bnf, &
                                     "vmax_asymb_bnf", proportional_parameter_changes, &
                                     vmax_asymb_bnf)
-
+    
     CALL Set_quincy_parameter_value(this%eta_mic_uptake_nh4, &
                                     this%eta_mic_uptake_nh4, &
                                     "eta_mic_uptake_nh4", proportional_parameter_changes, &
                                     eta_mic_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%eta_mic_uptake_no3, &
                                     this%eta_mic_uptake_no3, &
                                     "eta_mic_uptake_no3", proportional_parameter_changes, &
@@ -3874,7 +3892,7 @@ CONTAINS
                                     this%eta_plant_uptake_nh4, &
                                     "eta_plant_uptake_nh4", proportional_parameter_changes, &
                                     eta_plant_uptake_nh4)
-
+    
     CALL Set_quincy_parameter_value(this%eta_plant_uptake_no3, &
                                     this%eta_plant_uptake_no3, &
                                     "eta_plant_uptake_no3", proportional_parameter_changes, &
@@ -3884,12 +3902,12 @@ CONTAINS
                                     this%eta_nitrification, &
                                     "eta_nitrification", proportional_parameter_changes, &
                                     eta_nitrification)
-
+    
     CALL Set_quincy_parameter_value(this%eta_nitrate_production, &
                                     this%eta_nitrate_production, &
                                     "eta_nitrate_production", proportional_parameter_changes, &
                                     eta_nitrate_production)
-
+    
     CALL Set_quincy_parameter_value(this%eta_denitrification, &
                                     this%eta_denitrification, &
                                     "eta_denitrification", proportional_parameter_changes, &
@@ -3899,7 +3917,7 @@ CONTAINS
                                     this%eta_ammonification, &
                                     "eta_ammonification", proportional_parameter_changes, &
                                     eta_ammonification)
-
+    
     CALL Set_quincy_parameter_value(this%eta_volatilisation_nh3, &
                                     this%eta_volatilisation_nh3, &
                                     "eta_volatilisation_nh3", proportional_parameter_changes, &
@@ -3909,12 +3927,12 @@ CONTAINS
                                     this%k_weath_mineral, &
                                     "k_weath_mineral", proportional_parameter_changes, &
                                     k_weath_mineral)
-
+    
     CALL Set_quincy_parameter_value(this%eq_sorp_mineral_po4 / molar_mass_P, &
                                     this%eq_sorp_mineral_po4, &
                                     "eq_sorp_mineral_po4", proportional_parameter_changes, &
                                     eq_sorp_mineral_po4)
-
+    
     CALL Set_quincy_parameter_value(this%k_occlude_po4 / 1000000._wp / 30._wp / one_day, &
                                     this%k_occlude_po4, &
                                     "k_occlude_po4", proportional_parameter_changes, &
@@ -3924,7 +3942,7 @@ CONTAINS
                                     this%vmax_biochem_po4, &
                                     "vmax_biochem_po4", proportional_parameter_changes, &
                                     vmax_biochem_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_mic_biochem_po4 / molar_mass_C, &
                                     this%km_mic_biochem_po4, &
                                     "km_mic_biochem_po4", proportional_parameter_changes, &
@@ -3934,17 +3952,17 @@ CONTAINS
                                     this%km_dip_biochem_po4, &
                                     "km_dip_biochem_po4", proportional_parameter_changes, &
                                     km_dip_biochem_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_rootc_biochem_po4, &
                                     this%km_rootc_biochem_po4, &
                                     "km_rootc_biochem_po4", proportional_parameter_changes, &
                                     km_rootc_biochem_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_rootc_weath_po4, &
                                     this%km_rootc_weath_po4, &
                                     "km_rootc_weath_po4", proportional_parameter_changes, &
                                     km_rootc_weath_po4)
-
+    
     CALL Set_quincy_parameter_value(this%km_root_enzyme_weath_po4 / molar_mass_C, &
                                     this%km_root_enzyme_weath_po4, &
                                     "km_root_enzyme_weath_po4", proportional_parameter_changes, &
@@ -3954,17 +3972,17 @@ CONTAINS
                                     this%biomin_threshold_pc_ratio_mic_res, &
                                     "biomin_threshold_pc_ratio_mic_res", proportional_parameter_changes, &
                                     biomin_threshold_pc_ratio_mic_res)
-
+    
     CALL Set_quincy_parameter_value(this%fc_p_res2dom, &
                                     this%fc_p_res2dom, &
                                     "fc_p_res2dom", proportional_parameter_changes, &
                                     fc_p_res2dom)
-
+    
     CALL Set_quincy_parameter_value(this%fc_n_res2dom, &
                                     this%fc_n_res2dom, &
                                     "fc_n_res2dom", proportional_parameter_changes, &
                                     fc_n_res2dom)
-
+    
     CALL Set_quincy_parameter_value(this%f_norg_limit, &
                                     this%f_norg_limit, &
                                     "f_norg_limit", proportional_parameter_changes, &
@@ -3974,7 +3992,7 @@ CONTAINS
                                     this%f_tau_myc, &
                                     "f_tau_myc", proportional_parameter_changes, &
                                     f_tau_myc)
-
+    
     CALL Set_quincy_parameter_value(this%km_priming, &
                                     this%km_priming, &
                                     "km_priming", proportional_parameter_changes, &
@@ -3984,7 +4002,7 @@ CONTAINS
                                     this%km_up_org, &
                                     "km_up_org", proportional_parameter_changes, &
                                     km_up_org)
-
+    
     CALL Set_quincy_parameter_value(this%myc_root_coverage_max, &
                                     this%myc_root_coverage_max, &
                                     "myc_root_coverage_max", proportional_parameter_changes, &
@@ -3994,7 +4012,7 @@ CONTAINS
                                     this%resp_priming, &
                                     "resp_priming", proportional_parameter_changes, &
                                     resp_priming)
-
+    
     CALL Set_quincy_parameter_value(this%vmax_uptake_norg, &
                                     this%vmax_uptake_norg, &
                                     "vmax_uptake_norg", proportional_parameter_changes, &
@@ -4009,7 +4027,7 @@ CONTAINS
                                     this%k_fast_som_cn_min, &
                                     "k_fast_som_cn_min", proportional_parameter_changes, &
                                     k_fast_som_cn_min)
-
+    
     CALL Set_quincy_parameter_value(this%f_fast_som_cn, &
                                     this%f_fast_som_cn, &
                                     "f_fast_som_cn", proportional_parameter_changes, &
@@ -4024,7 +4042,7 @@ CONTAINS
                                     this%k_fast_som_np, &
                                     "k_fast_som_np", proportional_parameter_changes, &
                                     k_fast_som_np)
-
+    
     CALL Set_quincy_parameter_value(this%k_slow_som_np * molar_mass_P / molar_mass_N, &
                                     this%k_slow_som_np, &
                                     "k_slow_som_np", proportional_parameter_changes, &
@@ -4063,8 +4081,8 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> read lctlib parameter values from file
-  !!
-  !!
+  !! 
+  !! 
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE read_parameter_lctlib_list
 
@@ -4108,8 +4126,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p1
     REAL(wp)            :: vmax_uptake_p_p1
     REAL(wp)            :: bnf_base_p1
-    REAL(wp)            :: vmax_symb_bnf_p1
-    REAL(wp)            :: km_symb_bnf_p1
     REAL(wp)            :: lambda_est_light_p1
     REAL(wp)            :: k_est_light_p1
     REAL(wp)            :: seed_size_p1
@@ -4166,8 +4182,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p2
     REAL(wp)            :: vmax_uptake_p_p2
     REAL(wp)            :: bnf_base_p2
-    REAL(wp)            :: vmax_symb_bnf_p2
-    REAL(wp)            :: km_symb_bnf_p2
     REAL(wp)            :: lambda_est_light_p2
     REAL(wp)            :: k_est_light_p2
     REAL(wp)            :: seed_size_p2
@@ -4224,8 +4238,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p3
     REAL(wp)            :: vmax_uptake_p_p3
     REAL(wp)            :: bnf_base_p3
-    REAL(wp)            :: vmax_symb_bnf_p3
-    REAL(wp)            :: km_symb_bnf_p3
     REAL(wp)            :: lambda_est_light_p3
     REAL(wp)            :: k_est_light_p3
     REAL(wp)            :: seed_size_p3
@@ -4282,8 +4294,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p4
     REAL(wp)            :: vmax_uptake_p_p4
     REAL(wp)            :: bnf_base_p4
-    REAL(wp)            :: vmax_symb_bnf_p4
-    REAL(wp)            :: km_symb_bnf_p4
     REAL(wp)            :: lambda_est_light_p4
     REAL(wp)            :: k_est_light_p4
     REAL(wp)            :: seed_size_p4
@@ -4340,8 +4350,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p5
     REAL(wp)            :: vmax_uptake_p_p5
     REAL(wp)            :: bnf_base_p5
-    REAL(wp)            :: vmax_symb_bnf_p5
-    REAL(wp)            :: km_symb_bnf_p5
     REAL(wp)            :: lambda_est_light_p5
     REAL(wp)            :: k_est_light_p5
     REAL(wp)            :: seed_size_p5
@@ -4398,8 +4406,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p6
     REAL(wp)            :: vmax_uptake_p_p6
     REAL(wp)            :: bnf_base_p6
-    REAL(wp)            :: vmax_symb_bnf_p6
-    REAL(wp)            :: km_symb_bnf_p6
     REAL(wp)            :: lambda_est_light_p6
     REAL(wp)            :: k_est_light_p6
     REAL(wp)            :: seed_size_p6
@@ -4456,8 +4462,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p7
     REAL(wp)            :: vmax_uptake_p_p7
     REAL(wp)            :: bnf_base_p7
-    REAL(wp)            :: vmax_symb_bnf_p7
-    REAL(wp)            :: km_symb_bnf_p7
     REAL(wp)            :: lambda_est_light_p7
     REAL(wp)            :: k_est_light_p7
     REAL(wp)            :: seed_size_p7
@@ -4514,8 +4518,6 @@ CONTAINS
     REAL(wp)            :: vmax_uptake_n_p8
     REAL(wp)            :: vmax_uptake_p_p8
     REAL(wp)            :: bnf_base_p8
-    REAL(wp)            :: vmax_symb_bnf_p8
-    REAL(wp)            :: km_symb_bnf_p8
     REAL(wp)            :: lambda_est_light_p8
     REAL(wp)            :: k_est_light_p8
     REAL(wp)            :: seed_size_p8
@@ -4545,8 +4547,8 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':read_parameter_lctlib_list'
 
     ! Namelist definitions for each PFT
-    !
-    NAMELIST /lctlib_pft1_nml/  &
+    ! 
+    NAMELIST /LCTLIB_PFT1_CTL/  &
           sla_p1, &
           sigma_vis_p1, &
           sigma_nir_p1, &
@@ -4578,8 +4580,6 @@ CONTAINS
           vmax_uptake_n_p1, &
           vmax_uptake_p_p1, &
           bnf_base_p1, &
-          vmax_symb_bnf_p1, &
-          km_symb_bnf_p1, &
           lambda_est_light_p1, &
           k_est_light_p1, &
           seed_size_p1, &
@@ -4605,7 +4605,7 @@ CONTAINS
           fstore_target_p1, &
           k_root_dist_p1
 
-    NAMELIST /lctlib_pft2_nml/  &
+    NAMELIST /LCTLIB_PFT2_CTL/  &
           sla_p2, &
           sigma_vis_p2, &
           sigma_nir_p2, &
@@ -4637,8 +4637,6 @@ CONTAINS
           vmax_uptake_n_p2, &
           vmax_uptake_p_p2, &
           bnf_base_p2, &
-          vmax_symb_bnf_p2, &
-          km_symb_bnf_p2, &
           lambda_est_light_p2, &
           k_est_light_p2, &
           seed_size_p2, &
@@ -4664,7 +4662,7 @@ CONTAINS
           fstore_target_p2, &
           k_root_dist_p2
 
-    NAMELIST /lctlib_pft3_nml/  &
+    NAMELIST /LCTLIB_PFT3_CTL/  &
           sla_p3, &
           sigma_vis_p3, &
           sigma_nir_p3, &
@@ -4696,8 +4694,6 @@ CONTAINS
           vmax_uptake_n_p3, &
           vmax_uptake_p_p3, &
           bnf_base_p3, &
-          vmax_symb_bnf_p3, &
-          km_symb_bnf_p3, &
           lambda_est_light_p3, &
           k_est_light_p3, &
           seed_size_p3, &
@@ -4723,7 +4719,7 @@ CONTAINS
           fstore_target_p3, &
           k_root_dist_p3
 
-    NAMELIST /lctlib_pft4_nml/  &
+    NAMELIST /LCTLIB_PFT4_CTL/  &
           sla_p4, &
           sigma_vis_p4, &
           sigma_nir_p4, &
@@ -4755,8 +4751,6 @@ CONTAINS
           vmax_uptake_n_p4, &
           vmax_uptake_p_p4, &
           bnf_base_p4, &
-          vmax_symb_bnf_p4, &
-          km_symb_bnf_p4, &
           lambda_est_light_p4, &
           k_est_light_p4, &
           seed_size_p4, &
@@ -4782,7 +4776,7 @@ CONTAINS
           fstore_target_p4, &
           k_root_dist_p4
 
-    NAMELIST /lctlib_pft5_nml/  &
+    NAMELIST /LCTLIB_PFT5_CTL/  &
           sla_p5, &
           sigma_vis_p5, &
           sigma_nir_p5, &
@@ -4814,8 +4808,6 @@ CONTAINS
           vmax_uptake_n_p5, &
           vmax_uptake_p_p5, &
           bnf_base_p5, &
-          vmax_symb_bnf_p5, &
-          km_symb_bnf_p5, &
           lambda_est_light_p5, &
           k_est_light_p5, &
           seed_size_p5, &
@@ -4841,7 +4833,7 @@ CONTAINS
           fstore_target_p5, &
           k_root_dist_p5
 
-    NAMELIST /lctlib_pft6_nml/  &
+    NAMELIST /LCTLIB_PFT6_CTL/  &
           sla_p6, &
           sigma_vis_p6, &
           sigma_nir_p6, &
@@ -4873,8 +4865,6 @@ CONTAINS
           vmax_uptake_n_p6, &
           vmax_uptake_p_p6, &
           bnf_base_p6, &
-          vmax_symb_bnf_p6, &
-          km_symb_bnf_p6, &
           lambda_est_light_p6, &
           k_est_light_p6, &
           seed_size_p6, &
@@ -4900,7 +4890,7 @@ CONTAINS
           fstore_target_p6, &
           k_root_dist_p6
 
-    NAMELIST /lctlib_pft7_nml/  &
+    NAMELIST /LCTLIB_PFT7_CTL/  &
           sla_p7, &
           sigma_vis_p7, &
           sigma_nir_p7, &
@@ -4932,8 +4922,6 @@ CONTAINS
           vmax_uptake_n_p7, &
           vmax_uptake_p_p7, &
           bnf_base_p7, &
-          vmax_symb_bnf_p7, &
-          km_symb_bnf_p7, &
           lambda_est_light_p7, &
           k_est_light_p7, &
           seed_size_p7, &
@@ -4959,7 +4947,7 @@ CONTAINS
           fstore_target_p7, &
           k_root_dist_p7
 
-    NAMELIST /lctlib_pft8_nml/  &
+    NAMELIST /LCTLIB_PFT8_CTL/  &
           sla_p8, &
           sigma_vis_p8, &
           sigma_nir_p8, &
@@ -4991,8 +4979,6 @@ CONTAINS
           vmax_uptake_n_p8, &
           vmax_uptake_p_p8, &
           bnf_base_p8, &
-          vmax_symb_bnf_p8, &
-          km_symb_bnf_p8, &
           lambda_est_light_p8, &
           k_est_light_p8, &
           seed_size_p8, &
@@ -5020,13 +5006,13 @@ CONTAINS
 
 
     ! variables for reading model-options from namelist
-    !
+    ! 
     INTEGER  :: nml_handler, nml_unit, istat
 
     CALL message(TRIM(routine), 'Starting to read parameter list')
 
     ! Set defaults
-    !
+    ! 
     ! PFT1
     sla_p1      = missval
     sigma_vis_p1      = missval
@@ -5059,8 +5045,6 @@ CONTAINS
     vmax_uptake_n_p1      = missval
     vmax_uptake_p_p1      = missval
     bnf_base_p1      = missval
-    vmax_symb_bnf_p1      = missval
-    km_symb_bnf_p1      = missval
     lambda_est_light_p1      = missval
     k_est_light_p1      = missval
     seed_size_p1      = missval
@@ -5117,8 +5101,6 @@ CONTAINS
     vmax_uptake_n_p2      = missval
     vmax_uptake_p_p2      = missval
     bnf_base_p2      = missval
-    vmax_symb_bnf_p2      = missval
-    km_symb_bnf_p2      = missval
     lambda_est_light_p2      = missval
     k_est_light_p2      = missval
     seed_size_p2      = missval
@@ -5175,8 +5157,6 @@ CONTAINS
     vmax_uptake_n_p3      = missval
     vmax_uptake_p_p3      = missval
     bnf_base_p3      = missval
-    vmax_symb_bnf_p3      = missval
-    km_symb_bnf_p3      = missval
     lambda_est_light_p3      = missval
     k_est_light_p3      = missval
     seed_size_p3      = missval
@@ -5233,8 +5213,6 @@ CONTAINS
     vmax_uptake_n_p4      = missval
     vmax_uptake_p_p4      = missval
     bnf_base_p4      = missval
-    vmax_symb_bnf_p4      = missval
-    km_symb_bnf_p4      = missval
     lambda_est_light_p4      = missval
     k_est_light_p4      = missval
     seed_size_p4      = missval
@@ -5291,8 +5269,6 @@ CONTAINS
     vmax_uptake_n_p5      = missval
     vmax_uptake_p_p5      = missval
     bnf_base_p5      = missval
-    vmax_symb_bnf_p5      = missval
-    km_symb_bnf_p5      = missval
     lambda_est_light_p5      = missval
     k_est_light_p5      = missval
     seed_size_p5      = missval
@@ -5349,8 +5325,6 @@ CONTAINS
     vmax_uptake_n_p6      = missval
     vmax_uptake_p_p6      = missval
     bnf_base_p6      = missval
-    vmax_symb_bnf_p6      = missval
-    km_symb_bnf_p6      = missval
     lambda_est_light_p6      = missval
     k_est_light_p6      = missval
     seed_size_p6      = missval
@@ -5407,8 +5381,6 @@ CONTAINS
     vmax_uptake_n_p7      = missval
     vmax_uptake_p_p7      = missval
     bnf_base_p7      = missval
-    vmax_symb_bnf_p7      = missval
-    km_symb_bnf_p7      = missval
     lambda_est_light_p7      = missval
     k_est_light_p7      = missval
     seed_size_p7      = missval
@@ -5465,8 +5437,6 @@ CONTAINS
     vmax_uptake_n_p8      = missval
     vmax_uptake_p_p8      = missval
     bnf_base_p8      = missval
-    vmax_symb_bnf_p8      = missval
-    km_symb_bnf_p8      = missval
     lambda_est_light_p8      = missval
     k_est_light_p8      = missval
     seed_size_p8      = missval
@@ -5494,52 +5464,52 @@ CONTAINS
 
 
     ! read the namelist (parameters of all PFT are stored in the same namelist file using param_pft1_from_file%filename here)
-    !
-    ! &lctlib_pft1_nml
+    ! 
+    ! &LCTLIB_PFT1_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft1_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft1_nml)
+    nml_unit = position_nml('LCTLIB_PFT1_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT1_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft2_nml
+    ! &LCTLIB_PFT2_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft2_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft2_nml)
+    nml_unit = position_nml('LCTLIB_PFT2_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT2_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft3_nml
+    ! &LCTLIB_PFT3_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft3_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft3_nml)
+    nml_unit = position_nml('LCTLIB_PFT3_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT3_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft4_nml
+    ! &LCTLIB_PFT4_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft4_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft4_nml)
+    nml_unit = position_nml('LCTLIB_PFT4_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT4_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft5_nml
+    ! &LCTLIB_PFT5_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft5_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft5_nml)
+    nml_unit = position_nml('LCTLIB_PFT5_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT5_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft6_nml
+    ! &LCTLIB_PFT6_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft6_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft6_nml)
+    nml_unit = position_nml('LCTLIB_PFT6_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT6_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft7_nml
+    ! &LCTLIB_PFT7_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft7_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft7_nml)
+    nml_unit = position_nml('LCTLIB_PFT7_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT7_CTL)
     CALL close_nml(nml_handler)
-    ! &lctlib_pft8_nml
+    ! &LCTLIB_PFT8_CTL
     nml_handler = open_nml(TRIM(param_pft1_from_file%filename))
-    nml_unit = position_nml('lctlib_pft8_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lctlib_pft8_nml)
+    nml_unit = position_nml('LCTLIB_PFT8_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, LCTLIB_PFT8_CTL)
     CALL close_nml(nml_handler)
 
 
     ! pass values as read from file
-    !
-    ! lctlib_pft1_nml
+    ! 
+    ! LCTLIB_PFT1_CTL
     param_pft1_from_file%sla   = sla_p1
     param_pft1_from_file%sigma_vis   = sigma_vis_p1
     param_pft1_from_file%sigma_nir   = sigma_nir_p1
@@ -5571,8 +5541,6 @@ CONTAINS
     param_pft1_from_file%vmax_uptake_n   = vmax_uptake_n_p1
     param_pft1_from_file%vmax_uptake_p   = vmax_uptake_p_p1
     param_pft1_from_file%bnf_base   = bnf_base_p1
-    param_pft1_from_file%vmax_symb_bnf   = vmax_symb_bnf_p1
-    param_pft1_from_file%km_symb_bnf   = km_symb_bnf_p1
     param_pft1_from_file%lambda_est_light   = lambda_est_light_p1
     param_pft1_from_file%k_est_light   = k_est_light_p1
     param_pft1_from_file%seed_size   = seed_size_p1
@@ -5597,7 +5565,7 @@ CONTAINS
     param_pft1_from_file%c0_allom   = c0_allom_p1
     param_pft1_from_file%fstore_target   = fstore_target_p1
     param_pft1_from_file%k_root_dist   = k_root_dist_p1
-    ! lctlib_pft2_nml
+    ! LCTLIB_PFT2_CTL
     param_pft2_from_file%sla   = sla_p2
     param_pft2_from_file%sigma_vis   = sigma_vis_p2
     param_pft2_from_file%sigma_nir   = sigma_nir_p2
@@ -5629,8 +5597,6 @@ CONTAINS
     param_pft2_from_file%vmax_uptake_n   = vmax_uptake_n_p2
     param_pft2_from_file%vmax_uptake_p   = vmax_uptake_p_p2
     param_pft2_from_file%bnf_base   = bnf_base_p2
-    param_pft2_from_file%vmax_symb_bnf   = vmax_symb_bnf_p2
-    param_pft2_from_file%km_symb_bnf   = km_symb_bnf_p2
     param_pft2_from_file%lambda_est_light   = lambda_est_light_p2
     param_pft2_from_file%k_est_light   = k_est_light_p2
     param_pft2_from_file%seed_size   = seed_size_p2
@@ -5655,7 +5621,7 @@ CONTAINS
     param_pft2_from_file%c0_allom   = c0_allom_p2
     param_pft2_from_file%fstore_target   = fstore_target_p2
     param_pft2_from_file%k_root_dist   = k_root_dist_p2
-    ! lctlib_pft3_nml
+    ! LCTLIB_PFT3_CTL
     param_pft3_from_file%sla   = sla_p3
     param_pft3_from_file%sigma_vis   = sigma_vis_p3
     param_pft3_from_file%sigma_nir   = sigma_nir_p3
@@ -5687,8 +5653,6 @@ CONTAINS
     param_pft3_from_file%vmax_uptake_n   = vmax_uptake_n_p3
     param_pft3_from_file%vmax_uptake_p   = vmax_uptake_p_p3
     param_pft3_from_file%bnf_base   = bnf_base_p3
-    param_pft3_from_file%vmax_symb_bnf   = vmax_symb_bnf_p3
-    param_pft3_from_file%km_symb_bnf   = km_symb_bnf_p3
     param_pft3_from_file%lambda_est_light   = lambda_est_light_p3
     param_pft3_from_file%k_est_light   = k_est_light_p3
     param_pft3_from_file%seed_size   = seed_size_p3
@@ -5713,7 +5677,7 @@ CONTAINS
     param_pft3_from_file%c0_allom   = c0_allom_p3
     param_pft3_from_file%fstore_target   = fstore_target_p3
     param_pft3_from_file%k_root_dist   = k_root_dist_p3
-    ! lctlib_pft4_nml
+    ! LCTLIB_PFT4_CTL
     param_pft4_from_file%sla   = sla_p4
     param_pft4_from_file%sigma_vis   = sigma_vis_p4
     param_pft4_from_file%sigma_nir   = sigma_nir_p4
@@ -5745,8 +5709,6 @@ CONTAINS
     param_pft4_from_file%vmax_uptake_n   = vmax_uptake_n_p4
     param_pft4_from_file%vmax_uptake_p   = vmax_uptake_p_p4
     param_pft4_from_file%bnf_base   = bnf_base_p4
-    param_pft4_from_file%vmax_symb_bnf   = vmax_symb_bnf_p4
-    param_pft4_from_file%km_symb_bnf   = km_symb_bnf_p4
     param_pft4_from_file%lambda_est_light   = lambda_est_light_p4
     param_pft4_from_file%k_est_light   = k_est_light_p4
     param_pft4_from_file%seed_size   = seed_size_p4
@@ -5771,7 +5733,7 @@ CONTAINS
     param_pft4_from_file%c0_allom   = c0_allom_p4
     param_pft4_from_file%fstore_target   = fstore_target_p4
     param_pft4_from_file%k_root_dist   = k_root_dist_p4
-    ! lctlib_pft5_nml
+    ! LCTLIB_PFT5_CTL
     param_pft5_from_file%sla   = sla_p5
     param_pft5_from_file%sigma_vis   = sigma_vis_p5
     param_pft5_from_file%sigma_nir   = sigma_nir_p5
@@ -5803,8 +5765,6 @@ CONTAINS
     param_pft5_from_file%vmax_uptake_n   = vmax_uptake_n_p5
     param_pft5_from_file%vmax_uptake_p   = vmax_uptake_p_p5
     param_pft5_from_file%bnf_base   = bnf_base_p5
-    param_pft5_from_file%vmax_symb_bnf   = vmax_symb_bnf_p5
-    param_pft5_from_file%km_symb_bnf   = km_symb_bnf_p5
     param_pft5_from_file%lambda_est_light   = lambda_est_light_p5
     param_pft5_from_file%k_est_light   = k_est_light_p5
     param_pft5_from_file%seed_size   = seed_size_p5
@@ -5829,7 +5789,7 @@ CONTAINS
     param_pft5_from_file%c0_allom   = c0_allom_p5
     param_pft5_from_file%fstore_target   = fstore_target_p5
     param_pft5_from_file%k_root_dist   = k_root_dist_p5
-    ! lctlib_pft6_nml
+    ! LCTLIB_PFT6_CTL
     param_pft6_from_file%sla   = sla_p6
     param_pft6_from_file%sigma_vis   = sigma_vis_p6
     param_pft6_from_file%sigma_nir   = sigma_nir_p6
@@ -5861,8 +5821,6 @@ CONTAINS
     param_pft6_from_file%vmax_uptake_n   = vmax_uptake_n_p6
     param_pft6_from_file%vmax_uptake_p   = vmax_uptake_p_p6
     param_pft6_from_file%bnf_base   = bnf_base_p6
-    param_pft6_from_file%vmax_symb_bnf   = vmax_symb_bnf_p6
-    param_pft6_from_file%km_symb_bnf   = km_symb_bnf_p6
     param_pft6_from_file%lambda_est_light   = lambda_est_light_p6
     param_pft6_from_file%k_est_light   = k_est_light_p6
     param_pft6_from_file%seed_size   = seed_size_p6
@@ -5887,7 +5845,7 @@ CONTAINS
     param_pft6_from_file%c0_allom   = c0_allom_p6
     param_pft6_from_file%fstore_target   = fstore_target_p6
     param_pft6_from_file%k_root_dist   = k_root_dist_p6
-    ! lctlib_pft7_nml
+    ! LCTLIB_PFT7_CTL
     param_pft7_from_file%sla   = sla_p7
     param_pft7_from_file%sigma_vis   = sigma_vis_p7
     param_pft7_from_file%sigma_nir   = sigma_nir_p7
@@ -5919,8 +5877,6 @@ CONTAINS
     param_pft7_from_file%vmax_uptake_n   = vmax_uptake_n_p7
     param_pft7_from_file%vmax_uptake_p   = vmax_uptake_p_p7
     param_pft7_from_file%bnf_base   = bnf_base_p7
-    param_pft7_from_file%vmax_symb_bnf   = vmax_symb_bnf_p7
-    param_pft7_from_file%km_symb_bnf   = km_symb_bnf_p7
     param_pft7_from_file%lambda_est_light   = lambda_est_light_p7
     param_pft7_from_file%k_est_light   = k_est_light_p7
     param_pft7_from_file%seed_size   = seed_size_p7
@@ -5945,7 +5901,7 @@ CONTAINS
     param_pft7_from_file%c0_allom   = c0_allom_p7
     param_pft7_from_file%fstore_target   = fstore_target_p7
     param_pft7_from_file%k_root_dist   = k_root_dist_p7
-    ! lctlib_pft8_nml
+    ! LCTLIB_PFT8_CTL
     param_pft8_from_file%sla   = sla_p8
     param_pft8_from_file%sigma_vis   = sigma_vis_p8
     param_pft8_from_file%sigma_nir   = sigma_nir_p8
@@ -5977,8 +5933,6 @@ CONTAINS
     param_pft8_from_file%vmax_uptake_n   = vmax_uptake_n_p8
     param_pft8_from_file%vmax_uptake_p   = vmax_uptake_p_p8
     param_pft8_from_file%bnf_base   = bnf_base_p8
-    param_pft8_from_file%vmax_symb_bnf   = vmax_symb_bnf_p8
-    param_pft8_from_file%km_symb_bnf   = km_symb_bnf_p8
     param_pft8_from_file%lambda_est_light   = lambda_est_light_p8
     param_pft8_from_file%k_est_light   = k_est_light_p8
     param_pft8_from_file%seed_size   = seed_size_p8
@@ -6009,8 +5963,8 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> replace hard coded lctlib parameter values with values from file
-  !!
-  !!
+  !! 
+  !! 
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE set_parameter_lctlib_values_with_list_values(model)
 
@@ -6025,7 +5979,7 @@ CONTAINS
     TYPE(t_jsb_model), INTENT(inout) :: model
     ! ---------------------------
     ! 0.2 Local
-    INTEGER                     :: pft_id
+    INTEGER                     :: pft_id 
     LOGICAL                     :: prop_parameter_changes
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':set_parameter_lctlib_values_with_list_values'
     ! ---------------------------
@@ -6034,26 +5988,26 @@ CONTAINS
     dsl4jsb_Def_config(VEG_)
     ! ---------------------------
     ! 0.4 Process Activity, Debug Option
-    !
+    ! 
     ! ---------------------------
     ! 0.5 Get Memory
-    !
+    ! 
     ! Get process config
     dsl4jsb_Get_config(VEG_)
 
 
     !> 0.9 init local variables
-    !!
+    !! 
     prop_parameter_changes = model%config%set_parameter_values_proportional
     pft_id                 = dsl4jsb_Config(VEG_)%pft_id
 
 
     !> 1.0 read parameter lctlib values from file
-    !!
+    !! 
     CALL read_parameter_lctlib_list
 
     !> 2.0 replace parameter lctlib values for the particular PFT X that is simulated
-    !!
+    !! 
     !! lctlib(4)%sla is needed for calculation of k_rtos
     SELECT CASE(pft_id)
       CASE(1)
@@ -6079,13 +6033,13 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> replace hard coded lctlib parameter values for one PFT with values from file
-  !!
+  !! 
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE change_lctlib_param_values_pft_x(lctlib, param_pft_from_file, pft4_sla, proportional_parameter_changes)
 
     USE mo_jsb_lctlib_class,        ONLY: t_lctlib_element
     USE mo_jsb_math_constants,      ONLY: one_day, one_year
-    USE mo_jsb_physical_constants,  ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero
+    USE mo_jsb_physical_constants,  ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero 
     USE mo_veg_constants,           ONLY: carbon_per_dryweight_leaf, sm2lm_grass, itree
 
     IMPLICIT NONE
@@ -6104,7 +6058,7 @@ CONTAINS
 
 
     !> 0.9 set sla_helper to the sla value of pft4 always
-    !!
+    !! 
     pft4_sla_hlp = pft4_sla
 
 
@@ -6116,19 +6070,19 @@ CONTAINS
 
 
     !> 2.0 replace lctlib parameter-value for the particular PFT if a new value is provided
-    !!
+    !! 
     CALL Set_quincy_parameter_value(1._wp / carbon_per_dryweight_leaf / 1000.0_wp * molar_mass_C * param_pft_from_file%sla, &
                                     param_pft_from_file%sla, &
                                     "lctlib_sla", proportional_parameter_changes, &
                                     lctlib%sla)
     ! if the PFT of this simulation is 4 re-set the sla_helper variable (just in case the lctlib%sla was changed)
     IF (lctlib%lctnumber == 4) pft4_sla_hlp = lctlib%sla
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%sigma_vis, &
                                     param_pft_from_file%sigma_vis, &
                                     "lctlib_sigma_vis", proportional_parameter_changes, &
                                     lctlib%sigma_vis)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%sigma_nir, &
                                     param_pft_from_file%sigma_nir, &
                                     "lctlib_sigma_nir", proportional_parameter_changes, &
@@ -6138,12 +6092,12 @@ CONTAINS
                                     param_pft_from_file%omega_clumping, &
                                     "lctlib_omega_clumping", proportional_parameter_changes, &
                                     lctlib%omega_clumping)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%crown_shape_factor, &
                                     param_pft_from_file%crown_shape_factor, &
                                     "lctlib_crown_shape_factor", proportional_parameter_changes, &
                                     lctlib%crown_shape_factor)
-
+    
     CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / &
                                       param_pft_from_file%cn_leaf, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%cn_leaf, &
@@ -6155,13 +6109,13 @@ CONTAINS
                                     param_pft_from_file%cn_leaf_min, &
                                     "lctlib_cn_leaf_min", proportional_parameter_changes, &
                                     lctlib%cn_leaf_min)
-
+    
     CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / &
                                       param_pft_from_file%cn_leaf_max, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%cn_leaf_max, &
                                     "lctlib_cn_leaf_max", proportional_parameter_changes, &
                                     lctlib%cn_leaf_max)
-
+    
     ! not resolving the dependency to cn_leaf (as re-calc is not so easy, in case proportional changes are made, as the original input lctlib parameter is not available here)
     CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
                                       param_pft_from_file%np_leaf, &   ! line break - this part belongs to prev. line!
@@ -6182,7 +6136,7 @@ CONTAINS
                                     param_pft_from_file%np_leaf_max, &
                                     "lctlib_np_leaf_max", proportional_parameter_changes, &
                                     lctlib%np_leaf_max)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k0_fn_struc, &
                                     param_pft_from_file%k0_fn_struc, &
                                     "lctlib_k0_fn_struc", proportional_parameter_changes, &
@@ -6202,12 +6156,12 @@ CONTAINS
                                     param_pft_from_file%t_jmax_opt, &
                                     "lctlib_t_jmax_opt", proportional_parameter_changes, &
                                     lctlib%t_jmax_opt)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%t_jmax_omega, &
                                     param_pft_from_file%t_jmax_omega, &
                                     "lctlib_t_jmax_omega", proportional_parameter_changes, &
                                     lctlib%t_jmax_omega)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%g0, &
                                     param_pft_from_file%g0, &
                                     "lctlib_g0", proportional_parameter_changes, &
@@ -6222,12 +6176,12 @@ CONTAINS
                                     param_pft_from_file%g1_bberry, &
                                     "lctlib_g1_bberry", proportional_parameter_changes, &
                                     lctlib%g1_bberry)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%gmin, &
                                     param_pft_from_file%gmin, &
                                     "lctlib_gmin", proportional_parameter_changes, &
                                     lctlib%gmin)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%tau_leaf / 12.0_wp, &
                                     param_pft_from_file%tau_leaf, &
                                     "lctlib_tau_leaf", proportional_parameter_changes, &
@@ -6242,12 +6196,12 @@ CONTAINS
                                     param_pft_from_file%tau_coarse_root, &
                                     "lctlib_tau_coarse_root", proportional_parameter_changes, &
                                     lctlib%tau_coarse_root)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%tau_branch, &
                                     param_pft_from_file%tau_branch, &
                                     "lctlib_tau_branch", proportional_parameter_changes, &
                                     lctlib%tau_branch)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%tau_sap_wood, &
                                     param_pft_from_file%tau_sap_wood, &
                                     "lctlib_tau_sap_wood", proportional_parameter_changes, &
@@ -6257,12 +6211,12 @@ CONTAINS
                                     param_pft_from_file%tau_fruit, &
                                     "lctlib_tau_fruit", proportional_parameter_changes, &
                                     lctlib%tau_fruit)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%tau_seed_litter, &
                                     param_pft_from_file%tau_seed_litter, &
                                     "lctlib_tau_seed_litter", proportional_parameter_changes, &
                                     lctlib%tau_seed_litter)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%tau_seed_est, &
                                     param_pft_from_file%tau_seed_est, &
                                     "lctlib_tau_seed_est", proportional_parameter_changes, &
@@ -6272,12 +6226,12 @@ CONTAINS
                                     param_pft_from_file%tau_mycorrhiza, &
                                     "lctlib_tau_mycorrhiza", proportional_parameter_changes, &
                                     lctlib%tau_mycorrhiza)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%vmax_uptake_n, &
                                     param_pft_from_file%vmax_uptake_n, &
                                     "lctlib_vmax_uptake_n", proportional_parameter_changes, &
                                     lctlib%vmax_uptake_n)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%vmax_uptake_p, &
                                     param_pft_from_file%vmax_uptake_p, &
                                     "lctlib_vmax_uptake_p", proportional_parameter_changes, &
@@ -6288,27 +6242,16 @@ CONTAINS
                                     "lctlib_bnf_base", proportional_parameter_changes, &
                                     lctlib%bnf_base)
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%vmax_symb_bnf / (molar_mass_N / molar_mass_C) &
-                                    / one_day / one_year * 1.e6_wp, &
-                                    param_pft_from_file%vmax_symb_bnf, &
-                                    "lctlib_vmax_symb_bnf", proportional_parameter_changes, &
-                                    lctlib%vmax_symb_bnf)
-
-    CALL Set_quincy_parameter_value(param_pft_from_file%km_symb_bnf / (molar_mass_C / molar_mass_N), &
-                                    param_pft_from_file%km_symb_bnf, &
-                                    "lctlib_km_symb_bnf", proportional_parameter_changes, &
-                                    lctlib%km_symb_bnf)
-
     CALL Set_quincy_parameter_value(param_pft_from_file%lambda_est_light, &
                                     param_pft_from_file%lambda_est_light, &
                                     "lctlib_lambda_est_light", proportional_parameter_changes, &
                                     lctlib%lambda_est_light)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k_est_light, &
                                     param_pft_from_file%k_est_light, &
                                     "lctlib_k_est_light", proportional_parameter_changes, &
                                     lctlib%k_est_light)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%seed_size, &
                                     param_pft_from_file%seed_size, &
                                     "lctlib_seed_size", proportional_parameter_changes, &
@@ -6325,14 +6268,14 @@ CONTAINS
                                     lctlib%beta_soil_flush)
     ! beta_soil_flush may not be > 1
     IF (lctlib%beta_soil_flush > 1.0_wp) lctlib%beta_soil_flush = 1.0_wp
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%beta_soil_senescence, &
                                     param_pft_from_file%beta_soil_senescence, &
                                     "lctlib_beta_soil_senescence", proportional_parameter_changes, &
                                     lctlib%beta_soil_senescence)
     ! beta_soil_senescence may not be > 1
     IF (lctlib%beta_soil_senescence > 1.0_wp) lctlib%beta_soil_senescence = 1.0_wp
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%gdd_req_max, &
                                     param_pft_from_file%gdd_req_max, &
                                     "lctlib_gdd_req_max", proportional_parameter_changes, &
@@ -6342,12 +6285,12 @@ CONTAINS
                                     param_pft_from_file%k_gdd_dormance, &
                                     "lctlib_k_gdd_dormance", proportional_parameter_changes, &
                                     lctlib%k_gdd_dormance)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%t_air_senescence + Tzero, &
                                     param_pft_from_file%t_air_senescence, &
                                     "lctlib_t_air_senescence", proportional_parameter_changes, &
                                     lctlib%t_air_senescence)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%min_leaf_age, &
                                     param_pft_from_file%min_leaf_age, &
                                     "lctlib_min_leaf_age", proportional_parameter_changes, &
@@ -6364,12 +6307,12 @@ CONTAINS
                                     param_pft_from_file%wood_density, &
                                     "lctlib_wood_density", proportional_parameter_changes, &
                                     lctlib%wood_density)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k_latosa, &
                                     param_pft_from_file%k_latosa, &
                                     "lctlib_k_latosa", proportional_parameter_changes, &
                                     lctlib%k_latosa)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k_crtos, &
                                     param_pft_from_file%k_crtos, &
                                     "lctlib_k_crtos", proportional_parameter_changes, &
@@ -6386,12 +6329,12 @@ CONTAINS
     !                                 param_pft_from_file%k_rtos, &
     !                                 "lctlib_k_rtos", proportional_parameter_changes, &
     !                                 lctlib%k_rtos)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k2_fruit_alloc, &
                                     param_pft_from_file%k2_fruit_alloc, &
                                     "lctlib_k2_fruit_alloc", proportional_parameter_changes, &
                                     lctlib%k2_fruit_alloc)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%allom_k1, &
                                     param_pft_from_file%allom_k1, &
                                     "lctlib_allom_k1", proportional_parameter_changes, &
@@ -6401,12 +6344,12 @@ CONTAINS
                                     param_pft_from_file%allom_k2, &
                                     "lctlib_allom_k2", proportional_parameter_changes, &
                                     lctlib%allom_k2)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%phi_leaf_min, &
                                     param_pft_from_file%phi_leaf_min, &
                                     "lctlib_phi_leaf_min", proportional_parameter_changes, &
                                     lctlib%phi_leaf_min)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k_root * molar_mass_C * 1.0e-10_wp, &
                                     param_pft_from_file%k_root, &
                                     "lctlib_k_root", proportional_parameter_changes, &
@@ -6420,7 +6363,7 @@ CONTAINS
     ! is always recalculated in case any of its dependencies has changed
     IF(lctlib%growthform == itree) THEN
       lctlib%c0_allom = SQRT(lctlib%k_root / lctlib%k_sapwood * lctlib%tau_sap_wood / lctlib%tau_fine_root * &
-                             lctlib%wood_density) * &
+                             lctlib%wood_density) * & 
                         lctlib%tau_fine_root / lctlib%tau_sap_wood
     ELSE
       lctlib%c0_allom = 0.0_wp
@@ -6430,12 +6373,12 @@ CONTAINS
     !                                 param_pft_from_file%c0_allom, &
     !                                 "lctlib_c0_allom", proportional_parameter_changes, &
     !                                 lctlib%c0_allom)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%fstore_target, &
                                     param_pft_from_file%fstore_target, &
                                     "lctlib_fstore_target", proportional_parameter_changes, &
                                     lctlib%fstore_target)
-
+    
     CALL Set_quincy_parameter_value(param_pft_from_file%k_root_dist, &
                                     param_pft_from_file%k_root_dist, &
                                     "lctlib_k_root_dist", proportional_parameter_changes, &
@@ -6477,13 +6420,13 @@ CONTAINS
 
 
     !> 0.9 safe the original value for file output
-    !!
+    !! 
     def_val_save = def_val
 
 
-    !> 1.0 re-calc def_val if namelist value differs from missval (i.e., a new namelist value is set or a proportional-change value is set) \n
+    !> 1.0 re-calc def_val if namelist value differs from missval (i.e., a new namelist value is set or a proportional-change value is set) \n 
     !!     using the nml_prop_chng variable here, because the nml_abs_val might be changed because it has always "potential other parameters already included"
-    !!
+    !! 
     IF (ABS(nml_prop_chng - missval) > eps8) THEN
       ! differ between the two cases: just use the new value / change the (hardcoded) default value by x%
       IF (proportional) THEN
@@ -6509,16 +6452,16 @@ CONTAINS
         def_val = nml_abs_val
       ENDIF
     ENDIF
-
+    
     !> 2.0 write default and new value to file
     !!
     WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(def_val_save, wp), REAL(def_val, wp)
-
+    
   END SUBROUTINE Set_quincy_parameter_value
-
+  
   !-----------------------------------------------------------------------------------------------------
   !> modify QUINCY namelist parameter by multiplication with a factor
-  !!
+  !!  
   !!  this factor is associated with the particular namelist parameter and may range [eps4, 10000]
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE Modify_quincy_namelist_parameter(nml_param_factor, param_name, nml_param)
@@ -6531,17 +6474,17 @@ CONTAINS
 
     REAL(wp),         INTENT(in)    :: nml_param_factor   !< factor (range [eps4, 10000]) to multiply with the namelist parameter
     CHARACTER(LEN=*), INTENT(in)    :: param_name         !< name of the namelist parameter for writing the new value to file
-    REAL(wp),         INTENT(inout) :: nml_param          !< original value of the namelist parameter as provided by the namelist 'qs.namelist'
+    REAL(wp),         INTENT(inout) :: nml_param          !< original value of the namelist parameter as provided by the namelist 'namelist.slm'
 
     REAL(wp)                    :: nml_param_save         ! save the original value for output
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Modify_quincy_namelist_parameter'
 
     !> 0.9 safe the original value for file output
-    !!
+    !! 
     nml_param_save = nml_param
 
     !> 1.0 multiply namelist parameter with factor
-    !!
+    !! 
     ! if this namelist parameter should be changed (then the factor may differs from missval)
     IF (ABS(nml_param_factor - missval) > eps8) THEN
       !> 1.1 test if factor is within range
@@ -6556,7 +6499,7 @@ CONTAINS
     !> 2.0 write default and new value to file
     !!
     WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(nml_param_save, wp), REAL(nml_param, wp)
-
+    
   END SUBROUTINE Modify_quincy_namelist_parameter
 
 END MODULE mo_qs_set_parameters

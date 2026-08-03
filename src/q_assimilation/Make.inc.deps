@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -20,7 +20,6 @@ mo_q_assimi_interface.o: \
   mo_jsb_tile_class.o \
   mo_jsb_task_class.o \
   mo_jsb_process_class.o \
-  mo_jsb_math_constants.o \
   mo_q_assimi_util.o \
   mo_q_assimi_process.o \
   mo_q_assimi_config_class.o \
@@ -41,13 +40,14 @@ mo_q_assimi_process.o: \
   mo_jsb_math_constants.o \
   mo_atm2land_memory_class.o \
   mo_atmland_constants.o \
+  mo_atmland_util.o \
   mo_jsb_physical_constants.o \
   mo_isotope_util.o \
   mo_q_pheno_constants.o \
   mo_phy_schemes.o \
   mo_rad_memory_class.o \
   mo_turb_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_veg_memory_class.o \
   mo_veg_constants.o \
   mo_q_veg_respiration.o \

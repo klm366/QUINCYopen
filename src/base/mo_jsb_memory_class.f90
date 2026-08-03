@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -612,7 +612,7 @@ CONTAINS
     loutput, lcontainer,                                        &
     lrestart, lrestart_cont, initval_r, isteptype,              &
     resetval_r, lmiss, missval_r, l_aggregate_all,              &
-    output_level, verbose, cons_quan_type_id, transfer_all      &
+    output_level, verbose                                       &
     )
   
     CLASS(t_jsb_memory),   INTENT(inout)        :: mem                 ! memory structure
@@ -637,9 +637,7 @@ CONTAINS
     LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
     INTEGER,              INTENT(in), OPTIONAL :: output_level        ! minimum level of output groups this var belongs to
     LOGICAL,              INTENT(in), OPTIONAL :: verbose             ! print information
-    INTEGER,              INTENT(in), OPTIONAL :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,              INTENT(in), OPTIONAL :: transfer_all        ! transfer all or only a proportion of matter upon lcc
-
+  
     ! TYPE(t_jsb_varlist), POINTER :: this_list           ! list
     ! CHARACTER(len=50) :: name_loc
     ! TYPE(t_cf_var)    :: cf_loc
@@ -1092,7 +1090,7 @@ CONTAINS
     mem, name, var, &
     hgrid, vgrid, cf, grib1, grib2, prefix, suffix, &
     loutput, lrestart, lrestart_cont, output_level, output_groups, &
-    initval_r, l_aggregate_all, isteptype, cons_quan_type_id, transfer_all)
+    initval_r, l_aggregate_all, isteptype)
 
     CLASS(t_jsb_memory),              INTENT(inout)   :: mem            ! memory structure
     CHARACTER(len=*),                 INTENT(in)      :: name           ! name of variable
@@ -1112,8 +1110,6 @@ CONTAINS
     REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
     INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
-    INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,                OPTIONAL, INTENT(in)      :: transfer_all   ! transfer all or only a proportion of matter upon lcc
 
     INTEGER                     :: pos_of_var
     INTEGER                     :: ice, ics, nproma, iblk
@@ -1159,7 +1155,7 @@ CONTAINS
     mem, name, var, &
     hgrid, vgrid, cf, grib1, grib2, prefix, suffix, &
     loutput, lrestart, lrestart_cont, output_level, output_groups, &
-    initval_r, l_aggregate_all, isteptype, cons_quan_type_id, transfer_all)
+    initval_r, l_aggregate_all, isteptype)
   
     CLASS(t_jsb_memory),              INTENT(inout)   :: mem            ! memory structure
     CHARACTER(len=*),                 INTENT(in)      :: name           ! name of variable
@@ -1179,8 +1175,6 @@ CONTAINS
     REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
     INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
-    INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
-    LOGICAL,                OPTIONAL, INTENT(in)      :: transfer_all   ! transfer all or only a proportion of matter upon lcc
 
     INTEGER                     :: pos_of_var
     INTEGER                     :: ice, ics, nproma, iblk

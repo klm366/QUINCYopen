@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -51,7 +51,7 @@ CONTAINS
   !! 
   !! 
   !-----------------------------------------------------------------------------------------------------
-  SUBROUTINE setup_grid_standalone(model_id, grid_name, nproma, npromz, nblks)
+  SUBROUTINE setup_grid_standalone(model_id, grid_name, nproma)
 
     USE mo_jsb_model_class,       ONLY: t_jsb_model
     USE mo_jsb_class,             ONLY: Get_model
@@ -64,8 +64,6 @@ CONTAINS
     INTEGER,                    INTENT(in) :: model_id
     CHARACTER(len=*),           INTENT(in) :: grid_name
     INTEGER,                    INTENT(in) :: nproma
-    INTEGER,                    INTENT(in) :: npromz
-    INTEGER,                    INTENT(in) :: nblks
     ! ---------------------------
     ! 0.2 Local
     TYPE(t_jsb_model),  POINTER   :: model
@@ -78,7 +76,7 @@ CONTAINS
 
     !< 0.9
     !! 
-    !CALL message(TRIM(routine), 'Standalone model currently only works with ECHAM')
+    CALL message(TRIM(routine), 'Standalone model currently only works with ECHAM')
 
 
     !< 1.0 create horizontal grid
@@ -87,17 +85,8 @@ CONTAINS
     grid%id     = 1                     ! *quincytmp -> must be identical with the position of this grid in mo_jsb_grid:jsbach_grids(:)
     grid%name   = grid_name             ! *quincytmp
     grid%nproma = nproma                ! *quincytmp
-    grid%npromz = npromz                ! *quincytmp
-    grid%nblks  = nblks                 ! *quincytmp
     CALL register_grid(grid)            ! add to mo_jsb_grid:jsbach_grids(:), actuall to jsbach_grids(1)
     model%grid_id = grid%id             ! tell the model the id of the hgrid, so that one can get the correct hgrid per model
-
-    ALLOCATE(grid%lsm(grid%nproma, grid%nblks))
-    ALLOCATE(grid%lsf(grid%nproma, grid%nblks))
-    ALLOCATE(grid%area(grid%nproma, grid%nblks))
-    grid%lsm(:,:)  = .TRUE.
-    grid%lsf(:,:)  = 1.0_wp
-    grid%area(:,:) = 1.0_wp
 
     NULLIFY(model)    ! NULLIFY pointer to model
 
@@ -109,25 +98,19 @@ CONTAINS
   !! 
   !! and init of: forcing, SB_ & VEG_ pools, tiles, time, fluxnet diagnostics simulation state
   !-----------------------------------------------------------------------------------------------------
-  SUBROUTINE quincy_init(model_id, iblk, nproma, nblks, ics, ice, nc, l_forcing)
+  SUBROUTINE quincy_init(model_id, iblk, nproma, ics, ice, nc, l_forcing)
     ! base
     USE mo_jsb_model_class,       ONLY: t_jsb_model
     USE mo_quincy_model_config,   ONLY: QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION
     USE mo_jsb_tile_class,        ONLY: t_jsb_tile_abstract
     USE mo_jsb_lct_class,         ONLY: Contains_lct
     USE mo_jsb_model_usecases,    ONLY: init_usecase
-    USE mo_qs_forcing,            ONLY: Init_forcing_qs, forcing_options
+    USE mo_qs_forcing,            ONLY: Init_forcing, forcing_options
     USE mo_jsb_class,             ONLY: Get_model
-    USE mo_jsb_grid_class,        ONLY: t_jsb_vgrid
-    USE mo_jsb_grid,              ONLY: Get_vgrid
-    USE mo_jsb_process_class,     ONLY: VEG_, SSE_, Q_SYL_, Q_AGR_
+    USE mo_jsb_process_class,     ONLY: VEG_
     USE mo_jsb_math_constants,    ONLY: one_year, one_day
-    ! icon_adapter
-    USE mo_time_config,           ONLY: time_config
     ! shared 
-    USE mo_util,                  ONLY: one_of, int2string
-    ! quincy_standalone
-    USE mo_jsb4_forcing,          ONLY: setup_forcing, init_forcing   ! setup icon-land forcing_options(:)
+    USE mo_util,                  ONLY: one_of
     ! process init
     USE mo_veg_init,              ONLY: veg_init
     USE mo_spq_init,              ONLY: spq_init
@@ -141,33 +124,29 @@ CONTAINS
     USE mo_turb_init,             ONLY: turb_init
     USE mo_q_pheno_init,          ONLY: q_pheno_init
     USE mo_dfire_init,            ONLY: dfire_init
+    USE mo_dinsect_init,          ONLY: dinsect_init
     USE mo_q_agr_init,            ONLY: q_agr_init
-    USE mo_q_syl_init,            ONLY: q_syl_init
+    USE mo_q_sh_init,             ONLY: q_sh_init
     ! process configurations (t_PROC_config)
     dsl4jsb_Use_config(VEG_)
-    dsl4jsb_Use_config(SSE_)
     
     IMPLICIT NONE
     ! ---------------------------
     ! 0.1 InOut
     INTEGER ,INTENT(in)                       :: model_id
-    INTEGER ,INTENT(in)                       :: iblk, nproma, nblks  !< block number, number of points per chunk, number of blocks   *slmtmp
+    INTEGER ,INTENT(in)                       :: iblk, nproma         !< block number, number of points per chunk   *slmtmp
     INTEGER ,INTENT(in)                       :: ics, ice, nc         !< first & last & number of points in the chunk the model currently works on  *slmtmp
     LOGICAL ,INTENT(out)                      :: l_forcing            !< IF .TRUE. THEN update_forcing()
     ! ---------------------------
     ! 0.2 Local
     TYPE(t_jsb_model),          POINTER       :: model
     CLASS(t_jsb_tile_abstract), POINTER       :: tile
-    TYPE(t_jsb_vgrid),          POINTER       :: soil_w           ! vertical grid HYDRO_
-    TYPE(t_jsb_vgrid),          POINTER       :: soil_e           ! vertical grid SSE_
-    TYPE(t_jsb_vgrid),          POINTER       :: snow_e           ! vertical grid SSE_
     INTEGER                                   :: no_omp_thread
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':quincy_init'
     ! ---------------------------
     ! 0.3 Declare Memory
     ! Declare process configuration and memory Pointers
     dsl4jsb_Def_config(VEG_)
-    dsl4jsb_Def_config(SSE_)
     ! ---------------------------
     ! 0.4 Process Activity, Debug Option
     ! 
@@ -176,7 +155,6 @@ CONTAINS
     model  => Get_model(model_id)
     ! Get process config
     dsl4jsb_Get_config(VEG_)
-    dsl4jsb_Get_config(SSE_)
 
     !>0.9 init local variables
     !>
@@ -184,14 +162,15 @@ CONTAINS
     no_omp_thread = 1     ! no threading with OpenMPI in QUINCY
 
 
-    !>1.0 QS forcing config
+    !>1.0 forcing config
     !>
-    CALL Init_forcing_qs(model_id)
+    CALL Init_forcing(model_id)
 
 
     !>2.0 model options
     !>
     model%options%dtime        = model%config%dtime !< length of one time step
+    model%options%steplen      = model%config%dtime !< 
     model%options%alpha        = 1.0_wp
       !< in ICON-Land, 'alpha' is derived as alpha = MERGE(1._wp, cvdifts, jsbach_runs_standalone()))
       !< with cvdifts comming from ICON where it is set to 1.5; i.e. standalone: 1.0 // coupled: 1.5
@@ -202,9 +181,6 @@ CONTAINS
     model%options%nc           = nc                 !< 
 
     ALLOCATE(model%options%current_datetime)
-    ALLOCATE(time_config%tc_startdate)
-    ALLOCATE(time_config%tc_stopdate)
-    ALLOCATE(time_config%tc_current_date)   ! current not used, but should replace 'model%options%current_datetime' soon
 
     !>3.0 Init tiles
     !>
@@ -212,7 +188,7 @@ CONTAINS
     ! We continue with initializing the memory structure and different model processes.
     ! Iterate over tiles and call initialization if necessary
     CALL model%Reset_tiles()
-    CALL model%Get_top_tile(tile)
+    tile => model%Get_top_tile()
     IF (.NOT. ASSOCIATED(tile)) CALL finish(TRIM(routine), 'Top tile not set')
 
     !>  3.1 loop over tiles
@@ -245,19 +221,13 @@ CONTAINS
       CALL tile%Collect_bgc_materials()
 
       !! QUINCY specific:
-      !!   set lct of the tile (all is by default .FALSE.; see t_jsb_tile_abstract)
-      !!   part of these values are also set with 'Add_lct()'
-      tile%is_land              = .TRUE.
+      !! set lct of the tile (all is by default .FALSE.; see t_jsb_tile_abstract)
       tile%is_vegetation        = .TRUE.
       tile%contains_vegetation  = .TRUE.
       tile%contains_soil        = .TRUE.
       CALL message(TRIM(routine), 'tile%is_vegetation        = .TRUE.')
       CALL message(TRIM(routine), 'tile%contains_vegetation  = .TRUE.')
       CALL message(TRIM(routine), 'tile%contains_soil        = .TRUE.')
-      ALLOCATE(tile%fract(nproma, nblks))
-      ALLOCATE(tile%fract_old(nproma, nblks))
-      tile%fract(:,:)           = 1.0_wp
-      tile%fract_old(:,:)       = 1.0_wp
 
       !! this option is outdated; forcing is always used, but not for test_canopy, as the below CASE indicates :)
       !!
@@ -279,11 +249,15 @@ CONTAINS
       !>
       ! store all bgcms into their matrices to work on the matrices within the init routines
       IF (ASSOCIATED(tile%bgcm_store)) THEN
-        CALL tile%bgcm_store%Store_bgcm_vars_in_matrices(tile%name, ics, ice, iblk)
+        CALL tile%bgcm_store%Store_bgcms_in_matrices(tile%name, ics, ice, iblk)
       ENDIF
       ! dfire_init
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT ]) > 0) THEN
         CALL dfire_init(tile)
+      END IF
+      ! dinsect_init
+      IF (one_of(model%config%qmodel_id, [ QLAND]) > 0) THEN
+        CALL dinsect_init(tile)
       END IF
       ! pheno_init 
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QCANOPY ]) > 0) THEN
@@ -297,17 +271,10 @@ CONTAINS
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QCANOPY ]) > 0) THEN
         CALL turb_init(tile)
       END IF
-      ! q_syl_init - sylviculture
-      IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT]) > 0) THEN
-        IF (model%processes(Q_SYL_)%p%config%active) THEN
-          CALL q_syl_init(tile)
-        END IF
-      END IF
-      ! q_agr - agriculture
-      IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QCANOPY ]) > 0) THEN
-        IF (model%processes(Q_AGR_)%p%config%active) THEN
-          CALL q_agr_init(tile)
-        END IF
+      ! q_sh_init - simple harvest
+      IF (one_of(model%config%qmodel_id, [ QLAND ]) > 0) THEN
+        CALL q_sh_init(tile)
+        CALL q_agr_init(tile)
       END IF
       ! assimi_init and rad_init (initialised for the same models)
       IF (one_of(model%config%qmodel_id, &
@@ -320,20 +287,16 @@ CONTAINS
         CALL sse_init(tile)
       END IF
       ! seb_init
-      ! initialize SEB_ before HYDRO_
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
         CALL seb_init(tile)
       END IF
       ! hydro_init
-      ! initialize HYDRO_ before VEG_ and SPQ_
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
         CALL hydro_init(tile)
       END IF
       ! spq_init
-      IF (.NOT. model%config%use_soil_phys_jsbach) THEN
-        IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
-          CALL spq_init(tile)
-        END IF
+      IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
+        CALL spq_init(tile)
       END IF
       ! veg_init
       IF (one_of(model%config%qmodel_id, &
@@ -347,7 +310,7 @@ CONTAINS
       !!
       ! write back the matrices to the bgcms
       IF (ASSOCIATED(tile%bgcm_store)) THEN
-        CALL tile%bgcm_store%Write_matrices_to_bgcm_vars(tile%name, ics, ice, iblk)
+        CALL tile%bgcm_store%Write_stored_matrices_to_bgcms(tile%name, ics, ice, iblk)
       ENDIF
       ! next tile
       tile => model%Goto_next_tile()
@@ -356,26 +319,9 @@ CONTAINS
     !>  3.5 Iterate over tiles again and set lct fractions (after ALL tile fractions have been set above)
     !>
     CALL model%Reset_tiles()
-    CALL model%Get_top_tile(tile)
+    tile => model%Get_top_tile()
     IF (.NOT. ASSOCIATED(tile)) CALL finish(TRIM(routine), 'Top tile not set')
 
-    !>4.0 Make number of vertical layers available from the options type
-    !>
-    ! soil water
-    soil_w => Get_vgrid('soil_depth_water')
-    model%options%nsoil_w = soil_w%n_levels
-    ! soil energy
-    soil_e => Get_vgrid('soil_depth_energy')
-    model%options%nsoil_e = soil_e%n_levels
-    ! snow (SSE_ vgrid)
-    snow_e => Get_vgrid('snow_depth_energy')
-    model%options%nsnow_e = snow_e%n_levels
-    ! crosscheck process configs
-    IF ((model%options%nsoil_e /= model%options%nsoil_w)) THEN
-      CALL finish(routine, &
-        & 'The number of soil layers used for water and energy currently need to be identical:'  &
-        & //' nsoil_w = '//TRIM(int2string(model%options%nsoil_w))//', nsoil_e = '//TRIM(int2string(model%options%nsoil_e)))
-    END IF
 
     !>4.0 Time init for e.g. the time loop in the quincy_qs_model_driver
     !>
@@ -384,26 +330,13 @@ CONTAINS
     ntimestep         = forcing_options%Timesteps(model%config%dtime) !! number of time steps (considers the simulation_mode static & transient)
     timestep_prop_day = model%config%dtime / one_day                  !! proportion of one day that is simulated with one timestep
 
-    model%options%current_datetime%time_day  = time_day
+    model%options%current_datetime%time_day = time_day
     model%options%current_datetime%time_year = time_year
 
-    time_config%tc_startdate%time_day        = time_day                           ! just zero, i.e., start of the year
-    time_config%tc_startdate%time_year       = model%config%forcing_file_start_yr ! first year in the forcing file
-
-    !>5.0 Setup and init icon-land "quincy_standalone/mo_jsb4_forcing:forcing_options"
-    !>
-    ! setup 'forcing_options()' (in quincy standalone model%id is set to 1)
-    CALL setup_forcing(model%id)
-    ! init 'forcing_options()' with default values
-    CALL init_forcing( &
-      &               model%id, &
-      &               "qs.namelist", &
-      &               model%config%dtime)
-
-    !>6.0 Init a simulation setup specific for a site-set
+    !>5.0 Init a simulation setup specific for a site-set
     !>
 
-    !>  6.1 EucFACE transient simulations
+    !>  5.1 EucFACE transient simulations
     !>  using the fluxnet diagnostics-simulations infrastructure
     !>
     IF (TRIM(model%config%sim_siteset_specific) == "eucface_trans") THEN
@@ -412,7 +345,7 @@ CONTAINS
       PRINT*, TRIM(routine), ' Set fluxnet_type_transient_timestep_output=T; use fluxnet diagnostics infrastructure.'
     ENDIF
 
-    !>  6.2 Fluxnet diagnostics simulation
+    !>  5.2 Fluxnet diagnostics simulation
     !>    set the state to "active"
     !>    states: \n
     !>     0: not a fluxnet diagnostics simulation

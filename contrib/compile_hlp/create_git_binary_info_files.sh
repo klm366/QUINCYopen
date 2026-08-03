@@ -5,7 +5,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -26,7 +26,7 @@
 ## 
 
 echo ""
-echo "  ## sourcing the build/compile_hlp/create_git_binary_info_files.sh"
+echo "  ## sourcing the contrib/compile_hlp/create_git_binary_info_files.sh"
 echo ""
 
 # function --------------------------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ if [[ ${exitCode} -eq 0 ]]; then
 else
   ## if there is no git information, i.e., no git repo
   echo "The commit number of your local git repo which you just attempted to compile could not be identified, please check!"
-  echo "NOTE: git version information is not available for neither postprocessing nor documentation of simulation experiments."
+  echo "EXIT!"
   exit 1
 fi
 

@@ -3,7 +3,7 @@
 !> QUINCY standalone
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: https://doi.org/10.17871/quincy-model-2019
 !> Authors: AUTHORS.md

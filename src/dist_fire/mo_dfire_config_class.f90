@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -32,7 +32,7 @@ MODULE mo_dfire_config_class
 
   !>
   !> Fire models
-  !>
+  !> 
   !>   spitfire, ..
   !>
   ENUM, BIND(C)
@@ -53,11 +53,11 @@ MODULE mo_dfire_config_class
   CONTAINS
     PROCEDURE :: Init => Init_dfire_config
   END type t_dfire_config
-
+  
   CHARACTER(len=*), PARAMETER :: modname = 'mo_dfire_config_class'
 
 CONTAINS
-
+  
   ! ======================================================================================================= !
   !>
   !> configuration routine of t_dfire_config
@@ -78,7 +78,7 @@ CONTAINS
     REAL(wp)                      :: lightning_frequency
     CHARACTER(len=*), PARAMETER   :: routine = TRIM(modname)//':Init_dfire_config'
     ! ----------------------------------------------------------------------------------------------------- !
-    NAMELIST /lnd_dist_fire_nml/        &
+    NAMELIST /dist_fire_ctl/        &
       & active,                     &
       & ic_filename,                &
       & bc_filename,                &
@@ -102,11 +102,11 @@ CONTAINS
     lightning_frequency      = 5.0                ! default for spitfire
     ! ----------------------------------------------------------------------------------------------------- !
     ! read the namelist
-    ! &lnd_dist_fire_nml
+    ! &DIST_FIRE_CTL
     nml_handler = open_nml(TRIM(config%namelist_filename))
     ! ----------------------------------------------------------------------------------------------------- !
-    nml_unit = position_nml('lnd_dist_fire_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_dist_fire_nml)
+    nml_unit = position_nml('DIST_FIRE_CTL', nml_handler, STATUS=istat)
+    IF (istat == POSITIONED) READ(nml_unit, dist_fire_ctl)
     ! ----------------------------------------------------------------------------------------------------- !
     ! pass values as read from file
     config%active                    = active
@@ -134,7 +134,7 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Get_dfire_model_id'
     ! ----------------------------------------------------------------------------------------------------- !
-    SELECT CASE(tolower(TRIM(name)))
+    SELECT CASE(tolower(TRIM(name)))  
     CASE ('spitfire')
       return_value = DFIRE_MODEL_SF
     CASE DEFAULT

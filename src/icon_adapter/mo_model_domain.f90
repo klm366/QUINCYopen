@@ -1,7 +1,7 @@
 ! ICON
 !
 ! ---------------------------------------------------------------
-! Copyright (C) 2004-2026, DWD, MPI-M, DKRZ, KIT, ETH, MeteoSwiss
+! Copyright (C) 2004-2024, DWD, MPI-M, DKRZ, KIT, ETH, MeteoSwiss
 ! Contact information: icon-model.org
 !
 ! See AUTHORS.TXT for a list of authors
@@ -41,7 +41,7 @@ MODULE mo_model_domain
   ! USE mo_io_units,                ONLY: filename_max
   ! USE mo_util_uuid_types,         ONLY: t_uuid
   ! USE mo_lib_grid_geometry_info,  ONLY: t_grid_geometry_info
-  USE mo_decomposition_tools,     ONLY: t_grid_domain_decomp_info
+  ! USE mo_decomposition_tools,     ONLY: t_grid_domain_decomp_info
   ! USE mo_read_netcdf_types,       ONLY: t_distrib_read_data
   IMPLICIT NONE
 
@@ -129,163 +129,164 @@ MODULE mo_model_domain
   ! END TYPE t_subset_range_index
   ! !----------------------------------------------------
 
-    ! -----------------------------------------------------------------------------
-  ! grid_cell class - corresponds to triangles
-  ! -----------------------------------------------------------------------------
-  !
-  ! This data type holds the topological and geometrical information on
-  ! the grid cells, read from the NetCDF grid file.
-  !
-  ! * Note on parent-child relation "child_idx/child_blk":
-  !
-  !          *---------------o--------------*
-  !           \__   4     _/  \_    2    __/
-  !              \_     _/   3  \_    __/
-  !                \__ /__________\ _/
-  !                   o            o
-  !                     \__  1  __/
-  !                        \_ _/
-  !                          *
-  !
-  !   The ICON model makes an important implicit assumption on the
-  !   child ordering:
-  !
-  !   - cell child #3 is the "interior" child (containing the parent
-  !     cell's mass point)
-  !
-  TYPE t_grid_cells
+  ! ! -----------------------------------------------------------------------------
+  ! ! grid_cell class - corresponds to triangles
+  ! ! -----------------------------------------------------------------------------
+  ! !
+  ! ! This data type holds the topological and geometrical information on
+  ! ! the grid cells, read from the NetCDF grid file.
+  ! !
+  ! ! * Note on parent-child relation "child_idx/child_blk":
+  ! !
+  ! !          *---------------o--------------*
+  ! !           \__   4     _/  \_    2    __/
+  ! !              \_     _/   3  \_    __/
+  ! !                \__ /__________\ _/
+  ! !                   o            o  
+  ! !                     \__  1  __/
+  ! !                        \_ _/
+  ! !                          *
+  ! !
+  ! !   The ICON model makes an important implicit assumption on the
+  ! !   child ordering:
+  ! !
+  ! !   - cell child #3 is the "interior" child (containing the parent
+  ! !     cell's mass point)
+  ! !   
+  ! TYPE t_grid_cells
 
-    ! INTEGER :: max_connectivity
-    ! ! number of edges connected to cell
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: num_edges(:,:)
+  !   INTEGER :: max_connectivity
+  !   ! number of edges connected to cell
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: num_edges(:,:)
 
-    ! ! line index of parent triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: parent_loc_idx(:,:)
-    ! INTEGER, ALLOCATABLE :: parent_glb_idx(:,:)
-    ! ! block index of parent triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: parent_loc_blk(:,:)
-    ! INTEGER, ALLOCATABLE :: parent_glb_blk(:,:)
-    ! ! parent child index, number of current cell in parent's child_idx/child_blk:
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: pc_idx(:,:)
+  !   ! line index of parent triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: parent_loc_idx(:,:)
+  !   INTEGER, ALLOCATABLE :: parent_glb_idx(:,:)
+  !   ! block index of parent triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: parent_loc_blk(:,:)
+  !   INTEGER, ALLOCATABLE :: parent_glb_blk(:,:)
+  !   ! parent child index, number of current cell in parent's child_idx/child_blk:
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: pc_idx(:,:)
 
-    ! ! line indices of child triangles:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,4
-    ! INTEGER, ALLOCATABLE :: child_idx(:,:,:)
-    ! ! block indices of child triangles:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,4
-    ! INTEGER, ALLOCATABLE :: child_blk(:,:,:)
-    ! ! domain ID of child triangles:
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: child_id(:,:)
-    ! ! physical domain ID of triangles
-    ! ! (may differ from the "normal" domain ID in case of domain merging):
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: phys_id(:,:)
+  !   ! line indices of child triangles:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,4
+  !   INTEGER, ALLOCATABLE :: child_idx(:,:,:)
+  !   ! block indices of child triangles:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,4
+  !   INTEGER, ALLOCATABLE :: child_blk(:,:,:)
+  !   ! domain ID of child triangles:
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: child_id(:,:)
+  !   ! physical domain ID of triangles
+  !   ! (may differ from the "normal" domain ID in case of domain merging):
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: phys_id(:,:)
 
-    ! ! line indices of triangles next to each cell:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: neighbor_idx(:,:,:)
-    ! ! block indices of triangles next to each cell:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: neighbor_blk(:,:,:)
+  !   ! line indices of triangles next to each cell:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: neighbor_idx(:,:,:)
+  !   ! block indices of triangles next to each cell:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: neighbor_blk(:,:,:)
 
-    ! ! line indices of edges of triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: edge_idx(:,:,:)
-    ! ! block indices of edges of triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: edge_blk(:,:,:)
+  !   ! line indices of edges of triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: edge_idx(:,:,:)
+  !   ! block indices of edges of triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: edge_blk(:,:,:)
 
-    ! ! line indices of verts of triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: vertex_idx(:,:,:)
-    ! ! block indices of verts of triangle:
-    ! ! index1=1,nproma, index2=1,nblks_c, index3=1,3
-    ! INTEGER, ALLOCATABLE :: vertex_blk(:,:,:)
+  !   ! line indices of verts of triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: vertex_idx(:,:,:)
+  !   ! block indices of verts of triangle:
+  !   ! index1=1,nproma, index2=1,nblks_c, index3=1,3
+  !   INTEGER, ALLOCATABLE :: vertex_blk(:,:,:)
 
-    ! ! orientation of vectors normal to cell edges:
-    ! ! index1=nproma, index2=1,nblks_c, index3=1,3
-    ! REAL(wp), ALLOCATABLE :: edge_orientation(:,:,:)
+  !   ! orientation of vectors normal to cell edges:
+  !   ! index1=nproma, index2=1,nblks_c, index3=1,3
+  !   REAL(wp), ALLOCATABLE :: edge_orientation(:,:,:)
 
-    ! ! cell geometry
+  !   ! cell geometry
 
-    ! ! longitude & latitude of centers of triangular cells
-    ! ! index1=nproma, index2=1,nblks_c
-    ! TYPE(t_geographical_coordinates), ALLOCATABLE ::  &
-    !   & center(:,:)
+  !   ! longitude & latitude of centers of triangular cells
+  !   ! index1=nproma, index2=1,nblks_c
+  !   TYPE(t_geographical_coordinates), ALLOCATABLE ::  &
+  !     & center(:,:)
 
-    ! ! area of triangle
-    ! ! index1=nproma, index2=1,nblks_c
-    ! REAL(wp), POINTER :: area(:,:) => NULL()
+  !   ! area of triangle
+  !   ! index1=nproma, index2=1,nblks_c
+  !   REAL(wp), POINTER :: area(:,:) => NULL()
 
-    ! ! Coriolis parameter at cell centers
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! REAL(wp), ALLOCATABLE :: f_c(:,:)
+  !   ! Coriolis parameter at cell centers
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   REAL(wp), ALLOCATABLE :: f_c(:,:)
 
-    ! !----------------------------------
-    ! ! cell geometry auxiliary variables
-    ! ! the cartesian coordinates of the cell centers on the unit sphere
-    ! TYPE(t_cartesian_coordinates), POINTER ::  &
-    !   & cartesian_center(:,:) => NULL()
-    ! !----------------------------------
+  !   !----------------------------------
+  !   ! cell geometry auxiliary variables
+  !   ! the cartesian coordinates of the cell centers on the unit sphere
+  !   TYPE(t_cartesian_coordinates), POINTER ::  &
+  !     & cartesian_center(:,:) => NULL()
+  !   !----------------------------------
 
-    ! ! refinement control flag
-    ! ! index1=1,nproma, index2=1,nblks_c
-    ! INTEGER, ALLOCATABLE :: refin_ctrl(:,:)
+  !   ! refinement control flag
+  !   ! index1=1,nproma, index2=1,nblks_c
+  !   INTEGER, ALLOCATABLE :: refin_ctrl(:,:)
 
-    ! ! list of start indices for each refin_ctrl level
-    ! ! index1=min_rlcell,max_rlcell (defined in mo_impl_constants), index2=n_childdom
-    ! INTEGER, ALLOCATABLE :: start_idx(:,:) ! to be removed soon
-    ! INTEGER, ALLOCATABLE :: start_index(:) ! revised implementation
+  !   ! list of start indices for each refin_ctrl level
+  !   ! index1=min_rlcell,max_rlcell (defined in mo_impl_constants), index2=n_childdom
+  !   INTEGER, ALLOCATABLE :: start_idx(:,:) ! to be removed soon
+  !   INTEGER, ALLOCATABLE :: start_index(:) ! revised implementation
 
-    ! ! list of end indices for each refin_ctrl level
-    ! ! index1=min_rlcell,max_rlcell, index2=n_childdom
-    ! INTEGER, ALLOCATABLE :: end_idx(:,:) ! to be removed soon
-    ! INTEGER, ALLOCATABLE :: end_index(:) ! revised implementation
+  !   ! list of end indices for each refin_ctrl level
+  !   ! index1=min_rlcell,max_rlcell, index2=n_childdom
+  !   INTEGER, ALLOCATABLE :: end_idx(:,:) ! to be removed soon
+  !   INTEGER, ALLOCATABLE :: end_index(:) ! revised implementation
 
-    ! ! list of start block for each refin_ctrl level
-    ! ! index1=min_rlcell,max_rlcell, index2=n_childdom
-    ! INTEGER, ALLOCATABLE :: start_blk(:,:) ! to be removed soon
-    ! INTEGER, ALLOCATABLE :: start_block(:) ! revised implementation
+  !   ! list of start block for each refin_ctrl level
+  !   ! index1=min_rlcell,max_rlcell, index2=n_childdom
+  !   INTEGER, ALLOCATABLE :: start_blk(:,:) ! to be removed soon
+  !   INTEGER, ALLOCATABLE :: start_block(:) ! revised implementation
 
-    ! ! list of end block for each refin_ctrl level
-    ! ! index1=min_rlcell,max_rlcell, index2=n_childdom
-    ! INTEGER, ALLOCATABLE :: end_blk(:,:) ! to be removed soon
-    ! INTEGER, ALLOCATABLE :: end_block(:) ! revised implementation
+  !   ! list of end block for each refin_ctrl level
+  !   ! index1=min_rlcell,max_rlcell, index2=n_childdom
+  !   INTEGER, ALLOCATABLE :: end_blk(:,:) ! to be removed soon
+  !   INTEGER, ALLOCATABLE :: end_block(:) ! revised implementation
 
-    ! information on domain decomposition
-    TYPE(t_grid_domain_decomp_info) :: decomp_info
+  !   ! information on domain decomposition
+  !   TYPE(t_grid_domain_decomp_info) :: decomp_info
 
-    ! ! information for distributed read operation
-    ! ! the pointer is needed because mo_read_interface has references this,
-    ! ! without this pointer p_patch would have to be TARGET everywhere the
-    ! ! distributed IO is used
-    ! TYPE(t_distrib_read_data), POINTER :: dist_io_data => NULL()
+  !   ! information for distributed read operation
+  !   ! the pointer is needed because mo_read_interface has references this,
+  !   ! without this pointer p_patch would have to be TARGET everywhere the
+  !   ! distributed IO is used
+  !   TYPE(t_distrib_read_data), POINTER :: dist_io_data => NULL()
 
-    ! ! Please note that the following array is only needed on local parent patches
-    ! ! for storing the corresponding variable from nh_metrics.
-    ! ! It is not allocated/deallocated with the regular patch (de)allocation routines
-    ! ! nor does it need to be dumped/restored or subdivided in patch subdivision.
-    ! REAL(wp), ALLOCATABLE :: ddqz_z_full(:,:,:)
+  !   ! Please note that the following array is only needed on local parent patches
+  !   ! for storing the corresponding variable from nh_metrics.
+  !   ! It is not allocated/deallocated with the regular patch (de)allocation routines
+  !   ! nor does it need to be dumped/restored or subdivided in patch subdivision.
+  !   REAL(wp), ALLOCATABLE :: ddqz_z_full(:,:,:)
 
-    ! ! define basic subsets
-    ! TYPE(t_subset_range) :: ALL          ! these are the all valid entities, including all valid halos
-    ! TYPE(t_subset_range) :: owned         ! these are the owned entities
-    ! TYPE(t_subset_range) :: owned_no_boundary ! these are the owned entities without boundary interpolation zone
-    ! TYPE(t_subset_range) :: in_domain     ! these are the computation domain entities, for cells = owned
-    ! TYPE(t_subset_range) :: not_owned     ! these are all the halo entities
-    ! TYPE(t_subset_range) :: not_in_domain ! for cells = not_owned
-    ! TYPE(t_subset_range) :: one_edge_in_domain ! cells with exactly one edge in domain. these are always halo cells
+  !   ! define basic subsets
+  !   TYPE(t_subset_range) :: ALL          ! these are the all valid entities, including all valid halos
+  !   TYPE(t_subset_range) :: owned         ! these are the owned entities
+  !   TYPE(t_subset_range) :: owned_no_boundary ! these are the owned entities without boundary interpolation zone
+  !   TYPE(t_subset_range) :: in_domain     ! these are the computation domain entities, for cells = owned
+  !   TYPE(t_subset_range) :: not_owned     ! these are all the halo entities
+  !   TYPE(t_subset_range) :: not_in_domain ! for cells = not_owned
+  !   TYPE(t_subset_range) :: one_edge_in_domain ! cells with exactly one edge in domain. these are always halo cells
 
-    ! INTEGER :: dummy_cell_block, dummy_cell_index     ! in case of existing a dummy cell for closing the
-    !   ! local domain, these point to the dummy cell. This cell does not actually "exist"!
-    !   ! =0 if no dummy cell
+  !   INTEGER :: dummy_cell_block, dummy_cell_index     ! in case of existing a dummy cell for closing the
+  !     ! local domain, these point to the dummy cell. This cell does not actually "exist"!
+  !     ! =0 if no dummy cell
 
-  END TYPE t_grid_cells
+  ! END TYPE t_grid_cells
+
 
 
   ! ! !grid_edge class
@@ -613,215 +614,216 @@ MODULE mo_model_domain
 
   ! END TYPE t_grid_vertices
 
-! !patch class
 
-TYPE t_patch
+  ! !patch class
 
-    ! !
-    ! ! !  level in grid hierarchy on which patch lives
-    ! !
-    ! CHARACTER(LEN=filename_max) :: grid_filename, grid_filename_grfinfo
-    ! !
-    ! ! uuid of grid
-    ! TYPE(t_uuid) :: grid_uuid
-    !
-    ! grid level
-    INTEGER :: level
-    !
-    ! nest level = grid level - start level
-    INTEGER :: nest_level
-    !
+  TYPE t_patch
+
+!     !
+!     ! !  level in grid hierarchy on which patch lives
+!     !
+!     CHARACTER(LEN=filename_max) :: grid_filename, grid_filename_grfinfo
+!     !
+!     ! uuid of grid
+!     TYPE(t_uuid) :: grid_uuid
+!     !
+!     ! grid level
+!     INTEGER :: level
+!     !
+!     ! nest level = grid level - start level
+!     INTEGER :: nest_level
+!     !
     ! domain ID of current domain
-    INTEGER :: id
-    !
-    ! indicator if current model domain is active
-    LOGICAL :: ldom_active
-    !
-    ! indicator if current model domain is owned by a PE (relevant in case of processor splitting)
-    LOGICAL :: domain_is_owned
+    INTEGER :: id = -1
+!     !
+!     ! indicator if current model domain is active
+!     LOGICAL :: ldom_active
+!     !
+!     ! indicator if current model domain is owned by a PE (relevant in case of processor splitting)
+!     LOGICAL :: domain_is_owned
 
-    !-------------------------------------
-    !> The grid domain geometry parameters
-    ! cell type =3 or 6
-    ! INTEGER :: cell_type     ! included in geometry_info
+!     !-------------------------------------
+!     !> The grid domain geometry parameters
+!     ! cell type =3 or 6
+!     ! INTEGER :: cell_type     ! included in geometry_info
 
-!     INTEGER :: geometry_type ! included in geometry_info
+! !     INTEGER :: geometry_type ! included in geometry_info
 
-    ! TYPE(t_grid_geometry_info) :: geometry_info
-    !-------------------------------------
-    INTEGER :: boundary_depth_index  ! when is limited area grid, this is the  number of boundary levels based
-                                     ! on the edge-connected cells (the fisrt level are cells that have
-                                     ! at least one boundary edge, the next level are cells shering an edge with
-                                     ! level 1 cells, etc
+!     TYPE(t_grid_geometry_info) :: geometry_info
+!     !-------------------------------------
+!     INTEGER :: boundary_depth_index  ! when is limited area grid, this is the  number of boundary levels based
+!                                      ! on the edge-connected cells (the fisrt level are cells that have
+!                                      ! at least one boundary edge, the next level are cells shering an edge with
+!                                      ! level 1 cells, etc
 
-    !
-    ! domain ID of parent domain
-    INTEGER :: parent_id
-    !
-    ! child domain index of current domain as seen from parent domain
-    ! In other words: I am the nth child of my parents (n=parent_child_index)
-    INTEGER :: parent_child_index
-    ! !
-    ! ! list of child domain ID's
-    ! INTEGER :: child_id(max_dom)
-    !
-    ! actual number of child domains
-    INTEGER :: n_childdom
-    !
-    ! total number of child domains in the calling tree (over all nest levels)
-    INTEGER :: n_chd_total
-    ! !
-    ! ! corresponding list of child domain ID's
-    ! INTEGER :: child_id_list(max_dom)
-    !
-    ! maximum number of child domains
-    INTEGER :: max_childdom
-    !
+!     !
+!     ! domain ID of parent domain
+!     INTEGER :: parent_id
+!     !
+!     ! child domain index of current domain as seen from parent domain
+!     ! In other words: I am the nth child of my parents (n=parent_child_index)
+!     INTEGER :: parent_child_index
+!     !
+!     ! list of child domain ID's
+!     INTEGER :: child_id(max_dom)
+!     !
+!     ! actual number of child domains
+!     INTEGER :: n_childdom
+!     !
+!     ! total number of child domains in the calling tree (over all nest levels)
+!     INTEGER :: n_chd_total
+!     !
+!     ! corresponding list of child domain ID's
+!     INTEGER :: child_id_list(max_dom)
+!     !
+!     ! maximum number of child domains
+!     INTEGER :: max_childdom
+!     !
 
-    ! total number of locally allocated cells, edges and vertices
-    INTEGER :: n_patch_cells
-    INTEGER :: n_patch_edges
-    INTEGER :: n_patch_verts
+!     ! total number of locally allocated cells, edges and vertices
+!     INTEGER :: n_patch_cells
+!     INTEGER :: n_patch_edges
+!     INTEGER :: n_patch_verts
 
-    ! total number of exist cells
-!    INTEGER :: n_exist_cells
-!    INTEGER :: n_cell_blocks
-!    INTEGER :: last_cell_block_size
+!     ! total number of exist cells
+! !    INTEGER :: n_exist_cells
+! !    INTEGER :: n_cell_blocks
+! !    INTEGER :: last_cell_block_size
 
-    ! in case of a dummy cell, we keep the blk and index of it
-!    INTEGER :: dummy_cell_blk
-!    INTEGER :: dummy_cell_idx
-
-
-    !
-    ! ! number of cells, edges and vertices in the global patch
-    INTEGER :: n_patch_cells_g
-    INTEGER :: n_patch_edges_g
-    INTEGER :: n_patch_verts_g
-    !
-    ! ! values for the blocking
-    !
-    INTEGER :: alloc_cell_blocks  ! number of allocated cell blocks
-    ! number of blocks and chunk length in last block
-    ! ... for the cells
-    INTEGER :: nblks_c
-    INTEGER :: npromz_c
-    ! ... for the edges
-    INTEGER :: nblks_e
-    INTEGER :: npromz_e
-    ! ... for the vertices
-    INTEGER :: nblks_v
-    INTEGER :: npromz_v
-    !
-    ! ! vertical full and half levels
-    !
-    ! number of full and half levels
-    INTEGER :: nlev
-    INTEGER :: nlevp1
-    !
-    ! half level of parent domain (jg-1) that coincides
-    ! with the upper margin of the current domain jg
-    INTEGER :: nshift
-    !
-    ! total shift of model top with respect to global domain
-    INTEGER :: nshift_total
-    !
-    ! the same information seen from the parent level (duplication needed to simplify flow control)
-    INTEGER :: nshift_child
+!     ! in case of a dummy cell, we keep the blk and index of it
+! !    INTEGER :: dummy_cell_blk
+! !    INTEGER :: dummy_cell_idx
 
 
-    !
-    ! ! Mask and bathymetry for ocean patch
-    !  TYPE(t_patch_ocean) ::  &
-    !    &  patch_oce
-
-    !
-    ! ! grid information on the patch
-    !
-    TYPE(t_grid_cells) ::  &
-      & cells
-    ! TYPE(t_grid_edges) ::  &
-    !   & edges
-    ! TYPE(t_grid_vertices) ::  &
-    !   & verts
-
-    ! !
-    ! ! communication patterns for parallelization
-    ! !
-    ! ! Boundary exchange within patches, defined on regular patches and local parents
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_c
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_c1 ! reduced communication pattern, only level-1 halo cells
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_e
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_v
-
-    ! ! Interpolation for grid refinement, defined only on regular patches
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_interpolation_c
-    ! CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_vec_grf
-    ! CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_scal_grf
-    ! CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_vec_ubc
-    ! CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_scal_ubc
-
-    ! ! Gather complete patch to proc 0
-    ! ! Useful only for regular patches (defined but unused on local parents)
-    ! TYPE(t_comm_gather_pattern) :: comm_pat_gather_c
-    ! TYPE(t_comm_gather_pattern) :: comm_pat_gather_e
-    ! TYPE(t_comm_gather_pattern) :: comm_pat_gather_v
-
-    ! ! Scatter complete patch from proc 0
-    ! ! Useful only for regular patches (defined but unused on local parents)
-    ! CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_c => NULL()
-    ! CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_e => NULL()
-    ! CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_v => NULL()
-
-    ! !> if p_test_run, points to array containing
-    ! !! comm_pat_work2test(1) pattern to send cell data to test processes
-    ! !! comm_pat_work2test(2) pattern to send vertex data to test processes
-    ! !! comm_pat_work2test(3) pattern to send edge data to test processes
-    ! TYPE(t_p_comm_pattern) :: comm_pat_work2test(3)
-
-    ! ! Communication between local parent and its global counterpart,
-    ! ! defined only on local parents.
-    ! ! Please note that these communicate between
-    ! ! p_patch_local_parent(jg) and p_patch(p_patch(jg)%parent_id)
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_glb_to_loc_c
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_glb_to_loc_e
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_loc_to_glb_c_fbk
-    ! CLASS(t_comm_pattern), POINTER :: comm_pat_loc_to_glb_e_fbk
-
-    ! Halo comm patterns for the icon_commm_lib
-    INTEGER ::  sync_cells_not_in_domain
-    INTEGER ::  sync_cells_not_owned       ! = cells_not_in_domain
-    INTEGER ::  sync_cells_one_edge_in_domain
-    INTEGER ::  sync_edges_not_owned
-    INTEGER ::  sync_edges_not_in_domain
-    INTEGER ::  sync_verts_not_owned
-    INTEGER ::  sync_verts_not_in_domain
-
-    ! basic parallelization info for this patch
-    LOGICAL :: compute_is_parallel  ! if true more than 1 processes are used
-    LOGICAL :: is_in_parallel_test  ! if true there's one process that runs seq and compares the results to the parallel runs
-
-    ! basic communicators concerning this patch
-    !> the work universe of this patch, halo exchange, global sum,
-    ! etc, takes place in this universe
+!     !
+!     ! ! number of cells, edges and vertices in the global patch
+!     INTEGER :: n_patch_cells_g
+!     INTEGER :: n_patch_edges_g
+!     INTEGER :: n_patch_verts_g
+!     !
+!     ! ! values for the blocking
+!     !
+!     INTEGER :: alloc_cell_blocks  ! number of allocated cell blocks
+!     ! number of blocks and chunk length in last block
+!     ! ... for the cells
+!     INTEGER :: nblks_c
+!     INTEGER :: npromz_c
+!     ! ... for the edges
+!     INTEGER :: nblks_e
+!     INTEGER :: npromz_e
+!     ! ... for the vertices
+!     INTEGER :: nblks_v
+!     INTEGER :: npromz_v
+!     !
+!     ! ! vertical full and half levels
+!     !
+!     ! number of full and half levels
+!     INTEGER :: nlev
+!     INTEGER :: nlevp1
+!     !
+!     ! half level of parent domain (jg-1) that coincides
+!     ! with the upper margin of the current domain jg
+!     INTEGER :: nshift
+!     !
+!     ! total shift of model top with respect to global domain
+!     INTEGER :: nshift_total
+!     !
+!     ! the same information seen from the parent level (duplication needed to simplify flow control)
+!     INTEGER :: nshift_child
 
 
-    INTEGER :: work_communicator
-    !> the work universe plus the sequential test process,
-    ! in case it exists (otherwise the same as work_communicator)
-    INTEGER :: parallel_test_communicator
+!     !
+!     ! ! Mask and bathymetry for ocean patch
+!     !  TYPE(t_patch_ocean) ::  &
+!     !    &  patch_oce
 
-    ! MPI communicator for this patch
-    INTEGER :: comm
-    !
-    ! my index among the processors on this patch
-    INTEGER :: rank
-    !
-    ! total number of processors on this patch
-    INTEGER :: n_proc
-    !
-    ! global id of processor with rank 0 (within the working set p_comm_work)
-    INTEGER :: proc0
+!     !
+!     ! ! grid information on the patch
+!     !
+!     TYPE(t_grid_cells) ::  &
+!       & cells
+!     TYPE(t_grid_edges) ::  &
+!       & edges
+!     TYPE(t_grid_vertices) ::  &
+!       & verts
+
+!     !
+!     ! communication patterns for parallelization
+!     !
+!     ! Boundary exchange within patches, defined on regular patches and local parents
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_c
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_c1 ! reduced communication pattern, only level-1 halo cells
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_e
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_v
+
+!     ! Interpolation for grid refinement, defined only on regular patches
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_interpolation_c
+!     CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_vec_grf
+!     CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_scal_grf
+!     CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_vec_ubc
+!     CLASS(t_comm_pattern_collection), POINTER :: comm_pat_coll_interpol_scal_ubc
+
+!     ! Gather complete patch to proc 0
+!     ! Useful only for regular patches (defined but unused on local parents)
+!     TYPE(t_comm_gather_pattern) :: comm_pat_gather_c
+!     TYPE(t_comm_gather_pattern) :: comm_pat_gather_e
+!     TYPE(t_comm_gather_pattern) :: comm_pat_gather_v
+
+!     ! Scatter complete patch from proc 0
+!     ! Useful only for regular patches (defined but unused on local parents)
+!     CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_c => NULL()
+!     CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_e => NULL()
+!     CLASS(t_scatterPattern), POINTER :: comm_pat_scatter_v => NULL()
+
+!     !> if p_test_run, points to array containing
+!     !! comm_pat_work2test(1) pattern to send cell data to test processes
+!     !! comm_pat_work2test(2) pattern to send vertex data to test processes
+!     !! comm_pat_work2test(3) pattern to send edge data to test processes
+!     TYPE(t_p_comm_pattern) :: comm_pat_work2test(3)
+
+!     ! Communication between local parent and its global counterpart,
+!     ! defined only on local parents.
+!     ! Please note that these communicate between
+!     ! p_patch_local_parent(jg) and p_patch(p_patch(jg)%parent_id)
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_glb_to_loc_c
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_glb_to_loc_e
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_loc_to_glb_c_fbk
+!     CLASS(t_comm_pattern), POINTER :: comm_pat_loc_to_glb_e_fbk
+
+!     ! Halo comm patterns for the icon_commm_lib
+!     INTEGER ::  sync_cells_not_in_domain
+!     INTEGER ::  sync_cells_not_owned       ! = cells_not_in_domain
+!     INTEGER ::  sync_cells_one_edge_in_domain
+!     INTEGER ::  sync_edges_not_owned
+!     INTEGER ::  sync_edges_not_in_domain
+!     INTEGER ::  sync_verts_not_owned
+!     INTEGER ::  sync_verts_not_in_domain
+
+!     ! basic parallelization info for this patch
+!     LOGICAL :: compute_is_parallel  ! if true more than 1 processes are used
+!     LOGICAL :: is_in_parallel_test  ! if true there's one process that runs seq and compares the results to the parallel runs
+
+!     ! basic communicators concerning this patch
+!     !> the work universe of this patch, halo exchange, global sum,
+!     ! etc, takes place in this universe
+
+
+!     INTEGER :: work_communicator
+!     !> the work universe plus the sequential test process,
+!     ! in case it exists (otherwise the same as work_communicator)
+!     INTEGER :: parallel_test_communicator
+
+!     ! MPI communicator for this patch
+!     INTEGER :: comm
+!     !
+!     ! my index among the processors on this patch
+!     INTEGER :: rank
+!     !
+!     ! total number of processors on this patch
+!     INTEGER :: n_proc
+!     !
+!     ! global id of processor with rank 0 (within the working set p_comm_work)
+!     INTEGER :: proc0
 
   END TYPE t_patch
   !-----------------------------------------------------------------------------------

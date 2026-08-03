@@ -18,7 +18,6 @@ title: Authors
 - Marvin Heidkamp
 - Melanie Thurner
 - Philipp de Vrese
-- Pinhsin Hu
 - Rainer Schneck
 - Reiner Schnur
 - Roland Wirth

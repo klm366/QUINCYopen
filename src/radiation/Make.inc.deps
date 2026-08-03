@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -57,6 +57,7 @@ mo_rad_interface.o: \
   mo_seb_config_class.o \
   mo_hydro_config_class.o \
   mo_rad_memory_class.o \
+  mo_spq_memory_class.o \
   mo_seb_memory_class.o \
   mo_hydro_memory_class.o \
   mo_sb_memory_class.o \
@@ -86,7 +87,6 @@ mo_rad_memory_class.o: \
   mo_jsb_model_class.o \
   mo_jsb_class.o \
   mo_jsb_process_class.o \
-  mo_hydro_config_class.o \
   mo_quincy_output_class.o \
   mo_rad_constants.o
 

@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -33,7 +33,8 @@ MODULE mo_jsb_process_factory
   USE mo_dfire_memory_class,   ONLY: t_dfire_memory
   USE mo_rad_memory_class,     ONLY: t_rad_memory
   USE mo_phyd_memory_class,    ONLY: t_phyd_memory
-  USE mo_q_syl_memory_class,   ONLY: t_q_syl_memory
+  USE mo_dinsect_memory_class, ONLY: t_dinsect_memory
+  USE mo_q_sh_memory_class,    ONLY: t_q_sh_memory
   USE mo_q_agr_memory_class,   ONLY: t_q_agr_memory
   USE mo_spq_memory_class,     ONLY: t_spq_memory
 
@@ -58,24 +59,25 @@ MODULE mo_jsb_process_factory
   USE mo_q_pheno_config_class, ONLY: t_q_pheno_config
   USE mo_dfire_interface,      ONLY: Register_dfire_tasks
   USE mo_dfire_config_class,   ONLY: t_dfire_config
+  USE mo_dinsect_interface,    ONLY: Register_dinsect_tasks
+  USE mo_dinsect_config_class, ONLY: t_dinsect_config
   USE mo_q_sb_interface,       ONLY: Register_sb_tasks_quincy
   USE mo_sb_config_class,      ONLY: t_sb_config  
   USE mo_phyd_interface,       ONLY: Register_phyd_tasks
   USE mo_phyd_config_class,    ONLY: t_phyd_config
-  USE mo_q_syl_interface,      ONLY: Register_q_syl_tasks
-  USE mo_q_syl_config_class,   ONLY: t_q_syl_config
+  USE mo_q_sh_interface,       ONLY: Register_q_sh_tasks
+  USE mo_q_sh_config_class,    ONLY: t_q_sh_config
   USE mo_q_agr_interface,      ONLY: Register_q_agr_tasks
   USE mo_q_agr_config_class,   ONLY: t_q_agr_config
   USE mo_q_spq_interface,      ONLY: Register_spq_tasks_quincy
   USE mo_spq_config_class,     ONLY: t_spq_config
-  USE mo_alcc_config_class,    ONLY: t_alcc_config
 !!#ifndef __NO_JSBACH_HD__
 !!  USE mo_hd_interface,         ONLY: Register_hd_tasks
 !!  USE mo_hd_config_class,      ONLY: t_hd_config
 !!#endif
 
   USE mo_jsb_process_class, ONLY: A2L_, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-    & SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+    & SB_, DFIRE_, DINSECT_, PHYD_, RAD_, Q_SH_, Q_AGR_, SPQ_
   
   IMPLICIT NONE
   PRIVATE
@@ -135,23 +137,24 @@ CONTAINS
    CASE (DFIRE_)
      CALL Register_dfire_tasks(return_ptr, model_id)
      ALLOCATE(t_dfire_config::return_ptr%config)
+   CASE (DINSECT_)
+     CALL Register_dinsect_tasks(return_ptr, model_id)
+     ALLOCATE(t_dinsect_config::return_ptr%config)
    CASE (SB_)
      CALL Register_sb_tasks_quincy(return_ptr, model_id)
      ALLOCATE(t_sb_config::return_ptr%config)
   CASE (PHYD_)
     CALL Register_phyd_tasks(return_ptr, model_id)
     ALLOCATE(t_phyd_config::return_ptr%config)
-  CASE (Q_SYL_)
-    CALL Register_q_syl_tasks(return_ptr, model_id)
-    ALLOCATE(t_q_syl_config::return_ptr%config)
+  CASE (Q_SH_)
+    CALL Register_q_sh_tasks(return_ptr, model_id)
+    ALLOCATE(t_q_sh_config::return_ptr%config)
   CASE (Q_AGR_)
     CALL Register_q_agr_tasks(return_ptr, model_id)
     ALLOCATE(t_q_agr_config::return_ptr%config)
   CASE (SPQ_)
     CALL Register_spq_tasks_quincy(return_ptr, model_id)
     ALLOCATE(t_spq_config::return_ptr%config)
-  CASE (ALCC_)
-    ALLOCATE(t_alcc_config::return_ptr%config)
 ! #ifndef __NO_JSBACH_HD__
 !    CASE (HD_)
 !      CALL Register_hd_tasks(return_ptr, model_id)
@@ -181,8 +184,9 @@ CONTAINS
     USE mo_q_pheno_memory_class, ONLY: max_no_of_q_pheno_vars   => max_no_of_vars
     USE mo_phyd_memory_class,    ONLY: max_no_of_phyd_vars      => max_no_of_vars
     USE mo_dfire_memory_class,   ONLY: max_no_of_dfire_vars     => max_no_of_vars
+    USE mo_dinsect_memory_class, ONLY: max_no_of_dinsect_vars   => max_no_of_vars
     USE mo_rad_memory_class,     ONLY: max_no_of_rad_vars       => max_no_of_vars
-    USE mo_q_syl_memory_class,   ONLY: max_no_of_q_syl_vars     => max_no_of_vars
+    USE mo_q_sh_memory_class,    ONLY: max_no_of_q_sh_vars      => max_no_of_vars
     USE mo_q_agr_memory_class,   ONLY: max_no_of_q_agr_vars     => max_no_of_vars
     USE mo_spq_memory_class,     ONLY: max_no_of_spq_vars       => max_no_of_vars
 !!#ifndef __NO_JSBACH_HD__
@@ -231,15 +235,18 @@ CONTAINS
     CASE (DFIRE_)
       ALLOCATE(t_dfire_memory::return_ptr)
       return_ptr%max_no_of_vars = max_no_of_dfire_vars
+    CASE (DINSECT_)
+      ALLOCATE(t_dinsect_memory::return_ptr)
+      return_ptr%max_no_of_vars = max_no_of_dinsect_vars
     CASE (RAD_)
       ALLOCATE(t_rad_memory::return_ptr)
       return_ptr%max_no_of_vars = max_no_of_rad_vars
     CASE (PHYD_)
       ALLOCATE(t_phyd_memory::return_ptr)
       return_ptr%max_no_of_vars = max_no_of_phyd_vars
-    CASE (Q_SYL_)
-      ALLOCATE(t_q_syl_memory::return_ptr)
-      return_ptr%max_no_of_vars = max_no_of_q_syl_vars
+    CASE (Q_SH_)
+      ALLOCATE(t_q_sh_memory::return_ptr)
+      return_ptr%max_no_of_vars = max_no_of_q_sh_vars
     CASE (Q_AGR_)
       ALLOCATE(t_q_agr_memory::return_ptr)
       return_ptr%max_no_of_vars = max_no_of_q_agr_vars

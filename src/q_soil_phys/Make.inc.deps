@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -26,10 +26,6 @@ mo_q_spq_interface.o: \
   mo_spq_config_class.o \
   mo_spq_memory_class.o \
   mo_turb_memory_class.o \
-  mo_seb_memory_class.o \
-  mo_sse_memory_class.o \
-  mo_hydro_memory_class.o \
-  mo_q_assimi_memory_class.o \
   mo_rad_memory_class.o \
   mo_atm2land_memory_class.o
 
@@ -70,6 +66,7 @@ mo_spq_init.o: \
   mo_kind.o \
   mo_jsb_control.o \
   mo_exception.o \
+  mo_qs_process_init_util.o \
   mo_jsb_tile_class.o \
   mo_jsb_model_class.o \
   mo_jsb_class.o \
@@ -81,11 +78,7 @@ mo_spq_init.o: \
   mo_util.o \
   mo_spq_constants.o \
   mo_spq_config_class.o \
-  mo_spq_memory_class.o \
-  mo_seb_memory_class.o \
-  mo_sse_memory_class.o \
-  mo_q_assimi_memory_class.o \
-  mo_hydro_memory_class.o
+  mo_spq_memory_class.o
 
 mo_spq_util.o: \
   mo_kind.o \
@@ -99,8 +92,7 @@ mo_spq_util.o: \
   mo_jsb_grid_class.o \
   mo_jsb_grid.o \
   mo_jsb_math_constants.o \
-  mo_spq_memory_class.o \
-  mo_hydro_memory_class.o
+  mo_spq_memory_class.o
 
 mo_q_spq_update_physics.o: \
   mo_kind.o \
@@ -116,14 +108,14 @@ mo_q_spq_update_physics.o: \
   mo_jsb_grid.o \
   mo_atm2land_memory_class.o \
   mo_atmland_constants.o \
+  mo_atmland_util.o \
   mo_jsb_physical_constants.o \
+  mo_q_assimi_process.o \
   mo_phy_schemes.o \
   mo_veg_memory_class.o \
   mo_rad_memory_class.o \
   mo_spq_memory_class.o \
   mo_turb_memory_class.o \
-  mo_seb_memory_class.o \
-  mo_sse_memory_class.o \
   mo_hydro_memory_class.o \
   mo_spq_config_class.o \
   mo_spq_constants.o \
@@ -144,7 +136,6 @@ mo_q_spq_update_turbulence.o: \
   mo_phy_schemes.o \
   mo_veg_memory_class.o \
   mo_spq_memory_class.o \
-  mo_sse_memory_class.o \
   mo_turb_memory_class.o \
   mo_spq_constants.o \
   mo_phy_schemes.o

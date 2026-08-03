@@ -3,7 +3,7 @@
 !> QUINCY standalone
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: https://doi.org/10.17871/quincy-model-2019
 !> Authors: AUTHORS.md
@@ -41,12 +41,12 @@ CONTAINS
     USE mo_jsb_task_class,                ONLY: t_jsb_task_options
     USE mo_jsb_model_class,               ONLY: t_jsb_model
     USE mo_jsb_lctlib_class,              ONLY: t_lctlib_element
-    USE mo_jsb_process_class,             ONLY: Q_ASSIMI_, RAD_, VEG_, HYDRO_, TURB_, A2L_
+    USE mo_jsb_process_class,             ONLY: Q_ASSIMI_, RAD_, VEG_, SPQ_, TURB_, A2L_
     USE mo_jsb_grid_class,                ONLY: t_jsb_vgrid
     USE mo_jsb_grid,                      ONLY: Get_vgrid
     USE mo_atmland_constants,             ONLY: frac_vis_swtot_srf, frac_par_swvis_srf, eps_vpd, &
       &                                         standard_press_srf, def_co2_mixing_ratio
-    USE mo_phy_schemes,                   ONLY: qsat_mixed
+    USE mo_atmland_util,                  ONLY: calc_spec_humidity_sat
     USE mo_jsb_physical_constants,        ONLY: molar_mass_N, Tzero, grav
     USE mo_q_veg_canopy,                  ONLY: calc_canopy_layers
     USE mo_qs_rad_scope,                     ONLY: calc_radiative_transfer
@@ -54,7 +54,7 @@ CONTAINS
     dsl4jsb_Use_config(Q_ASSIMI_)
     dsl4jsb_Use_memory(RAD_)
     dsl4jsb_Use_memory(VEG_)
-    dsl4jsb_Use_memory(HYDRO_)
+    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(TURB_)
     dsl4jsb_Use_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -96,7 +96,7 @@ CONTAINS
     dsl4jsb_Def_config(Q_ASSIMI_)
     dsl4jsb_Def_memory(RAD_)
     dsl4jsb_Def_memory(VEG_)
-    dsl4jsb_Def_memory(HYDRO_)
+    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(TURB_)
     dsl4jsb_Def_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -104,8 +104,8 @@ CONTAINS
     dsl4jsb_Real3D_onChunk      :: ppfd_sunlit_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: ppfd_shaded_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: canopy_reflectance_sp
-    ! HYDRO_
-    dsl4jsb_Real2D_onChunk      :: wtr_rootzone_rel
+    ! SPQ_
+    dsl4jsb_Real2D_onChunk      :: w_soil_root_theta
     ! TURB_
     dsl4jsb_Real2D_onChunk      :: drag_srf_stdalone
     ! A2L_
@@ -157,7 +157,7 @@ CONTAINS
     dsl4jsb_Get_config(Q_ASSIMI_)
     dsl4jsb_Get_memory(RAD_)
     dsl4jsb_Get_memory(VEG_)
-    dsl4jsb_Get_memory(HYDRO_)
+    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(TURB_)
     dsl4jsb_Get_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -168,7 +168,7 @@ CONTAINS
     dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_shaded_tfrac_mavg_cl)      ! in
     dsl4jsb_Get_var3D_onChunk(RAD_, canopy_reflectance_sp)
     ! ---------------------------
-    dsl4jsb_Get_var2D_onChunk(HYDRO_, wtr_rootzone_rel)
+    dsl4jsb_Get_var2D_onChunk(SPQ_, w_soil_root_theta)
     ! ---------------------------
     dsl4jsb_Get_var2D_onChunk(TURB_, drag_srf_stdalone)
     ! ---------------------------
@@ -218,7 +218,7 @@ CONTAINS
     !>
     t_air(:)            = ref_t_air + TZero
     press_srf(:)        = standard_press_srf
-    q_air(:)            = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)            = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
     co2_mixing_ratio(:) = def_co2_mixing_ratio   ! def_co2_mixing_ratio is used instead of ref_co2_mixing_ratio
     swpar_srf_down(:)   = ref_swdown
     swvis_srf_down(:)   = swpar_srf_down(:) / frac_par_swvis_srf
@@ -235,7 +235,7 @@ CONTAINS
     !!
     !!
     ! soil water & lai 
-    wtr_rootzone_rel(:) = ref_theta
+    w_soil_root_theta(:) = ref_theta
     lai(:)   = ref_lai
     ! leaf N & P
     IF(ref_pft==0) THEN

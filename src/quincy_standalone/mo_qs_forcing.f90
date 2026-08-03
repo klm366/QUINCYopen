@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -24,7 +24,7 @@ MODULE mo_qs_forcing
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: Init_forcing_qs, calc_output_time_interval_pool
+  PUBLIC :: Init_forcing, calc_output_time_interval_pool
   PUBLIC :: forcing_options
 
   !-----------------------------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ CONTAINS
   !! 
   !! currently it does only: read parameters from namelist
   !-----------------------------------------------------------------------------------------------------
-  SUBROUTINE Init_forcing_qs(model_id)
+  SUBROUTINE Init_forcing(model_id)
 
     USE mo_jsb_namelist_iface,              ONLY: open_nml, POSITIONED, position_nml, close_nml
     USE mo_exception,                       ONLY: message_text, message, finish
@@ -113,7 +113,7 @@ CONTAINS
     ! ---------------------------
     ! 0.2 Local
     TYPE(t_jsb_model), POINTER          :: model
-    CHARACTER(len=*), PARAMETER         :: routine = TRIM(modname)//':Init_forcing_qs'
+    CHARACTER(len=*), PARAMETER         :: routine = TRIM(modname)//':Init_forcing'
     CHARACTER(15)                       :: n_deposition_scheme
     CHARACTER(15)                       :: p_deposition_scheme
     CHARACTER(15)                       :: forcing_mode                 !< static / transient
@@ -151,7 +151,7 @@ CONTAINS
     ! variables for reading model-options from namelist
     INTEGER  :: nml_handler, nml_unit, istat
 
-    CALL message(TRIM(routine), 'Starting Init_forcing_qs')
+    CALL message(TRIM(routine), 'Starting Init_forcing')
 
     ! get model and namelist_filename
     model => Get_model(model_id)
@@ -160,11 +160,11 @@ CONTAINS
     !! 
 
     ! Set defaults
-    n_deposition_scheme                 = "dynamic"
-    p_deposition_scheme                 = "dynamic"
+    n_deposition_scheme                 = "none"
+    p_deposition_scheme                 = "none"
     forcing_mode                        = "static"    ! static / transient
-    flag_read_dC13                      = .TRUE.
-    flag_read_DC14                      = .TRUE.
+    flag_read_dC13                      = .FALSE.
+    flag_read_DC14                      = .FALSE.
     flag_forcing_with_snow_data         = .TRUE.
     simulation_length_unit              = 'y'         ! y (years), w (weeks), d (days)
     simulation_length_number            = 30 
@@ -251,7 +251,7 @@ CONTAINS
       CALL message(TRIM(routine), 'Conversion of rain to snow is enabled (flag_forcing_with_snow_data == TRUE).')
     END IF
 
-  END SUBROUTINE Init_forcing_qs
+  END SUBROUTINE Init_forcing
 
 
   !-----------------------------------------------------------------------------------------------------

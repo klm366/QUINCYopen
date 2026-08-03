@@ -1,7 +1,7 @@
 ! ICON
 !
 ! ---------------------------------------------------------------
-! Copyright (C) 2004-2026, DWD, MPI-M, DKRZ, KIT, ETH, MeteoSwiss
+! Copyright (C) 2004-2024, DWD, MPI-M, DKRZ, KIT, ETH, MeteoSwiss
 ! Contact information: icon-model.org
 !
 ! See AUTHORS.TXT for a list of authors
@@ -227,92 +227,48 @@ CONTAINS
     pre = TRIM(tmp)
   END FUNCTION error_prefix
 
-  ! modified for quincy standalone
-  ! write out all finish() statements to error file
-  !
-  ! see drivers/quincy_qs_model_driver for error file name and LUN:
-  ! OPEN (UNIT = nerr, FILE = 'quincy_standalone.err', ACTION="write", STATUS="unknown")
-  !
   SUBROUTINE finish(name, text)
-    USE mo_io_units,  ONLY: nerr_global => nerr                ! LUN of log file
-
     CHARACTER(len=*), INTENT(IN)           :: name
     CHARACTER(len=*), INTENT(IN), OPTIONAL :: text
-    CHARACTER(LEN=filename_max)            :: tmp
+    CHARACTER(LEN=filename_max) :: tmp
 
     tmp(:) = ' '
     IF (PRESENT(text)) THEN
       tmp = text
     END IF
 
-    CALL write_to_unit(name, tmp, lvl_error, nerr_global)
+    CALL write_to_unit(name, tmp, lvl_error)
+
     CALL ftn_util_backtrace()
-    WRITE(*,*) ' '
-    WRITE(*,*) 'ERROR! Please see *.err file!  (should be: quincy_standalone.err)'
-    WRITE(*,*) '#########################'
+
+    ! callback passed at init
+    ! not working for QUINCY standalone
+    ! CALL model_abort()
+    ! add code specific to QUINCY standalone:
+    WRITE(*,*) 'ERROR! Please see err file!'
     STOP
+
   END SUBROUTINE finish
 
-  ! SUBROUTINE finish(name, text)
-
-  !   CHARACTER(len=*), INTENT(IN)           :: name
-  !   CHARACTER(len=*), INTENT(IN), OPTIONAL :: text
-  !   CHARACTER(LEN=filename_max) :: tmp
-
-  !   tmp(:) = ' '
-  !   IF (PRESENT(text)) THEN
-  !     tmp = text
-  !   END IF
-
-  !   CALL write_to_unit(name, tmp, lvl_error)
-
-  !   CALL ftn_util_backtrace()
-
-  !   ! callback passed at init
-  !   CALL model_abort()
-  !   STOP
-
-  ! END SUBROUTINE finish
-
-  ! modified for quincy standalone
-  ! write out all message() statements to log file
-  !
-  ! see drivers/quincy_qs_model_driver for logfile name and LUN:
-  ! OPEN (UNIT = nlog, FILE = 'quincy_standalone.log', ACTION="write", STATUS="unknown")
-  !
   SUBROUTINE message(name, text, all_print)
-    USE mo_io_units,  ONLY: nlog                ! LUN of log file
 
-    CHARACTER(len=*), INTENT(IN)            :: name
-    CHARACTER(len=*), INTENT(IN)            :: text
-    LOGICAL,          INTENT(IN), OPTIONAL  :: all_print
+    CHARACTER(len=*), INTENT(IN) :: name
+    CHARACTER(len=*), INTENT(IN) :: text
+    LOGICAL, INTENT(IN), OPTIONAL :: all_print
 
-    ! all of message() will be printed
-    ! NOTE: in ICON-Land in parallel environments (more than one node) 'all_print = .TRUE.' is needed for printing
-    lprint = .TRUE.
+    IF (PRESENT(all_print)) THEN
+      lprint = all_print
+    ELSE
+      lprint = .FALSE.
+    END IF
 
-    CALL write_to_unit(name, text, lvl_debug, nlog)
+    IF (lvl_info_is_active() .AND. lvl_debug_is_active()) THEN
+      CALL write_to_unit(name, text, lvl_debug)
+    ELSE IF (lvl_info_is_active()) THEN
+      CALL write_to_unit(name, text, lvl_info)
+    END IF
+
   END SUBROUTINE message
-
-  ! SUBROUTINE message(name, text, all_print)
-
-  !   CHARACTER(len=*), INTENT(IN) :: name
-  !   CHARACTER(len=*), INTENT(IN) :: text
-  !   LOGICAL, INTENT(IN), OPTIONAL :: all_print
-
-  !   IF (PRESENT(all_print)) THEN
-  !     lprint = all_print
-  !   ELSE
-  !     lprint = .FALSE.
-  !   END IF
-
-  !   IF (lvl_info_is_active() .AND. lvl_debug_is_active()) THEN
-  !     CALL write_to_unit(name, text, lvl_debug)
-  !   ELSE IF (lvl_info_is_active()) THEN
-  !     CALL write_to_unit(name, text, lvl_info)
-  !   END IF
-
-  ! END SUBROUTINE message
 
   SUBROUTINE message_to_own_unit(name, text, nerr_unit)
 

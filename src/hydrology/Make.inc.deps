@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -15,6 +15,7 @@ mo_hydro_config_class.o: \
   mo_exception.o \
   mo_jsb_impl_constants.o \
   mo_util.o \
+  mo_util_string.o \
   mo_io_units.o \
   mo_kind.o \
   mo_jsb_control.o \
@@ -30,37 +31,6 @@ mo_hydro_config_class.o: \
 mo_hydro_constants.o: \
   mo_kind.o
 
-mo_hydro_interface.o: \
-  mo_kind.o \
-  mo_exception.o \
-  mo_jsb_control.o \
-  mo_jsb_time.o \
-  mo_jsb_model_class.o \
-  mo_jsb_class.o \
-  mo_jsb_grid_class.o \
-  mo_jsb_grid.o \
-  mo_jsb_tile_class.o \
-  mo_jsb_process_class.o \
-  mo_jsb_task_class.o \
-  mo_jsb_impl_constants.o \
-  mo_jsb_math_constants.o \
-  mo_sse_config_class.o \
-  mo_seb_config_class.o \
-  mo_hydro_config_class.o \
-  mo_atm2land_memory_class.o \
-  mo_sse_memory_class.o \
-  mo_seb_memory_class.o \
-  mo_hydro_memory_class.o \
-  mo_turb_memory_class.o \
-  mo_veg_memory_class.o \
-  mo_q_assimi_memory_class.o \
-  mo_hydro_process.o \
-  mo_jsb_physical_constants.o \
-  mo_hydro_util.o \
-  mo_hydro_constants.o \
-  mo_jsb_physical_constants.o \
-  mo_phy_schemes.o
-
 mo_hydro_init.o: \
   mo_kind.o \
   mo_exception.o \
@@ -73,14 +43,10 @@ mo_hydro_init.o: \
   mo_jsb_io_netcdf.o \
   mo_jsb_io.o \
   mo_jsb_impl_constants.o \
-  mo_jsb_math_constants.o \
   mo_util.o \
   mo_jsb_process_class.o \
-  mo_sse_config_class.o \
-  mo_hydro_util.o \
   mo_hydro_constants.o \
   mo_hydro_config_class.o \
-  mo_hydro_process.o \
   mo_hydro_memory_class.o
 
 mo_hydro_memory_class.o: \
@@ -104,20 +70,6 @@ mo_hydro_memory_class.o: \
   mo_hydro_constants.o \
   mo_quincy_output_class.o
 
-mo_hydro_process.o: \
-  mo_exception.o \
-  mo_kind.o \
-  mo_jsb_control.o \
-  mo_jsb_model_class.o \
-  mo_jsb_impl_constants.o \
-  mo_jsb_math_constants.o \
-  mo_jsb_physical_constants.o \
-  mo_hydro_constants.o \
-  mo_sse_constants.o \
-  mo_phy_schemes.o \
-  mo_util.o
-
 mo_hydro_util.o: \
   mo_kind.o \
-  mo_exception.o \
-  mo_jsb_control.o
+  mo_exception.o

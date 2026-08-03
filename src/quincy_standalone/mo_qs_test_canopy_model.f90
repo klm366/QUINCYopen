@@ -3,7 +3,7 @@
 !> QUINCY standalone
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: https://doi.org/10.17871/quincy-model-2019
 !> Authors: AUTHORS.md
@@ -39,22 +39,23 @@ CONTAINS
     USE mo_jsb_task_class,         ONLY: t_jsb_task_options
     USE mo_jsb_model_class,        ONLY: t_jsb_model
     USE mo_jsb_lctlib_class,       ONLY: t_lctlib_element
-    USE mo_jsb_process_class,      ONLY: Q_ASSIMI_, RAD_, VEG_, TURB_, A2L_
+    USE mo_jsb_process_class,      ONLY: Q_ASSIMI_, RAD_, VEG_, SPQ_, TURB_, A2L_
     USE mo_jsb_grid_class,         ONLY: t_jsb_vgrid
     USE mo_jsb_grid,               ONLY: Get_vgrid
     USE mo_rad_parameters,         ONLY: rad2ppfd
     USE mo_atmland_constants,      ONLY: frac_vis_swtot_srf, frac_par_swvis_srf,eps_vpd, standard_press_srf, def_co2_mixing_ratio
-    USE mo_phy_schemes,            ONLY: qsat_mixed
+    USE mo_atmland_util,           ONLY: calc_spec_humidity_sat
     USE mo_veg_util,               ONLY: reset_veg_fluxes
     USE mo_jsb_physical_constants, ONLY: molar_mass_N, Tzero, grav
     USE mo_q_veg_canopy            ! .. e.g. calc_canopy_layers()
-    USE mo_rad_interface,          ONLY: update_radiation_par
+    USE mo_rad_process,            ONLY: calc_surface_radiation_quincy
     USE mo_q_assimi_interface,     ONLY: update_canopy_fluxes, update_reset_q_assimi_fluxes
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Use_config(Q_ASSIMI_)
     dsl4jsb_Use_memory(Q_ASSIMI_)
     dsl4jsb_Use_memory(RAD_)
     dsl4jsb_Use_memory(VEG_)
+    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(TURB_)
     dsl4jsb_Use_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -94,6 +95,7 @@ CONTAINS
     dsl4jsb_Def_memory(Q_ASSIMI_)
     dsl4jsb_Def_memory(RAD_)
     dsl4jsb_Def_memory(VEG_)
+    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(TURB_)
     dsl4jsb_Def_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -103,7 +105,6 @@ CONTAINS
     dsl4jsb_Real2D_onChunk      :: co2_conc_leaf
     dsl4jsb_Real2D_onChunk      :: soa_tsoa_mavg
     dsl4jsb_Real2D_onChunk      :: vpd
-    dsl4jsb_Real2D_onChunk      :: wtr_soil_root_pot
     ! RAD_
     dsl4jsb_Real3D_onChunk      :: ppfd_sunlit_tfrac_mavg_cl
     dsl4jsb_Real3D_onChunk      :: ppfd_shaded_tfrac_mavg_cl
@@ -119,6 +120,8 @@ CONTAINS
     dsl4jsb_Real2D_onChunk      :: swnir_srf_down
     dsl4jsb_Real2D_onChunk      :: fract_par_diffuse
     dsl4jsb_Real2D_onChunk      :: press_srf
+    ! SPQ_
+    dsl4jsb_Real2D_onChunk      :: w_soil_root_pot
     ! TURB_
     dsl4jsb_Real2D_onChunk      :: drag_srf_stdalone
     ! VEG_
@@ -157,6 +160,7 @@ CONTAINS
     dsl4jsb_Get_memory(Q_ASSIMI_)
     dsl4jsb_Get_memory(RAD_)
     dsl4jsb_Get_memory(VEG_)
+    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(TURB_)
     dsl4jsb_Get_memory(A2L_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -168,10 +172,11 @@ CONTAINS
     dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, co2_conc_leaf)
     dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, soa_tsoa_mavg)
     dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, vpd)
-    dsl4jsb_Get_var2D_onChunk(Q_ASSIMI_, wtr_soil_root_pot)
     ! ---------------------------
     dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_sunlit_tfrac_mavg_cl)      ! in
     dsl4jsb_Get_var3D_onChunk(RAD_, ppfd_shaded_tfrac_mavg_cl)      ! in
+    ! ---------------------------
+    dsl4jsb_Get_var2D_onChunk(SPQ_, w_soil_root_pot)
     ! ---------------------------
     dsl4jsb_Get_var2D_onChunk(TURB_, drag_srf_stdalone)
     ! ---------------------------
@@ -221,7 +226,7 @@ CONTAINS
     !>
     t_air(:)            = ref_t_air + TZero
     press_srf(:)        = standard_press_srf
-    q_air(:)            = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)            = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
     co2_mixing_ratio(:) = def_co2_mixing_ratio   ! def_co2_mixing_ratio is used instead of ref_co2_mixing_ratio
     swpar_srf_down(:)   = ref_swdown
     swvis_srf_down(:)   = swpar_srf_down(:) / frac_par_swvis_srf
@@ -298,7 +303,7 @@ CONTAINS
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(4F16.7)') swpar_srf_down(ipoi) * rad2ppfd, &
@@ -324,13 +329,13 @@ CONTAINS
     DO i = 1,70
   
        t_air(:) = t_air(:) + 1.0_wp
-       q_air(:) = 0.8_wp * qsat_mixed(t_air(:),press_srf(:))
+       q_air(:) = 0.8_wp * calc_spec_humidity_sat(t_air(:),press_srf(:))
        t_jmax_opt_mavg(:) = 20._wp+0.35_wp*(t_air(:) - Tzero)
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(5F16.7)') t_air(ipoi), &
@@ -339,7 +344,7 @@ CONTAINS
   
     END DO
     t_air(:)    = ref_t_air + Tzero
-    q_air(:)    = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    q_air(:)    = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
     t_jmax_opt_mavg(:) = hlp1(:)
   
     !> 2.3 atmospheric CO2 (175 - 1000 ppm)
@@ -354,7 +359,7 @@ CONTAINS
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(4F16.7)') co2_mixing_ratio(ipoi), &
@@ -370,46 +375,46 @@ CONTAINS
     lun = lun + 1
     WRITE(lun,*) 'VPD A GC CI'
     DO i = 1,30
-       q_air(:) = qsat_mixed(t_air(:),press_srf(:)) - i * 100.0_wp / press_srf(:) * eps_vpd
+       q_air(:) = calc_spec_humidity_sat(t_air(:),press_srf(:)) - i * 100.0_wp / press_srf(:) * eps_vpd
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
-       vpd(:) = ( qsat_mixed(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
+       vpd(:) = ( calc_spec_humidity_sat(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
   
        WRITE(lun,'(4F16.7)') vpd(ipoi), &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
              co2_conc_leaf(ipoi)/co2_mixing_ratio(ipoi)
   
     END DO
-    q_air(:) = qsat_mixed(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
-    vpd(:) = ( qsat_mixed(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
+    q_air(:) = calc_spec_humidity_sat(t_air(:),press_srf(:)) - ref_vpd / press_srf(:) * eps_vpd
+    vpd(:) = ( calc_spec_humidity_sat(t_air(:),press_srf(:)) - q_air(:) ) / eps_vpd * press_srf(:) / 1000.0_wp
   
     !> 2.5 soil water potential (0 to -4)
     !!
     !!
     lun = lun + 1
     WRITE(lun,*) 'SW_pot A GC CI'
-    wtr_soil_root_pot(:) = ref_soil_root_pot
+    w_soil_root_pot(:) = ref_soil_root_pot
     DO i = 1,80
   
-       wtr_soil_root_pot(:) = wtr_soil_root_pot(:) - 0.05_wp
+       w_soil_root_pot(:) = w_soil_root_pot(:) - 0.05_wp
   
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
-       WRITE(lun,'(4F16.7)') wtr_soil_root_pot(ipoi) *100._wp, &
+       WRITE(lun,'(4F16.7)') w_soil_root_pot(ipoi) *100._wp, &
              net_assimilation(ipoi), canopy_cond(ipoi) *1000._wp, &
              co2_conc_leaf(ipoi)/co2_mixing_ratio(ipoi)
   
     END DO
-    wtr_soil_root_pot(:) = ref_soil_root_pot
+    w_soil_root_pot(:) = ref_soil_root_pot
   
     !> 2.6 LAI (increase from 0 to 11)
     !!
@@ -456,7 +461,7 @@ CONTAINS
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(4F16.7)') lai(ipoi), &
@@ -509,7 +514,7 @@ CONTAINS
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(4F16.7)') veg_pool_mt(ix_leaf, ixN, ichunk) / lai(ipoi) * molar_mass_N, &
@@ -566,7 +571,7 @@ CONTAINS
        !! canopy calculation fluxes
        CALL reset_veg_fluxes(tile,options)             !< mo_veg_util
        CALL update_reset_q_assimi_fluxes(tile, model%options)
-       CALL update_radiation_par(tile,options)
+       CALL calc_surface_radiation_quincy(tile,options) 
        CALL update_canopy_fluxes(tile,options)  !< mo_q_assimi_process
   
        WRITE(lun,'(I1,3F16.7)') i, &

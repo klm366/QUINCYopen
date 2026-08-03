@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -39,7 +39,7 @@ CONTAINS
   SUBROUTINE update_soil_turbulence(tile, options)
 
     USE mo_jsb_class,              ONLY: Get_model
-    USE mo_jsb_process_class,      ONLY: A2L_, SPQ_, SSE_, VEG_, TURB_
+    USE mo_jsb_process_class,      ONLY: A2L_, SPQ_, VEG_, TURB_
     USE mo_jsb_tile_class,         ONLY: t_jsb_tile_abstract
     USE mo_jsb_task_class,         ONLY: t_jsb_task_options
     USE mo_jsb_model_class,        ONLY: t_jsb_model
@@ -49,7 +49,6 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Use_memory(A2L_)
     dsl4jsb_Use_memory(SPQ_)
-    dsl4jsb_Use_memory(SSE_)
     dsl4jsb_Use_memory(VEG_)
     dsl4jsb_Use_memory(TURB_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -59,16 +58,14 @@ CONTAINS
     TYPE(t_jsb_model),      POINTER       :: model                 !< the model
     REAL(wp), DIMENSION(options%nc)       :: wind_air
     REAL(wp), DIMENSION(options%nc)       :: hlp1
-    REAL(wp), DIMENSION(options%nc)       :: ddrag_srf ! Change of drag with time, not used by Quincy
     INTEGER                               :: iblk, ics, ice, nc, ic!< dimensions
     INTEGER                               :: model_scheme
     LOGICAL                               :: jsb_standalone
-    REAL(wp)                              :: dtime               !< ...
+    REAL(wp)                              :: steplen               !< ...
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':update_soil_turbulence'
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Def_memory(A2L_)
     dsl4jsb_Def_memory(SPQ_)
-    dsl4jsb_Def_memory(SSE_)
     dsl4jsb_Def_memory(VEG_)
     dsl4jsb_Def_memory(TURB_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -89,10 +86,9 @@ CONTAINS
     dsl4jsb_Real2D_onChunk                :: q_acoef_stdalone
     dsl4jsb_Real2D_onChunk                :: q_bcoef_stdalone
     ! SPQ_ 3D
+    dsl4jsb_Real3D_onChunk                :: t_soil_sl
     dsl4jsb_Real3D_onChunk                :: w_snow_snl
     dsl4jsb_Real3D_onChunk                :: t_snow_snl
-    ! SSE_ 3D
-    dsl4jsb_Real3D_onChunk                :: t_soil_sl
     ! VEG_
     dsl4jsb_Real2D_onChunk                :: height
     ! ----------------------------------------------------------------------------------------------------- !
@@ -100,7 +96,7 @@ CONTAINS
     ics     = options%ics
     ice     = options%ice
     nc      = options%nc
-    dtime   = options%dtime
+    steplen = options%steplen
     ! ----------------------------------------------------------------------------------------------------- !
     IF (.NOT. tile%Is_process_calculated(SPQ_)) RETURN
     IF (debug_on() .AND. iblk == 1) CALL message(TRIM(routine), 'Starting on tile '//TRIM(tile%name)//' ...')
@@ -110,7 +106,6 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Get_memory(A2L_)
     dsl4jsb_Get_memory(SPQ_)
-    dsl4jsb_Get_memory(SSE_)
     dsl4jsb_Get_memory(VEG_)
     dsl4jsb_Get_memory(TURB_)
     ! ----------------------------------------------------------------------------------------------------- !
@@ -130,16 +125,15 @@ CONTAINS
     dsl4jsb_Get_var2D_onChunk(TURB_, q_acoef_stdalone)    ! out
     dsl4jsb_Get_var2D_onChunk(TURB_, q_bcoef_stdalone)    ! out
     ! ---------------------------
+    dsl4jsb_Get_var3D_onChunk(SPQ_, t_soil_sl)            ! in
     dsl4jsb_Get_var3D_onChunk(SPQ_, t_snow_snl)           ! in
     dsl4jsb_Get_var3D_onChunk(SPQ_, w_snow_snl)           ! in
-    ! ---------------------------
-    dsl4jsb_Get_var3D_onChunk(SSE_, t_soil_sl)            ! in
     ! ---------------------------
     dsl4jsb_Get_var2D_onChunk(VEG_, height)               ! in
     ! ----------------------------------------------------------------------------------------------------- !
 
 
-    !$ACC DATA CREATE(wind_air(:), ddrag_srf(:), hlp1(:))
+    !$ACC DATA CREATE(wind_air(:), hlp1(:))
 
     !> 0.9 init local variable
     !>
@@ -170,7 +164,7 @@ CONTAINS
       ! calc drag
       CALL update_drag( &
         ! INTENT in
-        & nc, dtime, &
+        & nc, steplen, &
         & model_scheme, &
         & t_air(:), press_srf(:), q_air(:), wind_air(:), &
         & hlp1(:), &          ! jsbach t(:) from SEB_ (surface temperature)
@@ -184,10 +178,10 @@ CONTAINS
         & 0.25_wp, &          ! jsbach default value dsl4jsb_Config(SEB_)%coef_ril_t
         & 0.25_wp, &          ! jsbach default value dsl4jsb_Config(SEB_)%coef_ril_tp1
         ! INTENT out
-        & drag_srf_stdalone(:), ddrag_srf(:), t_acoef_stdalone(:), t_bcoef_stdalone(:), &
+        & drag_srf_stdalone(:), t_acoef_stdalone(:), t_bcoef_stdalone(:), &
         & q_acoef_stdalone(:), q_bcoef_stdalone(:), pch_stdalone(:), &
         ! optional (INTENT(IN)) argument
-        & veg_height = height) ! vegetation height (quincy specific)
+        & height = height) ! vegetation height (quincy specific)
     END IF
 
     !$ACC WAIT(1)

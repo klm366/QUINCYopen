@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -23,7 +23,7 @@ MODULE mo_jsb_model_usecases
 
   USE mo_jsb_model_class,     ONLY: t_jsb_model
   USE mo_jsb_process_class,   ONLY: A2L_, L2A_, Q_ASSIMI_, VEG_, Q_PHENO_, SPQ_, SB_, DFIRE_, PHYD_, &
-    &                               RAD_, TURB_, SEB_, SSE_, HYDRO_, Q_SYL_, Q_AGR_, &
+    &                               RAD_, TURB_, SEB_, SSE_, HYDRO_, Q_SH_, Q_AGR_, DINSECT_, &
     &                               ON_LEAFS_, ON_TILE_, AGGREGATE_
   USE mo_jsb_tile,            ONLY: t_jsb_tile
   USE mo_jsb_lct_class,       ONLY: t_jsb_lct, &
@@ -60,9 +60,9 @@ CONTAINS
     ! Create just one tile
     box_tile => t_jsb_tile('veg', 'quincy_standalone_pft', &
       & processes       = (/A2L_,     L2A_,     Q_ASSIMI_, VEG_,      Q_PHENO_,  SPQ_,      SB_      , &
-      &   DFIRE_   , PHYD_    , RAD_     , TURB_    , SEB_     , SSE_     , HYDRO_ /), &
+      &   DFIRE_   , DINSECT_,  PHYD_    , RAD_     , TURB_    , Q_SH_    , SEB_     , SSE_     , HYDRO_ /), &
       & process_actions = (/ON_TILE_, ON_TILE_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, &
-      &   ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_ /), &
+      &   ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_ /), &
       & lct=t_jsb_lct(VEG_TYPE), &
       & model_id=model%id, grid_id=model%grid_id, fract_varname='notsea')
 
@@ -72,8 +72,8 @@ CONTAINS
       END SELECT
 
       IF (model%lctlib(pft_id)%ForestFlag) THEN
-        IF (model%processes(Q_SYL_)%p%config%active) THEN
-          CALL box_tile%Set_process_action(Q_SYL_, ON_TILE_, AGGREGATE_)
+        IF (model%processes(Q_SH_)%p%config%active) THEN
+          CALL box_tile%Set_process_action(Q_SH_, ON_TILE_, AGGREGATE_)
         END IF
       END IF
 

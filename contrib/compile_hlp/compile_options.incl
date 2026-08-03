@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -34,7 +34,7 @@
 ##
 
 echo ""
-echo "  ## sourcing the build/compile_hlp/compile_options.incl"
+echo "  ## sourcing the contrib/compile_hlp/compile_options.incl"
 
 #--- test if required variables are declared
 if [[ ! -v compile_setup ]]; then
@@ -332,5 +332,5 @@ echo ""                                     >> ${compileOptionsInclFile}
 
 fi # END select compile options
 
-echo "  ## end of sourced code from build/compile_hlp/compile_options.incl"
+echo "  ## end of sourced code from contrib/compile_hlp/compile_options.incl"
 echo ""

@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -28,9 +28,7 @@ quincy_qs_model_driver.o: \
   mo_qs_forcing.o \
   mo_qs_atmland_forcing.o \
   mo_qs_atm2land_memory_class.o \
-  mo_q_syl_config_class.o \
+  mo_q_sh_config_class.o \
   mo_qs_output_txt.o \
-  mo_qs_output_txt_util.o \
   mo_qs_output_netcdf4.o \
-  mo_lookup_tables_constants.o \
   mo_qs_icon_adapter.o

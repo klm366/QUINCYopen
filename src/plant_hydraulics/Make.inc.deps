@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -41,7 +41,7 @@ mo_phyd_process.o: \
   mo_jsb_impl_constants.o \
   mo_atm2land_memory_class.o \
   mo_q_assimi_memory_class.o \
-  mo_hydro_memory_class.o \
+  mo_spq_memory_class.o \
   mo_phyd_memory_class.o
 
 mo_phyd_memory_class.o: \

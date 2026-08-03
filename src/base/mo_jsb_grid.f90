@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -54,7 +54,7 @@ CONTAINS
       jsbach_grids(1) = t_jsb_grid_ptr(grid)
     END IF
 
-    CALL message(TRIM(routine), 'registered new QUINCY model grid instance '//TRIM(grid%name))
+    CALL message(TRIM(routine), 'registered new JSBACH grid instance '//TRIM(grid%name))
 
   END SUBROUTINE Register_grid
 

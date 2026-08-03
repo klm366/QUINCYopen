@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -50,20 +50,14 @@ MODULE mo_jsb_lct_class
 
   INTEGER, PARAMETER :: max_no_of_lct = 10
 
-  ! ENUM, BIND(C)
-  !   ENUMERATOR ::      &
-  !     & LAND_TYPE = 1, & !< Land type to specify tile that computes the implicit surface energy balance
-  !     & VEG_TYPE,      & !< Vegetated
-  !     & BARE_TYPE,     & !< Bare soil -- currently not used
-  !     & GLACIER_TYPE,  & !< Glacier
-  !     & LAKE_TYPE        !< Lake
-  ! END ENUM
-
-  INTEGER, PARAMETER :: LAND_TYPE     = 1
-  INTEGER, PARAMETER :: VEG_TYPE      = 1
-  INTEGER, PARAMETER :: BARE_TYPE     = 3
-  INTEGER, PARAMETER :: GLACIER_TYPE  = 4
-  INTEGER, PARAMETER :: LAKE_TYPE     = 5
+  ENUM, BIND(C)
+    ENUMERATOR ::      &
+      & LAND_TYPE = 1, & !< Land type to specify tile that computes the implicit surface energy balance
+      & VEG_TYPE,      & !< Vegetated
+      & BARE_TYPE,     & !< Bare soil -- currently not used
+      & GLACIER_TYPE,  & !< Glacier
+      & LAKE_TYPE        !< Lake
+  END ENUM
 
   TYPE t_jsb_lct
     INTEGER           :: id = 0               !< Id for lct, one of enumeration above
@@ -174,8 +168,8 @@ CONTAINS
       return_value = TRIM(this%name)
     ELSE
       SELECT CASE(this%id)
-      ! CASE (LAND_TYPE)
-      !   return_value = 'land'
+      CASE (LAND_TYPE)
+        return_value = 'land'
       CASE (VEG_TYPE)
         return_value = 'veg'
       CASE (BARE_TYPE)
@@ -204,8 +198,8 @@ CONTAINS
       return_value = TRIM(this%long_name)
     ELSE
       SELECT CASE(this%id)
-      ! CASE (LAND_TYPE)
-      !   return_value = 'Land (veg/soil/glac)'
+      CASE (LAND_TYPE)
+        return_value = 'Land (veg/soil/glac)'
       CASE (VEG_TYPE)
         return_value = 'Vegetated'
       CASE (BARE_TYPE)

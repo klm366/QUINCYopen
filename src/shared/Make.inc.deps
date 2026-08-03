@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -24,15 +24,10 @@ mo_jsb_impl_constants.o: \
 
 mo_util.o: \
   mo_kind.o \
-  mo_math_utilities.o \
-  mo_qs_icon_adapter.o \
-  mo_jsb_io_netcdf.o \
-  mo_jsb_io.o \
   mo_exception.o
 
 mo_phy_schemes.o: \
   mo_kind.o \
-  mo_jsb_control.o \
   mo_sb_constants.o \
   mo_jsb_math_constants.o \
   mo_jsb_physical_constants.o \

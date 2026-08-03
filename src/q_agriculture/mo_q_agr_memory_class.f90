@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -13,7 +13,7 @@
 !>
 !> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
 !>
-!>#### definition and init of (memory) variables for the quincy agriculture process
+!>#### definition and init of (memory) variables for the quincy simple harvest process
 !>
 MODULE mo_q_agr_memory_class
 #ifndef __NO_QUINCY__
@@ -43,14 +43,12 @@ MODULE mo_q_agr_memory_class
 
     ! fertiliser application rate
     TYPE(t_jsb_var_real2d) ::   &
-      & crop_growth_phase, &             !< growth phase of crop [0 = Planting, 1 = Emergence, 2 = GrainFill,3 = Harvest]
+      & growth_phase, &             !< growth phase of crop [0 = Planting, 1 = Emergence, 2 = GrainFill,3 = Harvest]
       & gdd_mavg, &                 !< long-term average growing degree days [degC day]
       & nd_crop_season, &           !< number of days in this crop growing season [# days]
       & nd_crop_season_mavg, &      !< long-term average crop growing season length [# days]
       & n_fertiliser_c3, &          !< N fertiliser application rate for C3 crops [mol m-2 yr-1]
       & n_fertiliser_c4, &          !< N fertiliser application rate for C4 crops [mol m-2 yr-1]
-      & crop_season_per_year, &      !< number of crop seasons (agricultural growing seasons) in the current year
-      & crop_season_per_year_mavg, & !< long-term average number of crop seasons in a year
       & crop_type_index             !< crop type index (1-ncroptypes)
 
   CONTAINS
@@ -81,7 +79,7 @@ CONTAINS
     INTEGER,                 INTENT(in)            :: lib_id          !< id of primary lct in lctlib
     INTEGER,                 INTENT(in)            :: model_id
     ! ----------------------------------------------------------------------------------------------------- !
-    TYPE(t_jsb_model),  POINTER :: model                        !< model
+    TYPE(t_jsb_model),  POINTER :: model                      !< model
     TYPE(t_jsb_grid),   POINTER :: hgrid                        ! Horizontal grid
     TYPE(t_jsb_vgrid),  POINTER :: surface                      ! Vertical grid
     INTEGER                     :: table                        ! ...
@@ -96,35 +94,12 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Get_config(VEG_)
 
-    ! created memory depends on tile type
-    IF ( .NOT. ASSOCIATED(mem%parent)) THEN
-      ! memory to only create on the box tile
-      CALL mem%Add_var('n_fertiliser_c3', mem%n_fertiliser_c3, &
-        & hgrid, surface, &
-        & t_cf('n_fertiliser_c3', 'mol m-2 yr-1', 'N fertiliser application rate for C3 crops'), &
-        & t_grib1(table, 255, grib_bits), &
-        & t_grib2(255, 255, 255, grib_bits), &
-        & prefix, suffix, &
-        & lrestart = .TRUE., &
-        & output_level = NONE, &
-        & initval_r = 0.0_wp)
-
-      CALL mem%Add_var('n_fertiliser_c4', mem%n_fertiliser_c4, &
-        & hgrid, surface, &
-        & t_cf('n_fertiliser_c4', 'mol m-2 yr-1', 'N fertiliser application rate for C4 crops'), &
-        & t_grib1(table, 255, grib_bits), &
-        & t_grib2(255, 255, 255, grib_bits), &
-        & prefix, suffix, &
-        & lrestart = .TRUE., &
-        & output_level = NONE, &
-        & initval_r = 0.0_wp)
-    END IF
-
+    ! create memory at tiles of LAND_TYPE or VEG_TYPE
     IF ( One_of(LAND_TYPE, lct_ids(:)) > 0 .OR. One_of(VEG_TYPE,  lct_ids(:)) > 0) THEN
-      ! memory to create on tiles of or containing LAND_TYPE or VEG_TYPE
-      CALL mem%Add_var('crop_growth_phase', mem%crop_growth_phase, &
+
+      CALL mem%Add_var('growth_phase', mem%growth_phase, &
         & hgrid, surface, &
-        & t_cf('crop_growth_phase', '[0 - 3]', 'growth phase of crop from planting to harvest'), &
+        & t_cf('growth_phase', '[0 - 3]', 'growth phase of crop from planting to harvest'), &
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
@@ -162,9 +137,9 @@ CONTAINS
         & lrestart = .TRUE., &
         & initval_r = 150.0_wp)
 
-      CALL mem%Add_var('crop_season_per_year', mem%crop_season_per_year, &
+      CALL mem%Add_var('n_fertiliser_c3', mem%n_fertiliser_c3, &
         & hgrid, surface, &
-        & t_cf('crop_season_per_year', '# crop seasons yr-1', 'number of crop seasons in this year'), &
+        & t_cf('n_fertiliser_c3', 'mol m-2 yr-1', 'N fertiliser application rate for C3 crops'), &
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
@@ -172,15 +147,15 @@ CONTAINS
         & output_level = NONE, &
         & initval_r = 0.0_wp)
 
-      CALL mem%Add_var('crop_season_per_year_mavg', mem%crop_season_per_year_mavg, &
+      CALL mem%Add_var('n_fertiliser_c4', mem%n_fertiliser_c4, &
         & hgrid, surface, &
-        & t_cf('crop_season_per_year_mavg', '# crop seasons yr-1', 'long-term average of number of crop seasons per year'), &
+        & t_cf('n_fertiliser_c4', 'mol m-2 yr-1', 'N fertiliser application rate for C4 crops'), &
         & t_grib1(table, 255, grib_bits), &
         & t_grib2(255, 255, 255, grib_bits), &
         & prefix, suffix, &
         & lrestart = .TRUE., &
         & output_level = NONE, &
-        & initval_r = 1.0_wp)
+        & initval_r = 0.0_wp)
 
       CALL mem%Add_var('crop_type_index', mem%crop_type_index, &
         & hgrid, surface, &

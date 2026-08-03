@@ -3,7 +3,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -64,12 +64,13 @@ VPATH = src_dsl4jsb/quincy_standalone \
 	 src_dsl4jsb/hydrology \
 	 src_dsl4jsb/soil_snow_energy \
 	 src_dsl4jsb/srf_energy_bal \
-	 src_dsl4jsb/q_sylviculture \
+	 src_dsl4jsb/q_simple_harvest \
 	 src_dsl4jsb/q_soil_phys \
 	 src_dsl4jsb/q_soil_biogeochemistry \
 	 src_dsl4jsb/q_phenology \
 	 src_dsl4jsb/q_vegetation \
 	 src_dsl4jsb/dist_fire \
+	 src_dsl4jsb/dist_insect \
 	 src_dsl4jsb/plant_hydraulics\
 	 $(OBJDIR)
 # 
@@ -86,12 +87,13 @@ MODS += $(shell find src_dsl4jsb/turbulence/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/hydrology/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/soil_snow_energy/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/srf_energy_bal/ -name '*.f90' -print)
-MODS += $(shell find src_dsl4jsb/q_sylviculture/ -name '*.f90' -print)
+MODS += $(shell find src_dsl4jsb/q_simple_harvest/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_soil_phys/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_soil_biogeochemistry/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_phenology/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_vegetation/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/dist_fire/ -name '*.f90' -print)
+MODS += $(shell find src_dsl4jsb/dist_insect/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/plant_hydraulics/ -name '*.f90' -print)
 
 # 'notdir' takes away the path from the file name leaving just the file name (so /x/y/foo.a becomes foo.a)
@@ -101,15 +103,15 @@ OBJSMODS = $(OBJFILES:.f90=.o)
 
 
 # main target of make; removes all main-repo-dir/build/*.o files after build process has finished successfully
-all: $(BINDIR)/qs.bin
+all: $(BINDIR)/land.x
 	@rm -f ./*.o
 
-# rules for creating the qs.bin binary
-$(BINDIR)/qs.bin: $(LIBRARY) quincy_qs_model_driver.f90
+# rules for creating the land.x binary
+$(BINDIR)/land.x: $(LIBRARY) quincy_qs_model_driver.f90
 	$(F_C) $(F_O) src_dsl4jsb/drivers/quincy_qs_model_driver.f90
-	$(F_L) -o $(BINDIR)/qs.bin quincy_qs_model_driver.o $(LIBRARY)
+	$(F_L) -o $(BINDIR)/land.x quincy_qs_model_driver.o $(LIBRARY)
 	@$(RM) quincy_qs_model_driver.o
-	@echo -e "\n  qs.bin binary was built successfully"
+	@echo -e "\n  land.x binary was built successfully"
 
 # create libslm.a from .o files
 $(LIBRARY): $(OBJSMODS)
@@ -125,7 +127,7 @@ help:
 	@echo "## Commands available with make ##"
 	@echo " "
 	@echo " help:              this help" 
-	@echo " all (or nothing):  stand alone model (qs.bin binary including all SLM models)" 
+	@echo " all (or nothing):  stand alone model (land.x binary including all SLM models)" 
 	@echo " clean:             clean up library files" 
 
 # create .o files from .f90 files and copy to OBJDIR which is in the VPATH so that only changed/new .f90 files have to be compiled
@@ -147,7 +149,7 @@ include ../src/turbulence/Make.inc.deps
 include ../src/hydrology/Make.inc.deps
 include ../src/soil_snow_energy/Make.inc.deps
 include ../src/srf_energy_bal/Make.inc.deps
-include ../src/q_sylviculture/Make.inc.deps
+include ../src/q_simple_harvest/Make.inc.deps
 include ../src/q_soil_phys/Make.inc.deps
 include ../src/q_soil_biogeochemistry/Make.inc.deps
 include ../src/q_phenology/Make.inc.deps
@@ -155,4 +157,5 @@ include ../src/q_vegetation/Make.inc.deps
 include ../src/drivers/Make.inc.deps
 include ../src/quincy_standalone/Make.inc.deps
 include ../src/dist_fire/Make.inc.deps
+include ../src/dist_insect/Make.inc.deps
 include ../src/plant_hydraulics/Make.inc.deps

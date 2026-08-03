@@ -1,15 +1,15 @@
-!> QUINCY calculate plant hydraulics
+!> Summary: QUINCY calculate plant hydraulics
 !>
-!> ICON-Land
+!>#### ICON-Land
 !>
-!> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> ------------------------------------------------------------------------
+!> Copyright (C) 2004-2024, MPI-M, MPI-BGC, DWD, DKRZ, KIT, ETH, MeteoSwiss  
+!> Contact information: <https://icon-model.org>
 !>
-!> Contact: icon-model.org
-!> Authors: AUTHORS.md
-!> See LICENSES/ for license information
+!> See AUTHORS.TXT for a list of authors  
+!> See LICENSES/ for license information  
 !> SPDX-License-Identifier: BSD-3-Clause
-!> ---------------------------------------
+!> ------------------------------------------------------------------------
 !>
 !> For more information on the QUINCY model see: <https://doi.org/10.17871/quincy-model-2019>
 !>
@@ -41,10 +41,10 @@ CONTAINS
     USE mo_jsb_task_class,          ONLY: t_jsb_task_options
     USE mo_jsb_model_class,         ONLY: t_jsb_model
     USE mo_jsb_lctlib_class,        ONLY: t_lctlib_element
-    USE mo_jsb_process_class,       ONLY: A2L_, PHYD_, HYDRO_
+    USE mo_jsb_process_class,       ONLY: A2L_, PHYD_, SPQ_
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Use_memory(A2L_)
-    dsl4jsb_Use_memory(HYDRO_)
+    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(PHYD_)
     ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_tile_abstract), INTENT(inout)     :: tile         !< one tile with data structure for one lct
@@ -56,14 +56,14 @@ CONTAINS
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':update_plant_hydraulics'
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Def_memory(A2L_)
-    dsl4jsb_Def_memory(HYDRO_)
+    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(PHYD_)
     ! ----------------------------------------------------------------------------------------------------- !
     ! A2L_ 2D
     dsl4jsb_Real2D_onChunk      :: t_air
-    ! HYDRO_ 3D 
-    dsl4jsb_Real3D_onChunk      :: wtr_soil_pot_sl               
-    ! PHYD_2D 
+    ! SPQ_ 3D 
+    dsl4jsb_Real3D_onChunk      :: w_soil_pot_sl               
+    ! PYHDRO_2D 
     dsl4jsb_Real2D_onChunk      :: psi_leaf           
     dsl4jsb_Real2D_onChunk      :: psi_stem           
     ! ----------------------------------------------------------------------------------------------------- !
@@ -80,14 +80,14 @@ CONTAINS
     lctlib        => model%lctlib(tile%lcts(1)%lib_id)
     ! ----------------------------------------------------------------------------------------------------- !
     dsl4jsb_Get_memory(A2L_)
-    dsl4jsb_Get_memory(HYDRO_)
+    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(PHYD_)
     ! ----------------------------------------------------------------------------------------------------- !
     ! A2L_ 2D
     dsl4jsb_Get_var2D_onChunk(A2L_, t_air)                  ! in
-    ! HYDRO_ 3D
-    dsl4jsb_Get_var3D_onChunk(HYDRO_, wtr_soil_pot_sl)      ! in  [MPa]
-    ! PHYD_2D
+    ! SPQ_ 3D
+    dsl4jsb_Get_var3D_onChunk(SPQ_, w_soil_pot_sl)          ! in
+    ! PYHDRO_2D
     dsl4jsb_Get_var2D_onChunk(PHYD_, psi_leaf)            ! inout
     dsl4jsb_Get_var2D_onChunk(PHYD_, psi_stem)            ! inout 
     ! ----------------------------------------------------------------------------------------------------- !

@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -24,7 +24,7 @@ MODULE mo_jsb_process_class
   
   PUBLIC :: t_jsb_process, t_jsb_process_p, Get_process_name
   PUBLIC :: A2L_, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-    &       SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+    &       SB_, DFIRE_, DINSECT_, PHYD_, RAD_, Q_SH_, Q_AGR_, SPQ_
   PUBLIC :: SKIP_, AGGREGATE_, ON_LEAFS_, ON_TILE_, ON_SUBTREE_, INHERIT_, Get_action_name
 
   TYPE t_jsb_process
@@ -47,9 +47,9 @@ MODULE mo_jsb_process_class
 
   ENUM, BIND(C)
     ! A2L_=1, L2A_=2, SEB_=3, TURB_=4, SSE_=5, HYDRO_=6, VEG_=7, Q_ASSIMI_=9, Q_PHENO_=10,
-    ! SB_=11, DFIRE_=12, PHYD_=13, RAD_=14, Q_SYL_=15, Q_AGR_=16, SPQ_=17
+    ! SB_=11, DFIRE_=12, PHYD_=13, RAD_=14, Q_SH_=15, Q_AGR_=16, SPQ_=17
     ENUMERATOR :: A2L_=1, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-      &           SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+      &           SB_, DFIRE_, DINSECT_, PHYD_, RAD_, Q_SH_, Q_AGR_, SPQ_
   END ENUM
 
   ! Process actions
@@ -93,18 +93,18 @@ CONTAINS
       return_value = 'q_pheno'
     CASE (DFIRE_)
       return_value = 'dfire'
+    CASE (DINSECT_)
+      return_value = 'dinsect'
     CASE (PHYD_)
       return_value = 'phyd'
     CASE (RAD_)
       return_value = 'rad'
-    CASE (Q_SYL_)
-      return_value = 'q_syl'
+    CASE (Q_SH_)
+      return_value = 'q_sh'
     CASE (Q_AGR_)
       return_value = 'q_agr'
     CASE (SPQ_)
       return_value = 'spq'
-    CASE (ALCC_)
-      return_value = 'alcc'
 #ifndef __NO_JSBACH_HD__
    CASE (HD_)
      return_value = 'hd'

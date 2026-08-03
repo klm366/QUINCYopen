@@ -26,3 +26,7 @@ build/binary_git_info.txt
 # temporary IDE folders
 # clion IDE:
 .idea/
+contrib/test_bed/untrack
+
+contrib/site_level/untrack
+contrib/site_level/site_data_for_JAMES

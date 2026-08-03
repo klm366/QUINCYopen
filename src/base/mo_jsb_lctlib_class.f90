@@ -3,7 +3,7 @@
 !> ICON-Land
 !>
 !> ---------------------------------------
-!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 !>
 !> Contact: icon-model.org
 !> Authors: AUTHORS.md
@@ -53,7 +53,6 @@ MODULE mo_jsb_lctlib_class
     LOGICAL  :: LakeFlag             !! "true" for a land surface class that signifies lake or ocean
     LOGICAL  :: GlacierFlag          !! "true" for a land surface class that signifies glaciers
     LOGICAL  :: BareSoilFlag         !! "true" if none of the foregoing landcover classes
-    LOGICAL  :: C4flag               !! derived from ps_pathway, "true" if: ps_pathway == ic4phot
 
     INTEGER  :: growthform 
     INTEGER  :: ps_pathway
@@ -94,9 +93,7 @@ MODULE mo_jsb_lctlib_class
     ! N uptake parameters
     REAL(wp) :: vmax_uptake_n     , &
                 vmax_uptake_p     , &
-                bnf_base          , &
-                vmax_symb_bnf     , &
-                km_symb_bnf
+                bnf_base
 
     ! Vegetation dynamics parameters
     REAL(wp) :: lambda_est_light  , &
@@ -183,13 +180,15 @@ CONTAINS
     !
     ! The file can contain more keywords than needed --- therefore the same file can be used by several model components.
     !
-    USE mo_util, ONLY: tolower
-
+#ifdef __QUINCY_STANDALONE__
+    USE mo_util,        ONLY: tolower
+#else
+    USE mo_util_string, ONLY: tolower
+#endif
     ! USE statements necessary for modifying QUINCY model input values of lctlib parameters
     USE mo_jsb_math_constants,      ONLY: one_day, one_year
     USE mo_jsb_physical_constants,  ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero
-    USE mo_veg_constants,           ONLY: carbon_per_dryweight_leaf, sm2lm_grass, igrass, itree, icrop
-    USE mo_q_assimi_constants,      ONLY: ic4phot
+    USE mo_veg_constants,           ONLY: carbon_per_dryweight_leaf, sm2lm_grass, itree, igrass, icrop
 
     CHARACTER(len=*), INTENT(in) :: lctlib_file_name
     TYPE(t_lctlib_element), POINTER    :: return_value(:)
@@ -315,8 +314,6 @@ CONTAINS
     LOGICAL            :: exists_vmax_uptake_n = .FALSE.
     LOGICAL            :: exists_vmax_uptake_p = .FALSE.
     LOGICAL            :: exists_bnf_base = .FALSE.
-    LOGICAL            :: exists_vmax_symb_bnf = .FALSE.
-    LOGICAL            :: exists_km_symb_bnf = .FALSE.
     LOGICAL            :: exists_lambda_est_light = .FALSE.
     LOGICAL            :: exists_k_est_light = .FALSE.
     LOGICAL            :: exists_seed_size = .FALSE.
@@ -556,12 +553,6 @@ CONTAINS
             CASE ('bnf_base')
               READ(line(pos:length),*) lctlib(1:nlct)%bnf_base
               exists_bnf_base = .TRUE.
-            CASE ('vmax_symb_bnf')
-              READ(line(pos:length),*) lctlib(1:nlct)%vmax_symb_bnf
-              exists_vmax_symb_bnf = .TRUE.
-            CASE ('km_symb_bnf')
-              READ(line(pos:length),*) lctlib(1:nlct)%km_symb_bnf
-              exists_km_symb_bnf = .TRUE.
 
             CASE ('lambda_est_light')
               READ(line(pos:length),*) lctlib(1:nlct)%lambda_est_light
@@ -756,10 +747,6 @@ CONTAINS
           CALL finish('init_lctlib','No data for vmax_uptake_p found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_bnf_base) &
           CALL finish('init_lctlib','No data for bnf_base found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_vmax_symb_bnf) &
-          CALL finish('init_lctlib','No data for vmax_symb_bnf found in '//TRIM(lctlib_file_name))
-        IF(.NOT. exists_km_symb_bnf) &
-          CALL finish('init_lctlib','No data for km_symb_bnf found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_lambda_est_light) &
           CALL finish('init_lctlib','No data for lambda_est_light found in '//TRIM(lctlib_file_name))
         IF(.NOT. exists_k_est_light) &
@@ -883,14 +870,6 @@ CONTAINS
          DO i = j,nlct
           lctlib(i)%bnf_base = lctlib(i)%bnf_base / molar_mass_N / one_day / one_year * 1.e6_wp
          END DO
-       ! vmax_symb_bnf
-         DO i = j,nlct
-          lctlib(i)%vmax_symb_bnf = lctlib(i)%vmax_symb_bnf / (molar_mass_N / molar_mass_C) / one_day / one_year * 1.e6_wp
-         END DO
-       ! km_symb_bnf
-         DO i = j,nlct
-          lctlib(i)%km_symb_bnf = lctlib(i)%km_symb_bnf / (molar_mass_C / molar_mass_N)
-         END DO
        ! t_air_senescence
          DO i = j,nlct
            lctlib(i)%t_air_senescence = lctlib(i)%t_air_senescence + Tzero
@@ -928,15 +907,6 @@ CONTAINS
              lctlib(i)%c0_allom = 0.0_wp
            END IF
          END DO
-       ! derive C4flag from ps_pathway
-         DO i = 1,nlct
-            IF ( lctlib(i)%ps_pathway == ic4phot ) THEN
-              lctlib(i)%C4flag = .TRUE.
-            ELSE
-              lctlib(i)%C4flag = .FALSE.
-            END IF
-         END DO
-
        !END IF
        ! quincy
 
@@ -1036,7 +1006,6 @@ CONTAINS
 !       CALL p_bcast(lctlib(:)%LakeFlag, p_io)
 !       CALL p_bcast(lctlib(:)%GlacierFlag, p_io)
 !       CALL p_bcast(lctlib(:)%BareSoilFlag, p_io)
-!       CALL p_bcast(lctlib(:)%C4flag, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowVisMin, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowVisMax, p_io)
 !       CALL p_bcast(lctlib(:)%AlbedoSnowNirMin, p_io)

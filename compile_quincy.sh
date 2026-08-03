@@ -5,7 +5,7 @@
 #!> QUINCY standalone
 #!>
 #!> ---------------------------------------
-#!> Copyright (C) 2013-2026, MPI-M, MPI-BGC
+#!> Copyright (C) 2013-2024, MPI-M, MPI-BGC
 #!>
 #!> Contact: https://doi.org/10.17871/quincy-model-2019
 #!> Authors: AUTHORS.md
@@ -64,7 +64,7 @@ binaryBuildDir="x86_64-gfortran/"                   # build dir with info files,
 
 #--- source modules
 ## a bash script providing the function 'create_git_binary_info_files'
-source ./build/compile_hlp/create_git_binary_info_files.sh
+source contrib/compile_hlp/create_git_binary_info_files.sh
 ## the 'compile_options.incl' is sourced below
 
 #--- help
@@ -149,8 +149,8 @@ else
   exit 1
 fi
 
-#--- create the "build/make_compile-options.incl", used by the Makefile, accordingly to the compile_setup
-source ./../build/compile_hlp/compile_options.incl
+## create the "compile options file", used by the Makefile, accordingly to the compile_setup
+source ../contrib/compile_hlp/compile_options.incl
 
 #--- select and load the correct compiler (& netcdf4) software modules
 echo " "
