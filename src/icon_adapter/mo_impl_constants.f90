@@ -21,7 +21,7 @@ MODULE mo_impl_constants
 !
 !
 !
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   ! USE mo_impl_constants_grf, ONLY: grf_bdywidth_c, grf_bdywidth_e
 
   IMPLICIT NONE
@@ -622,19 +622,19 @@ MODULE mo_impl_constants
   !  MISSING VALUE FOR BOUNDARY INTERPOLATION ZONE !
   !------------------------------------------------!
 
-  REAL(WP), PARAMETER, PUBLIC :: BOUNDARY_MISSVAL = -999.e-10
+  REAL(lp), PARAMETER, PUBLIC :: BOUNDARY_MISSVAL = -999.e-10
 
   !------------------------------------------------!
   !  MISSING VALUE FOR NWP SEAICE ALBEDO           !
   !------------------------------------------------!
 
-  REAL(wp), PARAMETER, PUBLIC :: ALB_SI_MISSVAL = -1._wp
+  REAL(lp), PARAMETER, PUBLIC :: ALB_SI_MISSVAL = -1._lp
 
   ! The lon-lat parameterization of the torus is 
   !    (lon,lat) = [0, 2*pi] x [-max_lat, max_lat]
   ! where max_lat := pi/180 = 10 degrees 
   ! (hard-coded in the torus grid generator)
-  REAL(wp), PARAMETER :: TORUS_MAX_LAT = 4._wp / 18._wp * ATAN(1._wp)
+  REAL(lp), PARAMETER :: TORUS_MAX_LAT = 4._lp / 18._lp * ATAN(1._lp)
 
 
   !------------------------------------------------!

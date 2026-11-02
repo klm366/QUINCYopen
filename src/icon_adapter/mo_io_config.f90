@@ -14,7 +14,7 @@ MODULE mo_io_config
   ! USE mo_exception,               ONLY: finish, message
   ! USE mo_impl_constants,          ONLY: max_dom, max_echotop, max_wshear, max_srh
   ! USE mo_io_units,                ONLY: filename_max
-  ! USE mo_kind,                    ONLY: wp
+  ! USE mo_kind,                    ONLY: lp
   ! USE mo_parallel_config,         ONLY: num_restart_procs
   ! USE mo_run_config,              ONLY: dtime
   ! USE mo_util_string,             ONLY: int2string
@@ -33,10 +33,10 @@ MODULE mo_io_config
   ! ! from namelist
 
   ! LOGICAL :: lkeep_in_sync              ! if .true., sync stream after each timestep
-  ! REAL(wp):: dt_diag                    ! diagnostic output timestep [seconds]
-  ! REAL(wp):: gust_interval(max_dom)     ! time interval [seconds] over which maximum wind gusts are taken
-  ! REAL(wp):: ff10m_interval(max_dom)    ! time interval [seconds] over which ff10m is averaged
-  ! REAL(wp):: celltracks_interval(max_dom)  ! time interval [seconds] over which extrema of cell track vars are taken
+  ! REAL(lp):: dt_diag                    ! diagnostic output timestep [seconds]
+  ! REAL(lp):: gust_interval(max_dom)     ! time interval [seconds] over which maximum wind gusts are taken
+  ! REAL(lp):: ff10m_interval(max_dom)    ! time interval [seconds] over which ff10m is averaged
+  ! REAL(lp):: celltracks_interval(max_dom)  ! time interval [seconds] over which extrema of cell track vars are taken
   !                                          !  (LPI_MAX, UH_MAX, VORW_CTMAX, W_CTMAX, DBZ_CTMAX)
   ! CHARACTER(len=max_timedelta_str_len) :: precip_interval(max_dom)   ! time interval over which precipitation variables are accumulated
   ! CHARACTER(len=max_timedelta_str_len) :: totprec_d_interval(max_dom)! time interval over which the special tot_prec_d is accumulated
@@ -44,14 +44,14 @@ MODULE mo_io_config
   ! CHARACTER(len=max_timedelta_str_len) :: sunshine_interval(max_dom) ! time interval over which sunshine duration is accumulated
   ! CHARACTER(len=max_timedelta_str_len) :: melt_interval(max_dom)     ! time interval over which snow melt rate is accumulated
   ! CHARACTER(len=max_timedelta_str_len) :: maxt_interval(max_dom)     ! time interval for tmax_2m, tmin_2m
-  ! REAL(wp):: dt_lpi                     ! calling frequency [seconds] of lpi diagnosis for hourly maximum calculation
-  ! REAL(wp):: dt_celltracks              ! calling frequency [seconds] of celltrack diagnosis for hourly maximum calculation
+  ! REAL(lp):: dt_lpi                     ! calling frequency [seconds] of lpi diagnosis for hourly maximum calculation
+  ! REAL(lp):: dt_celltracks              ! calling frequency [seconds] of celltrack diagnosis for hourly maximum calculation
   !                                       ! this pertains to the following variables: tcond_max/tcond10_max, uh_max, vorw_ctmax, w_ctmax
-  ! REAL(wp):: dt_radar_dbz               ! calling frequency [seconds] of radar reflectivity diagnosis for hourly maximum calculation
-  ! REAL(wp):: dt_hailcast                ! calling frequency [seconds] of hailcast for dhail_* diagnostics
-  ! REAL(wp):: wdur_min_hailcast          ! minimal updraft persistence [seconds] for hailcast to be activated
+  ! REAL(lp):: dt_radar_dbz               ! calling frequency [seconds] of radar reflectivity diagnosis for hourly maximum calculation
+  ! REAL(lp):: dt_hailcast                ! calling frequency [seconds] of hailcast for dhail_* diagnostics
+  ! REAL(lp):: wdur_min_hailcast          ! minimal updraft persistence [seconds] for hailcast to be activated
 
-  ! REAL(wp):: dt_checkpoint              ! timestep [seconds] for triggering new restart file
+  ! REAL(lp):: dt_checkpoint              ! timestep [seconds] for triggering new restart file
 
   ! INTEGER :: inextra_2d                 ! number of extra output fields for debugging
   ! INTEGER :: inextra_3d                 ! number of extra output fields for debugging
@@ -71,7 +71,7 @@ MODULE mo_io_config
 
   ! INTEGER :: itype_hzerocl              ! Specifies height of freezing level if T < 0 Celsius in the whole atmospheric column
   !                                       ! 1: set hzerocl to orography height (default)
-  !                                       ! 2: set hzerocl to -999.0_wp (undef)
+  !                                       ! 2: set hzerocl to -999.0_lp (undef)
   !                                       ! 3: set hzerocl to extrapolated value below ground (assuming -6.5 K/km)
 
   ! INTEGER :: itype_pres_msl             ! Specifies method for computation of mean sea level pressure
@@ -87,23 +87,23 @@ MODULE mo_io_config
                                         !  is written in 64-bit instead of 32-bit accuracy
 
 !   INTEGER, PARAMETER :: uh_max_nlayer = 3
-!   REAL(wp):: uh_max_zmin(uh_max_nlayer), &  !< minimum and maximum height in m MSL for the vertical
+!   REAL(lp):: uh_max_zmin(uh_max_nlayer), &  !< minimum and maximum height in m MSL for the vertical
 !              uh_max_zmax(uh_max_nlayer)     !  integration of uh_max (output vars uh_max<_low,_med>)
 !   LOGICAL :: luh_max_out(max_dom, uh_max_nlayer) = .false.
 
 !   TYPE t_echotop_meta
-!     REAL(wp) :: time_interval           !< time interval [seconds] over which echotops are maximized/minimized
+!     REAL(lp) :: time_interval           !< time interval [seconds] over which echotops are maximized/minimized
 !                                         !   (ECHOTOP, ECHOTOPinM) for a domain
 !     INTEGER  :: nechotop                !< number of actual echotop levels for domain
-!     REAL(wp) :: dbzthresh(max_echotop)  !< actual echotop levels from namelist
+!     REAL(lp) :: dbzthresh(max_echotop)  !< actual echotop levels from namelist
 !   END TYPE t_echotop_meta
 
 !   TYPE(t_echotop_meta) :: echotop_meta(max_dom)
 
-!   REAL(wp):: wshear_uv_heights(max_wshear) !< heights AGL for which wind shear components WSHEAR_U, WSHEAR_V are desired
+!   REAL(lp):: wshear_uv_heights(max_wshear) !< heights AGL for which wind shear components WSHEAR_U, WSHEAR_V are desired
 !   INTEGER :: n_wshear                   !< actual number of wshear heights given in namelist
   
-!   REAL(wp):: srh_heights(max_srh)       !< heights AGL for which storm relative helicity calculations are desired
+!   REAL(lp):: srh_heights(max_srh)       !< heights AGL for which storm relative helicity calculations are desired
 !   INTEGER :: n_srh                      !< actual number of srh heights given in namelist
   
 !   ! Derived type to collect logical variables indicating if optional diagnostics are requested for output

@@ -22,7 +22,7 @@ MODULE mo_jsb_model_usecases
 #ifndef __NO_JSBACH__
 
   USE mo_jsb_model_class,     ONLY: t_jsb_model
-  USE mo_jsb_process_class,   ONLY: A2L_, L2A_, Q_ASSIMI_, VEG_, Q_PHENO_, SPQ_, SB_, DFIRE_, PHYD_, &
+  USE mo_jsb_process_class,   ONLY: A2L_, L2A_, Q_ASSIMI_, VEG_, Q_PHENO_, SB_, DFIRE_, PHYD_, &
     &                               RAD_, TURB_, SEB_, SSE_, HYDRO_, Q_SYL_, Q_AGR_, &
     &                               ON_LEAFS_, ON_TILE_, AGGREGATE_
   USE mo_jsb_tile,            ONLY: t_jsb_tile
@@ -59,9 +59,9 @@ CONTAINS
 
     ! Create just one tile
     box_tile => t_jsb_tile('veg', 'quincy_standalone_pft', &
-      & processes       = (/A2L_,     L2A_,     Q_ASSIMI_, VEG_,      Q_PHENO_,  SPQ_,      SB_      , &
+      & processes       = (/A2L_,     L2A_,     Q_ASSIMI_, VEG_,      Q_PHENO_,  SB_      , &
       &   DFIRE_   , PHYD_    , RAD_     , TURB_    , SEB_     , SSE_     , HYDRO_ /), &
-      & process_actions = (/ON_TILE_, ON_TILE_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, &
+      & process_actions = (/ON_TILE_, ON_TILE_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, &
       &   ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_, ON_LEAFS_ /), &
       & lct=t_jsb_lct(VEG_TYPE), &
       & model_id=model%id, grid_id=model%grid_id, fract_varname='notsea')

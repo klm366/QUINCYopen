@@ -15,7 +15,7 @@
 !>
 MODULE mo_qs_process_init_util
 
-  USE mo_kind,                    ONLY: wp
+  USE mo_kind,                    ONLY: lp
   USE mo_exception,               ONLY: finish
   USE mo_jsb_math_constants,      ONLY: eps8
 

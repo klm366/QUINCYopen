@@ -36,17 +36,17 @@ CONTAINS
     IMPLICIT NONE
     ! ---------------------------
     ! 0.1 Input
-    REAL(wp), INTENT(in) :: latitude                    !< latitude in degree
-    REAL(wp), INTENT(in) :: longitude                   !< longitude in degree
-    REAL(wp), INTENT(in) :: time                        !< days since 1. January
-    REAL(wp)             :: cos_zenith_angle            !< cosine of solar zenith angle 
+    REAL(lp), INTENT(in) :: latitude                    !< latitude in degree
+    REAL(lp), INTENT(in) :: longitude                   !< longitude in degree
+    REAL(lp), INTENT(in) :: time                        !< days since 1. January
+    REAL(lp)             :: cos_zenith_angle            !< cosine of solar zenith angle 
     ! ---------------------------
     ! 0.2 Local
-    REAL(wp) :: sin_delta                   ! sine of declination 
-    REAL(wp) :: cos_delta                   ! cosine of declination 
-    REAL(wp) :: hour                        ! current hour 
-    REAL(wp) :: hour_angle                  ! solar hour angle
-    REAL(wp) :: angle_offset                ! offset for solar angle
+    REAL(lp) :: sin_delta                   ! sine of declination 
+    REAL(lp) :: cos_delta                   ! cosine of declination 
+    REAL(lp) :: hour                        ! current hour 
+    REAL(lp) :: hour_angle                  ! solar hour angle
+    REAL(lp) :: angle_offset                ! offset for solar angle
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_solar_angle'
 
 
@@ -58,13 +58,13 @@ CONTAINS
     !> 1.0 calculate the solar hour angle in radians
     !! 
     !! 
-    hour = ( time - NINT(time-0.5_wp) ) * hourday
+    hour = ( time - NINT(time-0.5_lp) ) * hourday
     IF(angle_at_GMT) THEN
        angle_offset = degcircle/hourday*(longitude - reference_longitude_GMT)
     ELSE
-       angle_offset = 0.0_wp 
+       angle_offset = 0.0_lp 
     ENDIF
-    hour_angle = 2.0_wp*pi*(hour-hourday/2.0_wp+angle_offset)/hourday
+    hour_angle = 2.0_lp*pi*(hour-hourday/2.0_lp+angle_offset)/hourday
 
     !> 2.0 actual solar angle accounting for current solar declination 
     !! 
@@ -88,14 +88,14 @@ CONTAINS
                                           min_fract_par_diffuse, min_cos_zenith_angle
 
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp), INTENT(in) :: sw_srf_down       !< surface downward shortwave radiation flux
-    REAL(wp), INTENT(in) :: sw_toa_down       !< top-of-atmoshere downward shortwave radiation flux
-    REAL(wp), INTENT(in) :: cos_zenith_angle  !< cosine of solar zenith angle
-    REAL(wp)             :: fract_par_diffuse 
+    REAL(lp), INTENT(in) :: sw_srf_down       !< surface downward shortwave radiation flux
+    REAL(lp), INTENT(in) :: sw_toa_down       !< top-of-atmoshere downward shortwave radiation flux
+    REAL(lp), INTENT(in) :: cos_zenith_angle  !< cosine of solar zenith angle
+    REAL(lp)             :: fract_par_diffuse 
       !< fraction of surface downward radiation flux that is diffuse (assumed to be identical to PAR diffuse radiation)
     ! ---------------------------
     ! 0.2 Local
-    REAL(wp)             :: transmission          ! fraction of radiation reaching surface
+    REAL(lp)             :: transmission          ! fraction of radiation reaching surface
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_fract_par_diffuse'
     ! -------------------------------------------------------------------------------------------------- !
 
@@ -111,13 +111,13 @@ CONTAINS
       IF(transmission >= max_transmission_fdiff) THEN
          fract_par_diffuse = min_fract_par_diffuse
       ELSE
-         fract_par_diffuse = MIN(1.0_wp, k1_fdiff + transmission * & 
+         fract_par_diffuse = MIN(1.0_lp, k1_fdiff + transmission * & 
                        (k2_fdiff + transmission * ( k3_fdiff + k4_fdiff * transmission )))
       ENDIF
 
     ELSE ! assume that only diffuse light is available
   
-      fract_par_diffuse = 1.0_wp
+      fract_par_diffuse = 1.0_lp
   
     ENDIF
 
@@ -138,17 +138,17 @@ CONTAINS
     IMPLICIT NONE
     ! ---------------------------
     ! 0.1 InOut
-    REAL(wp),INTENT(in)  :: time             !< days since January 1st
-    REAL(wp),INTENT(out) :: declination      !< solar declination 
-    REAL(wp),INTENT(out) :: sw_toa_down(:)   !< shortwave downward flux at the top of the atmosphere (W m-2) with DIMENSION(nc)
+    REAL(lp),INTENT(in)  :: time             !< days since January 1st
+    REAL(lp),INTENT(out) :: declination      !< solar declination 
+    REAL(lp),INTENT(out) :: sw_toa_down(:)   !< shortwave downward flux at the top of the atmosphere (W m-2) with DIMENSION(nc)
     ! ---------------------------
     ! 0.2 Local
-    REAL(wp) :: so                           ! sine of obliquity
-    REAL(wp) :: sd,cd                        ! sine and cosine of declination
-    REAL(wp) :: xl,xllp                      ! perihel in radians
-    REAL(wp) :: xee,xse                      ! helper variables for eccentricity calculation
-    REAL(wp) :: ranm,rlam,xlam,dlamm,ranv    ! helper variables for anomaly calculation of eath orbit
-    REAL(wp) :: dist                         ! distance sun-Earth for potential radiation calculation 
+    REAL(lp) :: so                           ! sine of obliquity
+    REAL(lp) :: sd,cd                        ! sine and cosine of declination
+    REAL(lp) :: xl,xllp                      ! perihel in radians
+    REAL(lp) :: xee,xse                      ! helper variables for eccentricity calculation
+    REAL(lp) :: ranm,rlam,xlam,dlamm,ranv    ! helper variables for anomaly calculation of eath orbit
+    REAL(lp) :: dist                         ! distance sun-Earth for potential radiation calculation 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':update_orbital_parameters'
 
 
@@ -163,42 +163,42 @@ CONTAINS
     so    = SIN(obliquity*deg2rad)
     !
     ! perihel in radians
-    xl    = perihel + 180.0_wp
+    xl    = perihel + 180.0_lp
     xllp  = xl * deg2rad
     !
     ! helpers of eccentricity
     xee   = eccentricity * eccentricity
-    xse   = SQRT(1.0_wp - xee)
+    xse   = SQRT(1.0_lp - xee)
     !
     ! xlam : true long. sun for mean long. = 0
-    xlam  = (eccentricity/2.0_wp + eccentricity * xee/8.0_wp) * (1.0_wp + xse) * SIN(xllp) - & 
-             xee/4.0_wp * (0.5_wp + xse) * SIN(2.0_wp*xllp) + & 
-             eccentricity * xee/8.0_wp*(1.0_wp/3.0_wp + xse) * SIN(3.0_wp*xllp)
-    xlam  = 2.0_wp*xlam/deg2rad
+    xlam  = (eccentricity/2.0_lp + eccentricity * xee/8.0_lp) * (1.0_lp + xse) * SIN(xllp) - & 
+             xee/4.0_lp * (0.5_lp + xse) * SIN(2.0_lp*xllp) + & 
+             eccentricity * xee/8.0_lp*(1.0_lp/3.0_lp + xse) * SIN(3.0_lp*xllp)
+    xlam  = 2.0_lp*xlam/deg2rad
     ! dlamm : mean long. sun for ma-ja
-    dlamm = xlam+time-79.0_wp
+    dlamm = xlam+time-79.0_lp
 
     ranm  = (dlamm-xl) * deg2rad
     xee   = xee*eccentricity
     ! ranv : true anomaly (radians)
-    ranv  = ranm+(2.0_wp*eccentricity-xee/4.0_wp)*SIN(ranm) + & 
-            5.0_wp/4.0_wp*eccentricity*eccentricity * SIN(2.0_wp*ranm) + & 
-            13.0_wp/12.0_wp*xee*SIN(3.0_wp*ranm)
+    ranv  = ranm+(2.0_lp*eccentricity-xee/4.0_lp)*SIN(ranm) + & 
+            5.0_lp/4.0_lp*eccentricity*eccentricity * SIN(2.0_lp*ranm) + & 
+            13.0_lp/12.0_lp*xee*SIN(3.0_lp*ranm)
     ! rlam : true longitude (radians)
     rlam  = ranv + xllp
 
     !> 2.0 calculate current solar declination 
     !! 
     sd    = so*SIN(rlam)
-    cd    = SQRT(1.0_wp-sd*sd)
+    cd    = SQRT(1.0_lp-sd*sd)
     ! delta : Solar Declination (radians; angle sun at equator)
     declination = ATAN(sd/cd)
 
     !> 3.0 calculate potential radiation normal to the atmsphere
     !! 
     ! eccentricity effect: normalised Sun-Earth distance
-    dist  = 1.0_wp / (( 1.0_wp - eccentricity * eccentricity ) / & 
-            (1.0_wp + eccentricity * cos(ranv)))
+    dist  = 1.0_lp / (( 1.0_lp - eccentricity * eccentricity ) / & 
+            (1.0_lp + eccentricity * cos(ranv)))
     ! potential insolation normal to the atmosphere (W m-2)
     sw_toa_down(:) = dist * dist * solar_constant
 

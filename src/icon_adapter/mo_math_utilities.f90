@@ -22,8 +22,8 @@
 ! #endif
 MODULE mo_math_utilities
 
-  USE mo_kind,    ONLY: wp
-  ! USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: wp => real64
+  USE mo_kind,    ONLY: lp
+  ! USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: lp => real64
   ! USE mo_math_constants, ONLY: pi, pi_2, dbl_eps
   ! USE mo_gridman_constants, ONLY: SUCCESS, TORUS_MAX_LAT
   ! USE mo_exception, ONLY: finish
@@ -122,24 +122,24 @@ MODULE mo_math_utilities
 !     MODULE PROCEDURE cc2gc_generic
 !   END INTERFACE
 
-!   !> Derived type specifying a set of REAL(wp) values.
+!   !> Derived type specifying a set of REAL(lp) values.
 !   !
 !   TYPE t_value_set
 !     INTEGER               :: nvalues !< no. of values in set
 !     LOGICAL               :: sort_smallest_first !< Flag. If true, set is sorted smallest-to-largest
-!     REAL(wp), ALLOCATABLE :: values(:) !< sorted set of values.
+!     REAL(lp), ALLOCATABLE :: values(:) !< sorted set of values.
 
 !     !> Everytime when new values are inserted into the set, the total
 !     !  list of values is re-sorted.
 !   END TYPE t_value_set
 
-!   REAL(wp), PARAMETER :: fcirc = 2.0_wp*pi
-!   REAL(wp), PARAMETER :: hcirc = fcirc*0.5_wp, qcirc = fcirc*0.25_wp
+!   REAL(lp), PARAMETER :: fcirc = 2.0_lp*pi
+!   REAL(lp), PARAMETER :: hcirc = fcirc*0.5_lp, qcirc = fcirc*0.25_lp
 !   ! constants for fixpoint<->float conversion of latitude/longitude angles
-!   REAL(wp), PARAMETER :: lat_spread = 0.25_wp*REAL(HUGE(1), wp)/qcirc, &
-!                          lat_contract = 4.0_wp*qcirc/REAL(HUGE(1), wp), &
-!                          lon_spread = 0.25_wp*REAL(HUGE(1), wp)/hcirc, &
-!                          lon_contract = 4.0_wp*hcirc/REAL(HUGE(1), wp)
+!   REAL(lp), PARAMETER :: lat_spread = 0.25_lp*REAL(HUGE(1), lp)/qcirc, &
+!                          lat_contract = 4.0_lp*qcirc/REAL(HUGE(1), lp), &
+!                          lon_spread = 0.25_lp*REAL(HUGE(1), lp)/hcirc, &
+!                          lon_contract = 4.0_lp*hcirc/REAL(HUGE(1), lp)
 
 !   PUBLIC :: normalized_lat, fxp_lat, flp_lat
 !   PUBLIC :: normalized_lon, fxp_lon, flp_lon
@@ -150,7 +150,7 @@ MODULE mo_math_utilities
 ! #define d_norma_3d_x(x) SQRT(DOT_PRODUCT(x,x))
 ! #define d_normalize(v) v%x=v%x/d_norma_3d(v)
 ! #define d_normalize_x(x) x=x/d_norma_3d_x(x)
-! #define d_arc_of_hord_normalsphere(l) (2.0_wp*ASIN((l)*0.5_wp))
+! #define d_arc_of_hord_normalsphere(l) (2.0_lp*ASIN((l)*0.5_lp))
 ! #define d_normalize_f(v) v%x/d_norma_3d(v)
 ! #define d_sqrdistance_3d(v1,v2) DOT_PRODUCT((v1%x-v2%x),(v1%x-v2%x))
 
@@ -177,10 +177,10 @@ CONTAINS
     !$ACC ROUTINE SEQ
 
     INTEGER, INTENT(in) :: n
-    REAL(wp), DIMENSION(n), INTENT(in)  :: a, b, c, d
-    REAL(wp), DIMENSION(n), INTENT(out) :: varout
+    REAL(lp), DIMENSION(n), INTENT(in)  :: a, b, c, d
+    REAL(lp), DIMENSION(n), INTENT(out) :: varout
 
-    REAL(wp):: m, cp(n), dp(n)
+    REAL(lp):: m, cp(n), dp(n)
     INTEGER :: i
 
 ! initialize c-prime and d-prime
@@ -215,13 +215,13 @@ CONTAINS
   SUBROUTINE tdma_solver_vec(a, b, c, d, slev, elev, startidx, endidx, varout, opt_acc_queue)
     INTEGER, INTENT(IN) :: slev, elev
     INTEGER, INTENT(IN) :: startidx, endidx
-    REAL(wp), INTENT(IN) :: a(:, :), b(:, :), c(:, :), d(:, :)
-    REAL(wp), INTENT(OUT) :: varout(:, :)
+    REAL(lp), INTENT(IN) :: a(:, :), b(:, :), c(:, :), d(:, :)
+    REAL(lp), INTENT(OUT) :: varout(:, :)
     INTEGER, OPTIONAL, INTENT(IN) :: opt_acc_queue
 
     !
     ! local
-    REAL(wp):: m, cp(SIZE(a, 1), SIZE(a, 2)), dp(SIZE(a, 1), SIZE(a, 2))
+    REAL(lp):: m, cp(SIZE(a, 1), SIZE(a, 2)), dp(SIZE(a, 1), SIZE(a, 2))
     INTEGER :: i
     INTEGER :: jc
     INTEGER :: acc_queue
@@ -245,7 +245,7 @@ CONTAINS
     DO i = slev + 1, elev
       !$ACC LOOP GANG(STATIC: 1) VECTOR PRIVATE(m)
       DO jc = startidx, endidx
-        m = 1._wp/(b(jc, i) - cp(jc, i - 1)*a(jc, i))
+        m = 1._lp/(b(jc, i) - cp(jc, i - 1)*a(jc, i))
         cp(jc, i) = c(jc, i)*m
         dp(jc, i) = (d(jc, i) - dp(jc, i - 1)*a(jc, i))*m
       END DO
@@ -278,18 +278,18 @@ CONTAINS
   ! !!! Helper functions for computing the vertical layer structure
   ! SUBROUTINE set_zlev(zlev_i, zlev_m, n_zlev, dzlev_m)
   !   INTEGER, INTENT(IN)  :: n_zlev
-  !   REAL(wp), INTENT(OUT) :: zlev_i(n_zlev + 1), zlev_m(n_zlev)
-  !   REAL(wp), INTENT(IN)  :: dzlev_m(:) ! namelist input of layer thickness
+  !   REAL(lp), INTENT(OUT) :: zlev_i(n_zlev + 1), zlev_m(n_zlev)
+  !   REAL(lp), INTENT(IN)  :: dzlev_m(:) ! namelist input of layer thickness
 
   !   INTEGER :: jk
-  !   REAL(wp) :: accum
+  !   REAL(lp) :: accum
 
-  !   accum = 0.0_wp
+  !   accum = 0.0_lp
   !   ! zlev_i    : upper border surface of vertical cells
   !   ! zlev_m    : position of coordinate surfaces in meters below zero surface.
   !   DO jk = 1, n_zlev
   !     zlev_i(jk) = accum
-  !     zlev_m(jk) = 0.5_wp*(2.0_wp*accum + dzlev_m(jk))
+  !     zlev_m(jk) = 0.5_lp*(2.0_lp*accum + dzlev_m(jk))
   !     accum = accum + dzlev_m(jk)
   !   END DO
   !   zlev_i(n_zlev + 1) = accum
@@ -298,19 +298,19 @@ CONTAINS
 
   ! !> normalize latitude to range [-pi/2,pi/2]
   ! ELEMENTAL FUNCTION normalized_lat(lat) RESULT(normalized)
-  !   REAL(wp), INTENT(in) :: lat
-  !   REAL(wp) :: normalized
-  !   REAL(wp) :: norm_hcirc, qcirc_div, offset, sign_mult
+  !   REAL(lp), INTENT(in) :: lat
+  !   REAL(lp) :: normalized
+  !   REAL(lp) :: norm_hcirc, qcirc_div, offset, sign_mult
   !   offset = SIGN(qcirc, lat)
   !   qcirc_div = AINT((lat + offset)/qcirc)
   !   norm_hcirc = MOD(lat + offset, hcirc) - offset
-  !   sign_mult = -2.0_wp*ABS(MOD(AINT(qcirc_div*.5_wp), 2.0_wp)) + 1.0_wp
+  !   sign_mult = -2.0_lp*ABS(MOD(AINT(qcirc_div*.5_lp), 2.0_lp)) + 1.0_lp
   !   normalized = sign_mult*norm_hcirc
   ! END FUNCTION normalized_lat
 
   ! !> convert latitude to normalized fixed-point integer
   ! ELEMENTAL FUNCTION fxp_lat(lat)
-  !   REAL(wp), INTENT(in) :: lat
+  !   REAL(lp), INTENT(in) :: lat
   !   INTEGER :: fxp_lat
   !   fxp_lat = NINT(lat_spread*normalized_lat(lat))
   ! END FUNCTION fxp_lat
@@ -318,21 +318,21 @@ CONTAINS
   ! !> convert fixed-point latitude to floating-point value in range [-pi/2,pi/2]
   ! ELEMENTAL FUNCTION flp_lat(lat)
   !   INTEGER, INTENT(in) :: lat
-  !   REAL(wp) :: flp_lat
-  !   flp_lat = lat_contract*REAL(lat, wp)
+  !   REAL(lp) :: flp_lat
+  !   flp_lat = lat_contract*REAL(lat, lp)
   ! END FUNCTION flp_lat
 
   ! !> normalize latitude to range [-pi,pi]
   ! ELEMENTAL FUNCTION normalized_lon(lon) RESULT(normalized)
-  !   REAL(wp), INTENT(in) :: lon
-  !   REAL(wp) :: normalized, offset
+  !   REAL(lp), INTENT(in) :: lon
+  !   REAL(lp) :: normalized, offset
   !   offset = SIGN(hcirc, lon)
   !   normalized = MOD(lon + offset, fcirc) - offset
   ! END FUNCTION normalized_lon
 
   ! !> convert longitude to normalized fixed-point integer
   ! ELEMENTAL FUNCTION fxp_lon(lon)
-  !   REAL(wp), INTENT(in) :: lon
+  !   REAL(lp), INTENT(in) :: lon
   !   INTEGER :: fxp_lon
   !   fxp_lon = NINT(lon_spread*normalized_lon(lon))
   ! END FUNCTION fxp_lon
@@ -340,23 +340,23 @@ CONTAINS
   ! !> convert fixed-point longitude to floating-point value in range [-pi,pi]
   ! ELEMENTAL FUNCTION flp_lon(lon)
   !   INTEGER, INTENT(in) :: lon
-  !   REAL(wp) :: flp_lon
-  !   flp_lon = lon_contract*REAL(lon, wp)
+  !   REAL(lp) :: flp_lon
+  !   flp_lon = lon_contract*REAL(lon, lp)
   ! END FUNCTION flp_lon
 
   ! !-------------------------------------------------------------------------
-  ! !> Merges a list of REAL(wp) numbers into another list, yielding the
+  ! !> Merges a list of REAL(lp) numbers into another list, yielding the
   ! !  union set (without duplicates).
   ! !
   ! SUBROUTINE merge_values_into_set(nin_values, in_values, value_set, opt_tol)
   !   INTEGER, INTENT(IN)           :: nin_values !< no. of input values
-  !   REAL(wp), INTENT(IN)           :: in_values(:) !< list of input values
+  !   REAL(lp), INTENT(IN)           :: in_values(:) !< list of input values
   !   TYPE(t_value_set), INTENT(INOUT)        :: value_set !< result values (union set)
-  !   REAL(wp), INTENT(IN), OPTIONAL :: opt_tol !< (optional:) tolerance for floating-point equality
+  !   REAL(lp), INTENT(IN), OPTIONAL :: opt_tol !< (optional:) tolerance for floating-point equality
   !   ! local variables
   !   CHARACTER(LEN=*), PARAMETER :: routine = '::merge_values_into_set'
-  !   REAL(wp), PARAMETER :: default_tol = 1.e-12_wp
-  !   REAL(wp) :: tol
+  !   REAL(lp), PARAMETER :: default_tol = 1.e-12_lp
+  !   REAL(lp) :: tol
   !   INTEGER  :: i, k, n0, nn0, ierrstat
   !   INTEGER, ALLOCATABLE :: idx(:)
 
@@ -400,7 +400,7 @@ CONTAINS
   ! END SUBROUTINE merge_values_into_set
 
   ! !-------------------------------------------------------------------------
-  ! !> Compares a list of REAL(wp) numbers with the contents of a
+  ! !> Compares a list of REAL(lp) numbers with the contents of a
   ! !  "t_value_set" data object. For a "value_set" with N values, this
   ! !  subroutine returns a LOGICAL array "out_flag" of size 1:N, where
   ! !  "out_flag(i) == .TRUE.", if the value "value_set%values(i)"
@@ -412,14 +412,14 @@ CONTAINS
   ! !
   ! SUBROUTINE find_values_in_set(nin_values, in_values, value_set, out_flag, opt_tol)
   !   INTEGER, INTENT(IN)           :: nin_values !< no. of input values
-  !   REAL(wp), INTENT(IN)           :: in_values(:) !< list of input values
+  !   REAL(lp), INTENT(IN)           :: in_values(:) !< list of input values
   !   TYPE(t_value_set), INTENT(IN)           :: value_set !< set of values
   !   LOGICAL, INTENT(OUT)          :: out_flag(:) !<
-  !   REAL(wp), INTENT(IN), OPTIONAL :: opt_tol !< (optional:) tolerance for floating-point equality
+  !   REAL(lp), INTENT(IN), OPTIONAL :: opt_tol !< (optional:) tolerance for floating-point equality
   !   ! local variables
   !   CHARACTER(LEN=*), PARAMETER :: routine = '::find_values_in_set'
-  !   REAL(wp), PARAMETER :: default_tol = 1.e-12_wp
-  !   REAL(wp) :: tol
+  !   REAL(lp), PARAMETER :: default_tol = 1.e-12_lp
+  !   REAL(lp) :: tol
   !   INTEGER  :: i, j
 
   !   ! set tolerance for floating-point equality test
@@ -449,9 +449,9 @@ CONTAINS
   !   ! local variables
   !   CHARACTER(LEN=*), PARAMETER :: routine = '::deallocate_set'
   !   INTEGER               :: ierrstat, oldsize, newsize
-  !   REAL(wp), ALLOCATABLE :: tmp_rbuf(:)
+  !   REAL(lp), ALLOCATABLE :: tmp_rbuf(:)
 
-  !   ! increase size of REAL(wp) buffer
+  !   ! increase size of REAL(lp) buffer
   !   oldsize = 0
   !   IF (ALLOCATED(value_set%values)) THEN
   !     oldsize = SIZE(value_set%values)

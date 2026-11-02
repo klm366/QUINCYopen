@@ -17,7 +17,7 @@
 MODULE mo_jsb_task_class
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,            ONLY: wp
+  USE mo_kind,            ONLY: lp
   USE mo_exception,       ONLY: message, finish
   USE mo_jsb_control,     ONLY: debug_on!, l_timer
   USE mo_hsm_class,       ONLY: t_Message   ! , t_jsb_task_msg => t_Message
@@ -31,8 +31,8 @@ MODULE mo_jsb_task_class
 
 
   TYPE t_jsb_task_options
-    REAL(wp) :: dtime   = -1._wp                  !< length of one time step
-    REAL(wp) :: alpha   = -1._wp                  !< Implicitness factor (differs between standalone and coupled simulations)
+    REAL(lp) :: dtime   = -1._lp                  !< length of one time step
+    REAL(lp) :: alpha   = -1._lp                  !< Implicitness factor (differs between standalone and coupled simulations)
     TYPE(t_datetime), POINTER :: current_datetime !< stores current date and time information; TODO: use time_config
     INTEGER  :: iblk    = -1      !< Number of current block (chunk)
     INTEGER  :: nproma  = -1      !< number of points per chunk

@@ -14,17 +14,17 @@
 MODULE mo_jsb_varlist
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,              ONLY: wp
+  USE mo_kind,              ONLY: lp
   USE mo_jsb_varlist_iface, ONLY: VARNAME_LEN
 
   IMPLICIT NONE
   PRIVATE
 
   PUBLIC :: VARNAME_LEN
-  PUBLIC :: BASIC, MEDIUM, FULL, NONE
+  PUBLIC :: NONE, MINIMUM, BASIC, MEDIUM, FULL
 
   ENUM, BIND(C)
-    ENUMERATOR :: NONE=0, BASIC, MEDIUM, FULL
+    ENUMERATOR :: NONE=0, MINIMUM, BASIC, MEDIUM, FULL
   END ENUM
 
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_varlist'

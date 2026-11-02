@@ -20,7 +20,7 @@ MODULE mo_dfire_config_class
 
   USE mo_exception,         ONLY: message, finish, message_text
   USE mo_io_units,          ONLY: filename_max
-  USE mo_kind,              ONLY: wp
+  USE mo_kind,              ONLY: lp
   USE mo_util,              ONLY: tolower
   USE mo_jsb_config_class,  ONLY: t_jsb_config
 
@@ -48,8 +48,8 @@ MODULE mo_dfire_config_class
     CHARACTER(len=20) :: dfire_modelname             !< name of fire model to run
     INTEGER           :: dfire_model_id              !< fire model ID
     ! spitfire
-    REAL(wp)          :: density_human_population    !< average human population density in the grid cell [individuals km-2]
-    REAL(wp)          :: lightning_frequency         !< avrg number of all lightnings [ha-1 d-1]
+    REAL(lp)          :: density_human_population    !< average human population density in the grid cell [individuals km-2]
+    REAL(lp)          :: lightning_frequency         !< avrg number of all lightnings [ha-1 d-1]
   CONTAINS
     PROCEDURE :: Init => Init_dfire_config
   END type t_dfire_config
@@ -74,8 +74,8 @@ CONTAINS
     LOGICAL                       :: flag_dfire               !< on/off disturbance fire process [boolean]
     CHARACTER(len=20)             :: dfire_modelname          !< name of fire model to run
     INTEGER                       :: dfire_model_id           !< fire model ID, derived from 'dfire_modelname'
-    REAL(wp)                      :: density_human_population
-    REAL(wp)                      :: lightning_frequency
+    REAL(lp)                      :: density_human_population
+    REAL(lp)                      :: lightning_frequency
     CHARACTER(len=*), PARAMETER   :: routine = TRIM(modname)//':Init_dfire_config'
     ! ----------------------------------------------------------------------------------------------------- !
     NAMELIST /lnd_dist_fire_nml/        &

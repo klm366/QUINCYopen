@@ -107,7 +107,7 @@ END MODULE mo_jsb_namelist_iface
 !
 MODULE mo_physical_constants_iface
 
-  USE mo_kind, ONLY: wp
+  USE mo_kind, ONLY: lp
 
   USE mo_physical_constants, ONLY: &
     grav,            & !< Avg. gravitational acceleration        [m/s2]
@@ -142,12 +142,12 @@ MODULE mo_physical_constants_iface
   IMPLICIT NONE
   PUBLIC
 
-  REAL(wp), PARAMETER :: &
-    cs=2090._wp        !< Specific heat capacity of snow         [J/(K kg)]
+  REAL(lp), PARAMETER :: &
+    cs=2090._lp        !< Specific heat capacity of snow         [J/(K kg)]
 
-  REAL(wp), PARAMETER :: tpfac1 = cvdifts
-  REAL(wp), PARAMETER :: tpfac2 = 1._wp / tpfac1
-  REAL(wp), PARAMETER :: tpfac3 = 1._wp - tpfac2
+  REAL(lp), PARAMETER :: tpfac1 = cvdifts
+  REAL(lp), PARAMETER :: tpfac2 = 1._lp / tpfac1
+  REAL(lp), PARAMETER :: tpfac3 = 1._lp - tpfac2
 
 END MODULE mo_physical_constants_iface
 
@@ -339,7 +339,7 @@ END MODULE mo_jsb_domain_iface
 !
 MODULE mo_jsb_io_iface
 
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   ! USE mo_cf_convention, ONLY: t_cf_var
   ! USE mo_grib2,         ONLY: t_grib2_var, grib2_var
   USE mo_io_config,     ONLY: lnetcdf_flt64_output
@@ -393,11 +393,11 @@ CONTAINS
   !   INTEGER,           INTENT(in)    :: cdi_axis_type
   !   INTEGER,           INTENT(in)    :: length
   !   CHARACTER(len=*),  INTENT(in)    :: name
-  !   REAL(wp),          INTENT(in)    :: levels(:)
+  !   REAL(lp),          INTENT(in)    :: levels(:)
   !   CHARACTER(len=*),  INTENT(in)    :: units
   !   CHARACTER(len=*),  INTENT(in)    :: longname
-  !   REAL(wp),          INTENT(in)    :: lbounds(:)
-  !   REAL(wp),          INTENT(in)    :: ubounds(:)
+  !   REAL(lp),          INTENT(in)    :: lbounds(:)
+  !   REAL(lp),          INTENT(in)    :: ubounds(:)
 
   !   CHARACTER(len=*), PARAMETER :: routine = modname//':Create_zaxis'
 
@@ -437,28 +437,11 @@ END MODULE mo_jsb_io_iface
 
 
 !------------------------------------------------------------------------------------------------------------
-!> Contains interfaces to different ICON utilities for JSBACH
-!
-MODULE mo_jsb_utils_iface
-
-!  USE mo_fortran_tools, ONLY: assign_if_present, assign_if_present_allocatable
-  USE mo_util_string,   ONLY: toupper, tolower, int2string, real2string, logical2string, separator, one_of_str => one_of
-
-  IMPLICIT NONE
-  PRIVATE
-
-!  PUBLIC :: assign_if_present, assign_if_present_allocatable
-  PUBLIC :: toupper, tolower, int2string, real2string, logical2string, separator, one_of_str
-
-END MODULE mo_jsb_utils_iface
-
-
-!------------------------------------------------------------------------------------------------------------
 !> Contains interfaces to ICON varlists for JSBACH
 !
 MODULE mo_jsb_varlist_iface
 
-  ! USE mo_kind,               ONLY: wp, dp
+  ! USE mo_kind,               ONLY: lp, dp
   ! USE mo_exception,          ONLY: finish
   ! USE mo_master_control,     ONLY: get_my_process_name
   ! USE mo_var_list_register,  ONLY: vlr_get, vlr_add, get_nvl
@@ -551,7 +534,7 @@ MODULE mo_jsb_varlist_iface
 
 !     TYPE(t_var_list),     INTENT(inout)        :: this_list           ! list
 !     CHARACTER(len=*),     INTENT(in)           :: name                ! name of variable
-!     REAL(wp),             POINTER              :: ptr(:)              ! reference to field
+!     REAL(lp),             POINTER              :: ptr(:)              ! reference to field
 !     INTEGER,              INTENT(in)           :: hgrid               ! horizontal grid type
 !     INTEGER,              INTENT(in)           :: vgrid               ! vertical grid type
 !                                                                       ! ICON: zaxis type (ZA_*)
@@ -567,14 +550,14 @@ MODULE mo_jsb_varlist_iface
 !     LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-!     REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+!     REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
 !     INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-!     REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+!     REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
 !     LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
 !     REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
 !     INTEGER,              INTENT(in), OPTIONAL :: tlev_source         ! actual TL for TL dependent vars
 !     TYPE(t_var_metadata), POINTER,    OPTIONAL :: info                ! returns reference to metadata
-!     REAL(wp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
+!     REAL(lp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
 !     CHARACTER(len=VARNAME_LEN), INTENT(in), OPTIONAL :: in_groups(:)  ! groups to which a variable belongs
 !     LOGICAL,              INTENT(in), OPTIONAL :: verbose             ! print information
 !     TYPE(t_list_element), POINTER, OPTIONAL    :: new_element         ! pointer to new var list element
@@ -622,7 +605,7 @@ MODULE mo_jsb_varlist_iface
 
 !     TYPE(t_var_list),     INTENT(inout)        :: this_list           ! list
 !     CHARACTER(len=*),     INTENT(in)           :: name                ! name of variable
-!     REAL(wp),             POINTER              :: ptr(:,:)            ! reference to field
+!     REAL(lp),             POINTER              :: ptr(:,:)            ! reference to field
 !     INTEGER,              INTENT(in)           :: hgrid               ! horizontal grid type
 !     INTEGER,              INTENT(in)           :: vgrid               ! vertical grid type
 !                                                                       ! ICON: zaxis type (ZA_*)
@@ -638,14 +621,14 @@ MODULE mo_jsb_varlist_iface
 !     LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-!     REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+!     REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
 !     INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-!     REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+!     REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
 !     LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
 !     REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
 !     INTEGER,              INTENT(in), OPTIONAL :: tlev_source         ! actual TL for TL dependent vars
 !     TYPE(t_var_metadata), POINTER,    OPTIONAL :: info                ! returns reference to metadata
-!     REAL(wp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
+!     REAL(lp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
 !     CHARACTER(len=VARNAME_LEN), INTENT(in), OPTIONAL :: in_groups(:)  ! groups to which a variable belongs
 !     LOGICAL,              INTENT(in), OPTIONAL :: verbose             ! print information
 !     TYPE(t_list_element), POINTER, OPTIONAL :: new_element           ! pointer to new var list element
@@ -691,7 +674,7 @@ MODULE mo_jsb_varlist_iface
 
 !     TYPE(t_var_list),     INTENT(inout)        :: this_list           ! list
 !     CHARACTER(len=*),     INTENT(in)           :: name                ! name of variable
-!     REAL(wp),             POINTER              :: ptr(:,:,:)          ! reference to field
+!     REAL(lp),             POINTER              :: ptr(:,:,:)          ! reference to field
 !     INTEGER,              INTENT(in)           :: hgrid               ! horizontal grid type
 !     INTEGER,              INTENT(in)           :: vgrid               ! vertical grid type
 !                                                                       ! ICON: zaxis type (ZA_*)
@@ -707,14 +690,14 @@ MODULE mo_jsb_varlist_iface
 !     LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-!     REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+!     REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
 !     INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-!     REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+!     REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
 !     LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
 !     REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
 !     INTEGER,              INTENT(in), OPTIONAL :: tlev_source         ! actual TL for TL dependent vars
 !     TYPE(t_var_metadata), POINTER,    OPTIONAL :: info                ! returns reference to metadata
-!     REAL(wp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
+!     REAL(lp),             TARGET, CONTIGUOUS, OPTIONAL :: p5(:,:,:,:,:)       ! provided pointer
 !     CHARACTER(len=VARNAME_LEN), INTENT(in), OPTIONAL :: in_groups(:)  ! groups to which a variable belongs
 !     LOGICAL,              INTENT(in), OPTIONAL :: verbose             ! print information
 !     TYPE(t_list_element), POINTER, OPTIONAL  :: new_element           ! pointer to new var list element
@@ -757,10 +740,10 @@ END MODULE mo_jsb_varlist_iface
 !
 MODULE mo_jsb_time_iface
 
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   USE mo_exception,          ONLY: finish, message, message_text
 
-  USE mo_jsb_math_constants, ONLY: one_year, one_month, seconds_per_day, one_day
+  USE mo_jsb_math_constants, ONLY: one_year, one_month, seconds_per_day, one_day, eps8
   USE mo_time_config,        ONLY: t_datetime, time_config
 
   ! USE mtime,                     ONLY: t_datetime => datetime, newDatetime, deallocateDatetime,      &
@@ -813,28 +796,31 @@ CONTAINS
   ! ======================================================================================================= !
   !>
   !> helper function emulating jsbach+mtime behaviour to get previous datetime for use in QS
+  !>
+  !> In QS, time_day is the end of the current timestep, i.e. the first timestep of a year has
+  !> time_day ~ timestep_prop_day. The previous timestep then belongs to the previous year, except at
+  !> experiment start, where the previous time is the start date (time_day = 0) of the same year.
+  !> Half a timestep is used as tolerance against round-off in the time_day accumulated by the driver.
+  !> previous%time_day is kept >= 0 in the frame of the current year (time_day 0 is the same instant as
+  !> one_year of the previous year), such that the day-of-year comparison in is_newday stays consistent.
   FUNCTION get_time_previous(current, dt) RESULT(previous)
 
     TYPE(t_datetime), POINTER, INTENT(in) :: current   !< current time
-    REAL(wp),                  INTENT(in) :: dt        !< timestep
+    REAL(lp),                  INTENT(in) :: dt        !< timestep
     TYPE(t_datetime), POINTER             :: previous  !< time one timestep before current time
 
-    REAL(wp) :: timestep_prop_day  !< proportion of one daysimulated with in dtime
+    REAL(lp) :: timestep_prop_day  !< proportion of one day simulated within dt
 
     ALLOCATE(previous)
 
     timestep_prop_day = dt / one_day
 
-    IF (current%time_day > one_year) THEN
-      previous%time_day  = current%time_day - one_year
+    previous%time_day  = current%time_day - timestep_prop_day
+    previous%time_year = current%time_year
+    IF (previous%time_day < 0.5_lp * timestep_prop_day .AND. .NOT. l_is_time_experiment_start) THEN
       previous%time_year = current%time_year - 1
-    ELSEIF (ABS(current%time_day) < timestep_prop_day) THEN
-        previous%time_day  = one_year - timestep_prop_day
-        previous%time_year = current%time_year - 1
-    ELSE
-      previous%time_day  = current%time_day - timestep_prop_day
-      previous%time_year = current%time_year
     END IF
+    previous%time_day  = MAX(previous%time_day, 0.0_lp)
 
   END FUNCTION get_time_previous
 
@@ -873,13 +859,14 @@ CONTAINS
       year = this_datetime%time_year
     ENDIF
 
+    ! eps8 accounts for round-off in the time_day accumulated by the driver (e.g. 364.99999999984 for 365)
     IF (PRESENT(day)) THEN
-      day = FLOOR(this_datetime%time_day)
+      day = FLOOR(this_datetime%time_day + eps8)
     ENDIF
 
     ! seconds passed on this day (subtract whole days and convert day to seconds)
     IF (PRESENT(second)) THEN
-      second = FLOOR((this_datetime%time_day - REAL(FLOOR(this_datetime%time_day),wp)) * seconds_per_day)
+      second = FLOOR((this_datetime%time_day - REAL(FLOOR(this_datetime%time_day),lp)) * seconds_per_day)
     ENDIF
 
   END SUBROUTINE get_date_components
@@ -894,7 +881,7 @@ CONTAINS
   !>
   !> helper function emulating jsbach+mtime behaviour to get the day of the year for a given date for use in QS
   !> With seconds in the day given as fraction of the day.
-  REAL(wp) FUNCTION get_year_day(date)
+  REAL(lp) FUNCTION get_year_day(date)
 
     ! t_datetime points to mtimes datetime
     TYPE(t_datetime), POINTER, INTENT(in)  :: date
@@ -903,7 +890,7 @@ CONTAINS
 
     CALL get_date_components(date, day=day)
 
-    get_year_day = REAL(day, wp)
+    get_year_day = REAL(day, lp)
 
   END FUNCTION get_year_day
 
@@ -924,37 +911,37 @@ CONTAINS
 !   !!
 !   !! Function returns the length of the integration time step
 !   !!
-!   REAL(wp) FUNCTION get_time_dt(model_id)
+!   REAL(lp) FUNCTION get_time_dt(model_id)
 
 !     INTEGER, INTENT(in) :: model_id
 
 !     TYPE(t_datetime), POINTER :: reference_datetime
-!     REAL(wp) :: ztime
+!     REAL(lp) :: ztime
 
 !     CHARACTER(len=*), PARAMETER :: routine = modname//':get_time_dt'
 
 !     IF (iforcing == inwp) THEN
 !       ztime = atm_phy_nwp_config(model_id)%dt_fastphy
 !     ELSE
-!       ztime = -1._wp
+!       ztime = -1._lp
 
 !       reference_datetime => newDatetime("1979-01-01T00:00:00.000") ! 1980-06-01T00:00:00.000
 
 !       ! First try to get time step from the vertical diffusion config in a coupled experiment
 !       IF (ASSOCIATED(aes_phy_tc(model_id)%dt_vdf)) THEN
-!         ztime = REAL(getTotalSecondsTimeDelta(aes_phy_tc(model_id)%dt_vdf, reference_datetime), wp)
+!         ztime = REAL(getTotalSecondsTimeDelta(aes_phy_tc(model_id)%dt_vdf, reference_datetime), lp)
 !       END IF
 
-!       IF (ztime <= 0._wp) THEN
+!       IF (ztime <= 0._lp) THEN
 !         ! This should only happen for an ICON-Land standalone experiment;
 !         ! Use "modeltimestep" from run_nml in this case (same for all model_id's!)
-!         ztime = REAL(getTotalSecondsTimeDelta(time_config%tc_dt_model, reference_datetime), wp)
+!         ztime = REAL(getTotalSecondsTimeDelta(time_config%tc_dt_model, reference_datetime), lp)
 !       END IF
 
 !       CALL deallocateDatetime(reference_datetime)
 !     END IF
 
-!     IF (ztime <= 0.0_wp) &
+!     IF (ztime <= 0.0_lp) &
 !       CALL finish(routine, 'Couldn"t get model time step.')
 
 !     get_time_dt = ztime
@@ -1018,7 +1005,7 @@ CONTAINS
 !   FUNCTION get_time_previous(current, dt) RESULT(previous)
 
 !     TYPE(t_datetime), POINTER, INTENT(in) :: current
-!     REAL(wp),                  INTENT(in) :: dt
+!     REAL(lp),                  INTENT(in) :: dt
 !     TYPE(t_datetime), POINTER             :: previous
 
 !     TYPE(timedelta),  POINTER :: dt_mtime
@@ -1040,7 +1027,7 @@ CONTAINS
 !   FUNCTION get_time_next(current, dt) RESULT(next)
 
 !     TYPE(t_datetime), POINTER, INTENT(in) :: current
-!     REAL(wp),                  INTENT(in) :: dt
+!     REAL(lp),                  INTENT(in) :: dt
 !     TYPE(t_datetime), POINTER             :: next
 
 !     TYPE(timedelta),  POINTER :: dt_mtime
@@ -1069,8 +1056,8 @@ CONTAINS
 
     ! TYPE(t_datetime), POINTER, INTENT(in) :: current
     ! quincy
-    REAL(wp),                  INTENT(in) :: current
-    REAL(wp),                  INTENT(in) :: dt
+    REAL(lp),                  INTENT(in) :: current
+    REAL(lp),                  INTENT(in) :: dt
     INTEGER,                   INTENT(in) :: model_id
     LOGICAL                               :: ltrig_rad_m1
 
@@ -1141,7 +1128,7 @@ CONTAINS
     is_time_experiment_start = l_is_time_experiment_start
 
     ! ! take care of possibe IAU-Timeshift
-    ! IF (TRIM(get_my_process_name()) == 'atm' .AND. timeshift%dt_shift < 0._wp) THEN
+    ! IF (TRIM(get_my_process_name()) == 'atm' .AND. timeshift%dt_shift < 0._lp) THEN
     !   is_time_experiment_start = current == time_config%tc_exp_startdate + timeshift%mtime_shift
     ! ELSE
     !   is_time_experiment_start = current == time_config%tc_exp_startdate
@@ -1243,9 +1230,9 @@ CONTAINS
   !
   ! Function returns the length of a day in seconds
   !
-  REAL(wp) FUNCTION get_day_length()
+  REAL(lp) FUNCTION get_day_length()
 
-    ! get_day_length = REAL(no_of_sec_in_a_day,wp)
+    ! get_day_length = REAL(no_of_sec_in_a_day,lp)
     ! quincy
     get_day_length = one_day
 
@@ -1256,20 +1243,20 @@ CONTAINS
 !   ! Function returns the day of the year for a given date.
 !   ! The seconds in the day are given as fraction of the day.
 !   !
-!   REAL(wp) FUNCTION get_year_day(date)
+!   REAL(lp) FUNCTION get_year_day(date)
 
 !     ! t_datetime points to mtimes datetime
 !     TYPE(t_datetime), POINTER, INTENT(in)  :: date
 
-!     get_year_day = REAL(getDayOfYearFromDateTime(date), wp) &
-!          &        +REAL(getNoOfSecondsElapsedInDayDateTime(date),wp) &
-!          &        /REAL(no_of_sec_in_a_day,wp)
+!     get_year_day = REAL(getDayOfYearFromDateTime(date), lp) &
+!          &        +REAL(getNoOfSecondsElapsedInDayDateTime(date),lp) &
+!          &        /REAL(no_of_sec_in_a_day,lp)
 
 !   END FUNCTION get_year_day
 
 !   SUBROUTINE  get_time_interpolation_weights(w1, w2, n1, n2)
 
-!     REAL(wp), INTENT(out) :: w1, w2
+!     REAL(lp), INTENT(out) :: w1, w2
 !     INTEGER, INTENT(out)  :: n1, n2
 
 !     CHARACTER(len=*), PARAMETER :: routine = modname//':get_time_interpolation_weights'
@@ -1287,10 +1274,10 @@ CONTAINS
 
 !   END SUBROUTINE get_time_interpolation_weights
 
-  REAL(wp) FUNCTION get_asselin_coef()
+  REAL(lp) FUNCTION get_asselin_coef()
     CHARACTER(len=*), PARAMETER :: routine = modname//':get_asselin_coef'
 
-    get_asselin_coef = 0._wp
+    get_asselin_coef = 0._lp
 
   END FUNCTION get_asselin_coef
 
@@ -1301,7 +1288,7 @@ END MODULE mo_jsb_time_iface
 !
 MODULE mo_jsb_io_netcdf_iface
 
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   USE mo_exception,          ONLY: finish, message
   USE mo_io_units,           ONLY: filename_max
   USE mo_jsb_domain_iface,   ONLY: t_patch
@@ -1412,8 +1399,8 @@ CONTAINS
 
   !   CLASS(t_input_file), INTENT(inout) :: input_file
   !   CHARACTER(LEN=*),   INTENT(in)     :: variable_name
-  !   REAL(wp), TARGET, OPTIONAL         :: fill_array(:)
-  !   REAL(wp), POINTER                  :: netcdf_read_real_1d(:)
+  !   REAL(lp), TARGET, OPTIONAL         :: fill_array(:)
+  !   REAL(lp), POINTER                  :: netcdf_read_real_1d(:)
 
   !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_1d'
 
@@ -1433,8 +1420,8 @@ CONTAINS
 
     CLASS(t_input_file), INTENT(inout) :: input_file
     CHARACTER(LEN=*),   INTENT(in)    :: variable_name
-    REAL(wp), TARGET, OPTIONAL        :: fill_array(:,:)
-    REAL(wp), POINTER                 :: netcdf_read_real_2d(:,:)
+    REAL(lp), TARGET, OPTIONAL        :: fill_array(:,:)
+    REAL(lp), POINTER                 :: netcdf_read_real_2d(:,:)
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d'
 
@@ -1455,9 +1442,9 @@ CONTAINS
 
   !   CLASS(t_input_file), INTENT(inout) :: input_file
   !   CHARACTER(LEN=*),   INTENT(in)    :: variable_name
-  !   REAL(wp), TARGET, OPTIONAL        :: fill_array(:,:,:)
+  !   REAL(lp), TARGET, OPTIONAL        :: fill_array(:,:,:)
   !   INTEGER, OPTIONAL,  INTENT(in)    :: start_time_step, end_time_step
-  !   REAL(wp), POINTER                 :: netcdf_read_real_2d_time(:,:,:)
+  !   REAL(lp), POINTER                 :: netcdf_read_real_2d_time(:,:,:)
 
   !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d_time'
 
@@ -1471,8 +1458,8 @@ CONTAINS
 
   !   CLASS(t_input_file), INTENT(inout) :: input_file
   !   CHARACTER(LEN=*),   INTENT(in)    :: variable_name
-  !   REAL(wp), TARGET, OPTIONAL        :: fill_array(:,:)
-  !   REAL(wp), POINTER                 :: netcdf_read_real_2d_1lev_1time(:,:)
+  !   REAL(lp), TARGET, OPTIONAL        :: fill_array(:,:)
+  !   REAL(lp), POINTER                 :: netcdf_read_real_2d_1lev_1time(:,:)
 
   !   CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d_1lev_1time'
 
@@ -1486,10 +1473,10 @@ CONTAINS
 
     CLASS(t_input_file),         INTENT(inout) :: input_file
     CHARACTER(LEN=*),           INTENT(in)    :: variable_name
-    REAL(wp), TARGET, OPTIONAL                :: fill_array(:,:,:)
+    REAL(lp), TARGET, OPTIONAL                :: fill_array(:,:,:)
     INTEGER, OPTIONAL,          INTENT(in)    :: start_extdim, end_extdim
     CHARACTER(LEN=*), OPTIONAL, INTENT(in)    :: extdim_name
-    REAL(wp), POINTER                         :: netcdf_read_real_2d_extdim(:,:,:)
+    REAL(lp), POINTER                         :: netcdf_read_real_2d_extdim(:,:,:)
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':netcdf_read_real_2d_extdim'
 
@@ -1605,11 +1592,11 @@ END MODULE mo_jsb_io_netcdf_iface
 !> - Provides GPU-accelerated thermodynamic calculations
 !> - Ensures consistency between land and atmosphere thermodynamic calculations
 !>
-!> Note for `sat_pres_mixed`: If the input temperature is outside the valid range, the function returns -1.0_wp.
+!> Note for `sat_pres_mixed`: If the input temperature is outside the valid range, the function returns -1.0_lp.
 !>
 MODULE mo_jsb_thermo_iface
 
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   USE mo_physical_constants, ONLY: tmelt, rdv
 
   USE mo_aes_thermo, ONLY:                        &
@@ -1729,8 +1716,8 @@ ELEMENTAL &
 #endif
   FUNCTION sat_pres_water(temp) RESULT(esat)
 
-    REAL(wp), INTENT(IN) :: temp ! Temperature [K]
-    REAL(wp) :: esat             ! Saturation vapor pressure over water [Pa]
+    REAL(lp), INTENT(IN) :: temp ! Temperature [K]
+    REAL(lp) :: esat             ! Saturation vapor pressure over water [Pa]
 
     !$ACC ROUTINE SEQ
 
@@ -1747,8 +1734,8 @@ ELEMENTAL &
 #endif
   FUNCTION sat_pres_ice(temp) RESULT(esat)
 
-    REAL(wp), INTENT(IN) :: temp !< Temperature [K]
-    REAL(wp) :: esat             !< Saturation vapor pressure over ice [Pa]
+    REAL(lp), INTENT(IN) :: temp !< Temperature [K]
+    REAL(lp) :: esat             !< Saturation vapor pressure over ice [Pa]
 
     !$ACC ROUTINE SEQ
 
@@ -1765,29 +1752,29 @@ ELEMENTAL &
 #endif
   FUNCTION sat_pres_mixed(temp) RESULT(esat)
 
-    REAL(wp), INTENT(IN) :: temp !< Temperature [K]
-    REAL(wp) :: esat             !< Saturation vapor pressure over water/ice [Pa]
+    REAL(lp), INTENT(IN) :: temp !< Temperature [K]
+    REAL(lp) :: esat             !< Saturation vapor pressure over water/ice [Pa]
 
     ! INTEGER :: it
 
     !$ACC ROUTINE SEQ
 
     ! IF (l_aes_convect_tables) THEN
-    !   it = NINT(temp * 1000._wp)
+    !   it = NINT(temp * 1000._lp)
     !   ! NOTE convection tables work within [50,400] Kelvin
 
     !   IF (it >= jptlucu1 .AND. it <= jptlucu2) THEN
     !     esat = tlucua(it) / rdv
     !   ELSE
-    !     esat = -1.0_wp ! Return a clearly invalid value
+    !     esat = -1.0_lp ! Return a clearly invalid value
     !   END IF
     ! ELSE
-      IF (temp >= tmelt .AND. temp <= 400._wp) THEN
+      IF (temp >= tmelt .AND. temp <= 400._lp) THEN
         esat = sat_pres_water(temp)
-      ELSE IF (temp < tmelt .AND. temp >= 50._wp) THEN
+      ELSE IF (temp < tmelt .AND. temp >= 50._lp) THEN
         esat = sat_pres_ice(temp)
       ELSE
-        esat = -1.0_wp ! Return a clearly invalid value
+        esat = -1.0_lp ! Return a clearly invalid value
       END IF
     ! END IF
 
@@ -1798,9 +1785,9 @@ ELEMENTAL &
 #endif
   FUNCTION specific_humidity(pvapor, ptotal)
 
-    REAL (wp), INTENT(IN)  :: ptotal            !< Total pressure [Pa]
-    REAL (wp), INTENT(IN)  :: pvapor            !< Vapor pressure [Pa]
-    REAL (wp)              :: specific_humidity !< Specific humidity [kg/kg]
+    REAL (lp), INTENT(IN)  :: ptotal            !< Total pressure [Pa]
+    REAL (lp), INTENT(IN)  :: pvapor            !< Vapor pressure [Pa]
+    REAL (lp)              :: specific_humidity !< Specific humidity [kg/kg]
 
     !$ACC ROUTINE SEQ
 

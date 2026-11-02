@@ -18,7 +18,7 @@
 MODULE mo_phyd_memory_class
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                   ONLY: wp
+  USE mo_kind,                   ONLY: lp
   USE mo_exception,              ONLY: message, message_text, finish
   USE mo_util,                   ONLY: One_of
   USE mo_jsb_memory_class,       ONLY: t_jsb_memory
@@ -93,7 +93,7 @@ CONTAINS
         & output_level = BASIC, &
         & loutput = .FALSE., &
         & lrestart = .TRUE., &
-        & initval_r = 0.0_wp)
+        & initval_r = 0.0_lp)
         
       CALL mem%Add_var('psi_stem', mem%psi_stem, &
         & hgrid, surface, &
@@ -104,7 +104,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .TRUE., &
-        & initval_r = 0.0_wp)
+        & initval_r = 0.0_lp)
         
       CALL mem%Add_var('beta_leaf', mem%beta_leaf, &
         & hgrid, surface, &
@@ -115,7 +115,7 @@ CONTAINS
         & output_level = FULL, &
         & loutput = .FALSE., &
         & lrestart = .TRUE., &
-        & initval_r = 0.0_wp)        
+        & initval_r = 0.0_lp)        
     END IF
   END SUBROUTINE Init_phyd_memory
 

@@ -20,7 +20,7 @@
 !           Journal of the Atmospheric Sciences, 64(2), 645-655. https://doi.org/10.1175/JAS3856.1
 
 MODULE mo_turb_vdiff_params
-  USE mo_kind, ONLY: wp
+  USE mo_kind, ONLY: lp
 
   IMPLICIT NONE
   PUBLIC
@@ -29,29 +29,29 @@ MODULE mo_turb_vdiff_params
   INTEGER, PARAMETER :: VDIFF_TURB_3DSMAGORINSKY = 2 !< 3D Smagorinsky scheme, use in t_vdiff_config%turb
 
   ! Parameters
-  REAL(wp),PARAMETER :: ckap    = 0.4_wp       !< karman constant.
-  REAL(wp),PARAMETER :: cchar   = 0.018_wp     !< charnock constant.
-  REAL(wp),PARAMETER :: cb      = 5._wp        !< stability parameter near neutrality.
-  REAL(wp),PARAMETER :: cc      = 5._wp        !< stability parameter for unstable cases.
+  REAL(lp),PARAMETER :: ckap    = 0.4_lp       !< karman constant.
+  REAL(lp),PARAMETER :: cchar   = 0.018_lp     !< charnock constant.
+  REAL(lp),PARAMETER :: cb      = 5._lp        !< stability parameter near neutrality.
+  REAL(lp),PARAMETER :: cc      = 5._lp        !< stability parameter for unstable cases.
 
-  REAL(wp),PARAMETER :: eps_shear = 1.e-5_wp   !< zepshr in sbr. vdiff of ECHAM6
-  REAL(wp),PARAMETER :: eps_corio = 5.e-5_wp   !< zepcor in sbr. vdiff of ECHAM6
-  REAL(wp),PARAMETER :: totte_min = 1.e-10_wp  !< minimum total turbulent energy
+  REAL(lp),PARAMETER :: eps_shear = 1.e-5_lp   !< zepshr in sbr. vdiff of ECHAM6
+  REAL(lp),PARAMETER :: eps_corio = 5.e-5_lp   !< zepcor in sbr. vdiff of ECHAM6
+  REAL(lp),PARAMETER :: totte_min = 1.e-10_lp  !< minimum total turbulent energy
 
-  REAL(wp),PARAMETER :: chneu  = 0.3_wp
+  REAL(lp),PARAMETER :: chneu  = 0.3_lp
 
-  REAL(wp),PARAMETER :: cons5  = 3._wp*cb*cc
+  REAL(lp),PARAMETER :: cons5  = 3._lp*cb*cc
 
-  REAL(wp),PARAMETER :: shn = 2.22_wp*0.22_wp*SQRT(2._wp)
-  REAL(wp),PARAMETER :: smn = shn*1.24_wp*2.37_wp/3.69_wp
-  REAL(wp),PARAMETER :: da1 = 1._wp/smn**3
+  REAL(lp),PARAMETER :: shn = 2.22_lp*0.22_lp*SQRT(2._lp)
+  REAL(lp),PARAMETER :: smn = shn*1.24_lp*2.37_lp/3.69_lp
+  REAL(lp),PARAMETER :: da1 = 1._lp/smn**3
 
   ! Parameters related to time step weighting in *rhs* of *vdiff* and *scv*
 
-  REAL(wp),PARAMETER :: cvdifts = 1.5_wp
-  REAL(wp),PARAMETER :: tpfac1  = cvdifts
-  REAL(wp),PARAMETER :: tpfac2  = 1._wp / tpfac1
-  REAL(wp),PARAMETER :: tpfac3  = 1._wp - tpfac2
-  REAL(wp),PARAMETER :: tpfac4  = 1._wp + tpfac3
+  REAL(lp),PARAMETER :: cvdifts = 1.5_lp
+  REAL(lp),PARAMETER :: tpfac1  = cvdifts
+  REAL(lp),PARAMETER :: tpfac2  = 1._lp / tpfac1
+  REAL(lp),PARAMETER :: tpfac3  = 1._lp - tpfac2
+  REAL(lp),PARAMETER :: tpfac4  = 1._lp + tpfac3
 
 END MODULE mo_turb_vdiff_params

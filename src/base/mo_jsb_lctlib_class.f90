@@ -28,7 +28,7 @@ MODULE mo_jsb_lctlib_class
   !          Christian H. Reick, 8/2003
   !
 !  USE mo_jsb_parallel, ONLY: my_process_is_stdio, my_process_is_mpi_parallel, p_io, p_bcast
-  USE mo_kind,         ONLY: wp
+  USE mo_kind,         ONLY: lp
   USE mo_exception,    ONLY: message_text, finish
   USE mo_util,         ONLY: int2string
 
@@ -58,30 +58,30 @@ MODULE mo_jsb_lctlib_class
     INTEGER  :: growthform 
     INTEGER  :: ps_pathway
     INTEGER  :: phenology_type
-    REAL(wp) :: lai_max
-    REAL(wp) :: vegetation_height
-    REAL(wp) :: sla
-    REAL(wp) :: sigma_vis 
-    REAL(wp) :: sigma_nir 
-    REAL(wp) :: omega_clumping 
-    REAL(wp) :: crown_shape_factor 
-    REAL(wp) :: cn_leaf             
-    REAL(wp) :: cn_leaf_min
-    REAL(wp) :: cn_leaf_max
-    REAL(wp) :: np_leaf  
-    REAL(wp) :: np_leaf_min
-    REAL(wp) :: np_leaf_max
-    REAL(wp) :: k0_fn_struc
-    REAL(wp) :: fn_oth_min
-    REAL(wp) :: t_jmax_opt
-    REAL(wp) :: t_jmax_omega
-    REAL(wp) :: g0
-    REAL(wp) :: g1_medlyn
-    REAL(wp) :: g1_bberry
-    REAL(wp) :: gmin
+    REAL(lp) :: lai_max
+    REAL(lp) :: vegetation_height
+    REAL(lp) :: sla
+    REAL(lp) :: sigma_vis 
+    REAL(lp) :: sigma_nir 
+    REAL(lp) :: omega_clumping 
+    REAL(lp) :: crown_shape_factor 
+    REAL(lp) :: cn_leaf             
+    REAL(lp) :: cn_leaf_min
+    REAL(lp) :: cn_leaf_max
+    REAL(lp) :: np_leaf  
+    REAL(lp) :: np_leaf_min
+    REAL(lp) :: np_leaf_max
+    REAL(lp) :: k0_fn_struc
+    REAL(lp) :: fn_oth_min
+    REAL(lp) :: t_jmax_opt
+    REAL(lp) :: t_jmax_omega
+    REAL(lp) :: g0
+    REAL(lp) :: g1_medlyn
+    REAL(lp) :: g1_bberry
+    REAL(lp) :: gmin
 
     ! turnover times
-    REAL(wp) :: tau_leaf          , &
+    REAL(lp) :: tau_leaf          , &
                 tau_fine_root     , &
                 tau_coarse_root   , &
                 tau_branch        , &
@@ -92,20 +92,20 @@ MODULE mo_jsb_lctlib_class
                 tau_mycorrhiza
 
     ! N uptake parameters
-    REAL(wp) :: vmax_uptake_n     , &
+    REAL(lp) :: vmax_uptake_n     , &
                 vmax_uptake_p     , &
                 bnf_base          , &
                 vmax_symb_bnf     , &
                 km_symb_bnf
 
     ! Vegetation dynamics parameters
-    REAL(wp) :: lambda_est_light  , &
+    REAL(lp) :: lambda_est_light  , &
                 k_est_light       , &
                 seed_size         , &
                 k1_mort_greff
 
     ! Phenology parameters
-    REAL(wp) :: beta_soil_flush       , &
+    REAL(lp) :: beta_soil_flush       , &
                 beta_soil_senescence  , &
                 gdd_req_max           , &
                 k_gdd_dormance        , &
@@ -113,7 +113,7 @@ MODULE mo_jsb_lctlib_class
                 min_leaf_age
 
     ! Allocation paramters
-    REAL(wp) :: frac_sapwood_branch   , &
+    REAL(lp) :: frac_sapwood_branch   , &
                 wood_density          , &
                 k_latosa              , &
                 k_crtos               , &
@@ -128,13 +128,13 @@ MODULE mo_jsb_lctlib_class
                 fstore_target
 
     ! Soil
-    REAL(wp) :: &
+    REAL(lp) :: &
       & k_root_dist                   , &
       & k_som_fast_init               , &
       & k_som_slow_init
 
     ! copy of jsbach param
-    REAL(wp) :: &
+    REAL(lp) :: &
       & AlbedoLitterVIS               , &
       & AlbedoLitterNIR               , &
       & VegRoughness                  , &
@@ -842,50 +842,50 @@ CONTAINS
 
        ! sla
          DO i = j,nlct
-             lctlib(i)%sla = 1._wp / carbon_per_dryweight_leaf / 1000.0_wp * molar_mass_C * lctlib(i)%sla
+             lctlib(i)%sla = 1._lp / carbon_per_dryweight_leaf / 1000.0_lp * molar_mass_C * lctlib(i)%sla
          END DO
        ! cn_leaf
          DO i = j,nlct
-           lctlib(i)%cn_leaf = carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf
+           lctlib(i)%cn_leaf = carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf
          END DO
        ! cn_leaf_min
          DO i = j,nlct
-           lctlib(i)%cn_leaf_min = carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf_min
+           lctlib(i)%cn_leaf_min = carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf_min
          END DO
        ! cn_leaf_max
          DO i = j,nlct
-           lctlib(i)%cn_leaf_max = carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf_max
+           lctlib(i)%cn_leaf_max = carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / lctlib(i)%cn_leaf_max
          END DO
        ! np_leaf
          DO i = j,nlct
-           lctlib(i)%np_leaf = carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
+           lctlib(i)%np_leaf = carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
                                 lctlib(i)%np_leaf
          END DO
        ! np_leaf_min
          DO i = j,nlct
-           lctlib(i)%np_leaf_min = carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
+           lctlib(i)%np_leaf_min = carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
                                    lctlib(i)%np_leaf_min
          END DO
        ! np_leaf_max
          DO i = j,nlct
-           lctlib(i)%np_leaf_max = carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
+           lctlib(i)%np_leaf_max = carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib(i)%cn_leaf / &
                                    lctlib(i)%np_leaf_max
          END DO
        ! fn_oth_min
          DO i = j,nlct
-           lctlib(i)%fn_oth_min = lctlib(i)%k0_fn_struc - 5.0_wp/molar_mass_n * 0.5_wp * 1.e3_wp * 71.4_wp * molar_mass_N / 1.e6_wp
+           lctlib(i)%fn_oth_min = lctlib(i)%k0_fn_struc - 5.0_lp/molar_mass_n * 0.5_lp * 1.e3_lp * 71.4_lp * molar_mass_N / 1.e6_lp
          END DO
        ! tau_leaf
          DO i = j,nlct
-           lctlib(i)%tau_leaf = lctlib(i)%tau_leaf / 12.0_wp
+           lctlib(i)%tau_leaf = lctlib(i)%tau_leaf / 12.0_lp
          END DO
        ! bnf_base
          DO i = j,nlct
-          lctlib(i)%bnf_base = lctlib(i)%bnf_base / molar_mass_N / one_day / one_year * 1.e6_wp
+          lctlib(i)%bnf_base = lctlib(i)%bnf_base / molar_mass_N / one_day / one_year * 1.e6_lp
          END DO
        ! vmax_symb_bnf
          DO i = j,nlct
-          lctlib(i)%vmax_symb_bnf = lctlib(i)%vmax_symb_bnf / (molar_mass_N / molar_mass_C) / one_day / one_year * 1.e6_wp
+          lctlib(i)%vmax_symb_bnf = lctlib(i)%vmax_symb_bnf / (molar_mass_N / molar_mass_C) / one_day / one_year * 1.e6_lp
          END DO
        ! km_symb_bnf
          DO i = j,nlct
@@ -897,25 +897,25 @@ CONTAINS
          END DO
        ! wood_density
          DO i = j,nlct
-           lctlib(i)%wood_density = lctlib(i)%wood_density * 1.e6_wp/ molar_mass_C
+           lctlib(i)%wood_density = lctlib(i)%wood_density * 1.e6_lp/ molar_mass_C
          END DO
        ! k_root
          DO i = j,nlct
-           lctlib(i)%k_root = lctlib(i)%k_root * molar_mass_C * 1.e-10_wp
+           lctlib(i)%k_root = lctlib(i)%k_root * molar_mass_C * 1.e-10_lp
          END DO
        ! k_sapwood
          DO i = j,nlct
-           lctlib(i)%k_sapwood = 1.e-3_wp * lctlib(i)%k_sapwood
+           lctlib(i)%k_sapwood = 1.e-3_lp * lctlib(i)%k_sapwood
          END DO
         ! k_rtos
          DO i = j,nlct
            SELECT CASE (lctlib(i)%growthform)
              CASE (itree)
-               lctlib(i)%k_rtos = 1.75_wp * (lctlib(4)%sla * lctlib(i)%wood_density) / lctlib(i)%k_latosa
+               lctlib(i)%k_rtos = 1.75_lp * (lctlib(4)%sla * lctlib(i)%wood_density) / lctlib(i)%k_latosa
                !lctlib(i)%k_rtos = SQRT(lctlib(i)%k_root / lctlib(i)%k_sapwood * &
                !     lctlib(i)%tau_sap_wood / lctlib(i)%tau_fine_root * lctlib(i)%wood_density)
              CASE (igrass,icrop)
-               lctlib(i)%k_rtos = 0.5_wp / sm2lm_grass
+               lctlib(i)%k_rtos = 0.5_lp / sm2lm_grass
            END SELECT
          END DO
          ! c0_allom
@@ -925,7 +925,7 @@ CONTAINS
                                        lctlib(i)%tau_sap_wood / lctlib(i)%tau_fine_root * lctlib(i)%wood_density) * &
                                   lctlib(i)%tau_fine_root / lctlib(i)%tau_sap_wood
            ELSE
-             lctlib(i)%c0_allom = 0.0_wp
+             lctlib(i)%c0_allom = 0.0_lp
            END IF
          END DO
        ! derive C4flag from ps_pathway

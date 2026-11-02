@@ -209,7 +209,7 @@ MODULE mo_model_domain
 
     ! ! orientation of vectors normal to cell edges:
     ! ! index1=nproma, index2=1,nblks_c, index3=1,3
-    ! REAL(wp), ALLOCATABLE :: edge_orientation(:,:,:)
+    ! REAL(lp), ALLOCATABLE :: edge_orientation(:,:,:)
 
     ! ! cell geometry
 
@@ -220,11 +220,11 @@ MODULE mo_model_domain
 
     ! ! area of triangle
     ! ! index1=nproma, index2=1,nblks_c
-    ! REAL(wp), POINTER :: area(:,:) => NULL()
+    ! REAL(lp), POINTER :: area(:,:) => NULL()
 
     ! ! Coriolis parameter at cell centers
     ! ! index1=1,nproma, index2=1,nblks_c
-    ! REAL(wp), ALLOCATABLE :: f_c(:,:)
+    ! REAL(lp), ALLOCATABLE :: f_c(:,:)
 
     ! !----------------------------------
     ! ! cell geometry auxiliary variables
@@ -270,7 +270,7 @@ MODULE mo_model_domain
     ! ! for storing the corresponding variable from nh_metrics.
     ! ! It is not allocated/deallocated with the regular patch (de)allocation routines
     ! ! nor does it need to be dumped/restored or subdivided in patch subdivision.
-    ! REAL(wp), ALLOCATABLE :: ddqz_z_full(:,:,:)
+    ! REAL(lp), ALLOCATABLE :: ddqz_z_full(:,:,:)
 
     ! ! define basic subsets
     ! TYPE(t_subset_range) :: ALL          ! these are the all valid entities, including all valid halos
@@ -337,7 +337,7 @@ MODULE mo_model_domain
   !   ! from cell c1 to cell c2 (c2-c1) goes outside the sphere
   !   ! =-1 if vector product ...       goes inside  the sphere
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: tangent_orientation(:,:)
+  !   REAL(lp), ALLOCATABLE :: tangent_orientation(:,:)
 
   !   ! line indices of the  of the quadrilateral formed by two adjacent cells:
   !   ! index1=1,nproma, index2=1,nblks_e, index3=1,4
@@ -348,7 +348,7 @@ MODULE mo_model_domain
 
   !   ! orientation of vectors normal to quad cell edges:
   !   ! index1=nproma, index2=1,nblks_e, index3=1,4
-  !   REAL(wp), ALLOCATABLE :: quad_orientation(:,:,:)
+  !   REAL(lp), ALLOCATABLE :: quad_orientation(:,:,:)
 
   !   ! line indices of cells which share the two vertices
   !   ! of a given edge. These cells are subdivided into two classes:
@@ -416,39 +416,39 @@ MODULE mo_model_domain
 
   !   ! length of triangle edge
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), POINTER :: primal_edge_length(:,:) => NULL()
+  !   REAL(lp), POINTER :: primal_edge_length(:,:) => NULL()
 
   !   ! inverse length of triangle edge
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: inv_primal_edge_length(:,:)
+  !   REAL(lp), ALLOCATABLE :: inv_primal_edge_length(:,:)
 
   !   ! length of hexagon/pentagon edge
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: dual_edge_length(:,:)
+  !   REAL(lp), ALLOCATABLE :: dual_edge_length(:,:)
 
   !   ! inverse length of hexagon/pentagon edge
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: inv_dual_edge_length(:,:)
+  !   REAL(lp), ALLOCATABLE :: inv_dual_edge_length(:,:)
 
   !   ! length of edge midpoint to vertex
   !   ! index=1,nproma, index2=1,nblks_e,2
-  !   REAL(wp), ALLOCATABLE :: edge_vert_length(:,:,:)
+  !   REAL(lp), ALLOCATABLE :: edge_vert_length(:,:,:)
 
   !   ! length of edge midpoint to cell center
   !   ! index=1,nproma, index2=1,nblks_e,2
-  !   REAL(wp), ALLOCATABLE :: edge_cell_length(:,:,:)
+  !   REAL(lp), ALLOCATABLE :: edge_cell_length(:,:,:)
 
   !   ! inverse distance between outer vertices of adjacent cells
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: inv_vert_vert_length(:,:)
+  !   REAL(lp), ALLOCATABLE :: inv_vert_vert_length(:,:)
 
   !   ! area of the quadrilateral given by the adjacent vertices and centers
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: area_edge(:,:)
+  !   REAL(lp), ALLOCATABLE :: area_edge(:,:)
 
   !   ! area of the quadrilateral formed by two cells adjacent to the edge
   !   ! index=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: quad_area(:,:)
+  !   REAL(lp), ALLOCATABLE :: quad_area(:,:)
 
   !   ! edge geometry auxiliary variables
   !   TYPE(t_cartesian_coordinates), POINTER ::  &
@@ -459,16 +459,16 @@ MODULE mo_model_domain
 
   !   ! Coriolis parameter at cell edges
   !   ! index1=1,nproma, index2=1,nblks_e
-  !   REAL(wp), ALLOCATABLE :: f_e(:,:)
+  !   REAL(lp), ALLOCATABLE :: f_e(:,:)
 
   !   ! components of horizontal Coriolis parameter (vector)
   !   ! index1=1,nproma, index2=1,nblks_e
   !   ! NOTE: The horizontal Coriolis parameter components 
   !   ! are only available on edges!
   !   ! normal component 
-  !   REAL(wp), ALLOCATABLE :: fn_e(:,:)
+  !   REAL(lp), ALLOCATABLE :: fn_e(:,:)
   !   ! tangential component
-  !   REAL(wp), ALLOCATABLE :: ft_e(:,:)
+  !   REAL(lp), ALLOCATABLE :: ft_e(:,:)
 
   !   ! refinement control flag
   !   ! index1=1,nproma, index2=1,nblks_e
@@ -548,7 +548,7 @@ MODULE mo_model_domain
 
   !   ! (xx)
   !   ! index1=1,nproma, index2=1,nblks_v, index3=1,6
-  !   REAL(wp), ALLOCATABLE :: edge_orientation(:,:,:)
+  !   REAL(lp), ALLOCATABLE :: edge_orientation(:,:,:)
 
   !   ! number of edges connected to vertex
   !   ! index1=1,nproma, index2=1,nblks_v
@@ -560,11 +560,11 @@ MODULE mo_model_domain
 
   !   ! area of hexagon/pentagon of which vertex is center:
   !   ! index1=1,nproma, index2=1,nblks_v
-  !   REAL(wp), POINTER :: dual_area(:,:) => NULL()
+  !   REAL(lp), POINTER :: dual_area(:,:) => NULL()
 
   !   ! Coriolis parameter at cell vertices
   !   ! index1=1,nproma, index2=1,nblks_v
-  !   REAL(wp), ALLOCATABLE :: f_v(:,:)
+  !   REAL(lp), ALLOCATABLE :: f_v(:,:)
 
   !   ! vertex geometry auxiliary variables
   !   TYPE(t_cartesian_coordinates), POINTER ::  &
@@ -894,29 +894,29 @@ TYPE t_patch
 !     !!             surfaces. These data are provided by the user, all other
 !     !!             vertical information is calculated from this array of
 !     !!             thicknesses.  Dimension: n_zlev
-!     REAL(wp), ALLOCATABLE :: del_zlev_m(:)
+!     REAL(lp), ALLOCATABLE :: del_zlev_m(:)
 
 !     !! the inverse of the above
-!     REAL(wp), ALLOCATABLE :: inv_del_zlev_m(:)
+!     REAL(lp), ALLOCATABLE :: inv_del_zlev_m(:)
 
 !     !! zlev_m    : position of the vertical cell centers, i.e. below zero surface;
 !     !!             Numbering starts from surface and increases downwards to bottom.
 !     !!             Dimension: n_zlev
 !     !!             At these surfaces the horizontal velocities, vorticity, divergence
 !     !!             and scalar variables are evaluated.
-!     REAL(wp), ALLOCATABLE :: zlev_m(:)
+!     REAL(lp), ALLOCATABLE :: zlev_m(:)
 
 !     !! zlev_i    : vertical position of the UPPER BORDER of the vertical cell
 !     !!             i.e. the position of the top of elemental prisms.
 !     !!             Position of first surface is 0.
 !     !!             Dimension: n_zlvp = n_zlev + 1
 !     !!             The vertical velocities are evaluated at such surfaces.
-!     REAL(wp), ALLOCATABLE :: zlev_i(:)
+!     REAL(lp), ALLOCATABLE :: zlev_i(:)
 
 !     !! del_zlev_i: distance between two z-coordinate surfaces. The first is
 !     !!             the distance from the ocean surface = zlev_m(1)
 !     !!             Dimension: n_zlev
-!     REAL(wp), ALLOCATABLE :: del_zlev_i(:)
+!     REAL(lp), ALLOCATABLE :: del_zlev_i(:)
 
 !     ! To simplify the acess to the required information within these loops
 !     ! we store an cell and edge based version of the deepest ocean layer
@@ -929,10 +929,10 @@ TYPE t_patch
 !     INTEGER, POINTER :: dolic_e(:,:)  => NULL()   ! index1=1,nproma, index2=1,nblks_e
 !     INTEGER, POINTER :: vertex_bottomLevel(:,:) => NULL()
 
-!     REAL(wp), POINTER :: ocean_area   (:) => NULL()  ! global ocean area for each vertical level
-!     REAL(wp), POINTER :: ocean_volume (:) => NULL()  ! global ocean volume for each vertical level
+!     REAL(lp), POINTER :: ocean_area   (:) => NULL()  ! global ocean area for each vertical level
+!     REAL(lp), POINTER :: ocean_volume (:) => NULL()  ! global ocean volume for each vertical level
 
-!     REAL(wp), POINTER ::                &
+!     REAL(lp), POINTER ::                &
 !       &  prism_thick_c(:,:,:),          & ! individual prism thickness at cells. Unit [m].
 !                                           ! This array includes the free surface. dimension: (nproma, n_zlev, nblks_c)
 !       &  prism_volume(:,:,:),           & ! individual prism volume (cells). Unit [m^3].
@@ -956,12 +956,12 @@ TYPE t_patch
 !       &  depth_CellMiddle(:,:,:),      & ! depth of the middle of the prism, update according to the current h
 !       &  depth_CellInterface(:,:,:)    & ! depths at the interface (size is levels + 1)
 !       &  => NULL()
-!     REAL(wp), POINTER :: invConstantPrismThickness(:,:,:) => NULL()
+!     REAL(lp), POINTER :: invConstantPrismThickness(:,:,:) => NULL()
 !     !! the vertical distance between the prism centers, dim = n_zlev+1
 !     !! constantPrismCenters_zDistance(2) = vertical distance between prisms at 1 and 2 levels
-!     REAL(wp), POINTER :: constantPrismCenters_Zdistance(:,:,:) => NULL()
+!     REAL(lp), POINTER :: constantPrismCenters_Zdistance(:,:,:) => NULL()
 !     !!the inverse of the above
-!     REAL(wp), POINTER :: constantPrismCenters_invZdistance(:,:,:) => NULL()
+!     REAL(lp), POINTER :: constantPrismCenters_invZdistance(:,:,:) => NULL()
     
 !   END TYPE t_patch_vert
 
@@ -991,20 +991,20 @@ TYPE t_patch
 
 !     ! To simply set land points to zero we store additional 3-dim wet points
 !     ! dimensions as in lsm_oce:
-!     REAL(wp), POINTER :: wet_c(:,:,:) => NULL()  ! cells
-!     REAL(wp), POINTER :: wet_e(:,:,:) => NULL()  ! edges
+!     REAL(lp), POINTER :: wet_c(:,:,:) => NULL()  ! cells
+!     REAL(lp), POINTER :: wet_e(:,:,:) => NULL()  ! edges
 !     ! For calculation of global sum and area including lsm the halo must be set to zero:
-!     REAL(wp), POINTER :: wet_halo_zero_c(:,:,:) => NULL()  !  cells
-!     REAL(wp), POINTER :: wet_halo_zero_e(:,:,:) => NULL()  !  edges
+!     REAL(lp), POINTER :: wet_halo_zero_c(:,:,:) => NULL()  !  cells
+!     REAL(lp), POINTER :: wet_halo_zero_e(:,:,:) => NULL()  !  edges
 
 !     ! For diagnosis like stream functions and area calculations we add surface arrays
 !     ! index1=1,nproma, index2=1,nblks_c
 !     INTEGER,  POINTER :: basin_c(:,:) => NULL()  ! basin information Atlantic/Indian/Pacific
 !     INTEGER,  POINTER :: regio_c(:,:) => NULL()  ! area information like tropical Atlantic etc.
-!     REAL(wp), POINTER :: bottom_thick_c(:,:) => NULL()  ! individual bottom prism thickness at cells. Unit [m].
-!     REAL(wp), POINTER :: bottom_thick_e(:,:) => NULL()  ! individual bottom prism thickness at edges. Unit [m].
-!     REAL(wp), POINTER :: column_thick_c(:,:) => NULL()  ! individual column thickness at cells, no elevation. Unit [m].
-!     REAL(wp), POINTER :: column_thick_e(:,:) => NULL()  ! individual column thickness at edges, no elevation. Unit [m].
+!     REAL(lp), POINTER :: bottom_thick_c(:,:) => NULL()  ! individual bottom prism thickness at cells. Unit [m].
+!     REAL(lp), POINTER :: bottom_thick_e(:,:) => NULL()  ! individual bottom prism thickness at edges. Unit [m].
+!     REAL(lp), POINTER :: column_thick_c(:,:) => NULL()  ! individual column thickness at cells, no elevation. Unit [m].
+!     REAL(lp), POINTER :: column_thick_e(:,:) => NULL()  ! individual column thickness at edges, no elevation. Unit [m].
 
 !   END TYPE t_patch_3D
 !   !--------------------------------------------------------------------

@@ -36,9 +36,9 @@
 MODULE mo_thdyn_functions
 
 
-USE mo_kind, ONLY: wp, i4
+USE mo_kind, ONLY: lp, i4
 USE mo_physical_constants, ONLY: r_v   => rv    , & !> gas constant for water vapour
-                               rvd_m_o => vtmpc1 , & !! rv/rd-1._wp
+                               rvd_m_o => vtmpc1 , & !! rv/rd-1._lp
                                  o_m_rdv        , & !! 1 - r_d/r_v
                                  rdv            , & !! r_d / r_v
                                  cvd            , & !!
@@ -75,12 +75,12 @@ USE mo_lookup_tables_constants, ONLY:  &
   INTEGER, PARAMETER :: ipsat = 1    ! (1) Tetens (1930)
                                      ! (2) Murphy-Koop for liq and ice
 
-  REAL (KIND=wp), PARAMETER :: cp_v = 1850._wp ! specific heat of water vapor J
+  REAL (KIND=lp), PARAMETER :: cp_v = 1850._lp ! specific heat of water vapor J
                                                        ! at constant pressure
                                                        ! (Landolt-Bornstein)
-  REAL (KIND=wp), PARAMETER :: ci = 2108.0_wp  ! specific heat of ice
+  REAL (KIND=lp), PARAMETER :: ci = 2108.0_lp  ! specific heat of ice
 
-  real(wp), parameter  ::      &
+  real(lp), parameter  ::      &
        &  c1i_mk = 9.550426,    &  ! coefficients in Murphy and Koop saturation vapor pressure
        &  c2i_mk = 5723.265,    &  ! over ice and over  liquid water
        &  c3i_mk = 3.53068,     &
@@ -101,8 +101,8 @@ CONTAINS
 ELEMENTAL FUNCTION sat_pres_water(temp)
   IMPLICIT NONE
 
-  REAL (KIND=wp)              :: sat_pres_water
-  REAL (KIND=wp), INTENT(IN)  :: temp
+  REAL (KIND=lp)              :: sat_pres_water
+  REAL (KIND=lp), INTENT(IN)  :: temp
 
   !$ACC ROUTINE SEQ
 
@@ -119,8 +119,8 @@ END FUNCTION sat_pres_water
 ELEMENTAL FUNCTION sat_pres_ice(temp)
   IMPLICIT NONE
 
-  REAL (KIND=wp)              :: sat_pres_ice
-  REAL (KIND=wp), INTENT(IN)  :: temp
+  REAL (KIND=lp)              :: sat_pres_ice
+  REAL (KIND=lp), INTENT(IN)  :: temp
 
   !$ACC ROUTINE SEQ
 
@@ -137,8 +137,8 @@ END FUNCTION sat_pres_ice
 ELEMENTAL FUNCTION spec_humi(pvap,pres)
   IMPLICIT NONE
 
-  REAL (KIND=wp)              :: spec_humi
-  REAL (KIND=wp), INTENT(IN)  :: pres,pvap
+  REAL (KIND=lp)              :: spec_humi
+  REAL (KIND=lp), INTENT(IN)  :: pres,pvap
 
   !$ACC ROUTINE SEQ
 
@@ -162,8 +162,8 @@ FUNCTION qsat_rho(temp, rhotot)
     !-------------------------------------------------------------------------------
 
   ! input variables: temperature [K], total density [kg/m^2]:
-  REAL (KIND=wp)             :: qsat_rho
-  REAL (KIND=wp), INTENT(IN) :: temp, rhotot
+  REAL (KIND=lp)             :: qsat_rho
+  REAL (KIND=lp), INTENT(IN) :: temp, rhotot
 
   qsat_rho   = sat_pres_water(temp) / (rhotot * r_v * temp)
 
@@ -189,14 +189,14 @@ FUNCTION dqsatdT_rho(zqsat, temp, rho)
   IMPLICIT NONE
 
   ! input variables: specific saturation humidity [-], temperature [K]:
-  REAL (KIND=wp)            :: dqsatdT_rho
-  REAL (KIND=wp), INTENT(IN):: zqsat, temp, rho
+  REAL (KIND=lp)            :: dqsatdT_rho
+  REAL (KIND=lp), INTENT(IN):: zqsat, temp, rho
 
   ! local variables:
-  REAL(kind=wp) :: beta
+  REAL(kind=lp) :: beta
 
   IF (ipsat == 1) THEN
-    beta        = b234w/(temp-b4w)**2_i4 - 1.0_wp / temp
+    beta        = b234w/(temp-b4w)**2_i4 - 1.0_lp / temp
     dqsatdT_rho = beta * zqsat
   ELSEIF (ipsat == 2) THEN
     beta        = psatw_murphykoop_derivative(temp)
@@ -219,10 +219,10 @@ ELEMENTAL  FUNCTION dqsatdT (zqsat, temp)
   IMPLICIT NONE
 
   ! input variables: specific saturation humidity [-], temperature [K]:
-  REAL (KIND=wp)            :: dqsatdT
-  REAL (KIND=wp), INTENT(IN):: zqsat, temp
+  REAL (KIND=lp)            :: dqsatdT
+  REAL (KIND=lp), INTENT(IN):: zqsat, temp
 
-  dqsatdT = b234w * ( 1.0_wp + rvd_m_o*zqsat ) * zqsat &
+  dqsatdT = b234w * ( 1.0_lp + rvd_m_o*zqsat ) * zqsat &
                              / (temp-b4w)**2
 
 END FUNCTION dqsatdT
@@ -239,11 +239,11 @@ ELEMENTAL  FUNCTION dqsatdT_ice (zqsat, temp)
   IMPLICIT NONE
 
   ! input variables: specific saturation humidity [-], temperature [K]:
-  REAL (KIND=wp)            :: dqsatdT_ice
-  REAL (KIND=wp), INTENT(IN):: zqsat, temp
+  REAL (KIND=lp)            :: dqsatdT_ice
+  REAL (KIND=lp), INTENT(IN):: zqsat, temp
   !$ACC ROUTINE SEQ
 
-  dqsatdT_ice = b234i * ( 1.0_wp + rvd_m_o*zqsat ) * zqsat &
+  dqsatdT_ice = b234i * ( 1.0_lp + rvd_m_o*zqsat ) * zqsat &
                              / (temp-b4i)**2
 
 END FUNCTION dqsatdT_ice
@@ -262,8 +262,8 @@ FUNCTION latent_heat_vaporization(temp)
     !-------------------------------------------------------------------------------
 
   IMPLICIT NONE
-  REAL(KIND=wp)             :: latent_heat_vaporization
-  REAL(KIND=wp), INTENT(IN) :: temp
+  REAL(KIND=lp)             :: latent_heat_vaporization
+  REAL(KIND=lp), INTENT(IN) :: temp
   !$ACC ROUTINE SEQ
 
   latent_heat_vaporization = lwd + (cp_v - cl)*(temp-tmelt) - r_v*temp
@@ -284,8 +284,8 @@ FUNCTION latent_heat_sublimation(temp)
     !-------------------------------------------------------------------------------
 
   IMPLICIT NONE
-  REAL(KIND=wp)             :: latent_heat_sublimation
-  REAL(KIND=wp), INTENT(IN) :: temp
+  REAL(KIND=lp)             :: latent_heat_sublimation
+  REAL(KIND=lp), INTENT(IN) :: temp
   !$ACC ROUTINE SEQ
 
   latent_heat_sublimation = led + (cp_v - ci)*(temp-tmelt) - r_v*temp
@@ -304,8 +304,8 @@ ELEMENTAL FUNCTION latent_heat_melting(temp)
   !$ACC ROUTINE SEQ
 
   IMPLICIT NONE
-  REAL(KIND=wp)             :: latent_heat_melting
-  REAL(KIND=wp), INTENT(IN) :: temp
+  REAL(KIND=lp)             :: latent_heat_melting
+  REAL(KIND=lp), INTENT(IN) :: temp
 
   latent_heat_melting = lwd - led + (ci - cl)*(temp-tmelt)
 
@@ -313,8 +313,8 @@ END FUNCTION latent_heat_melting
 
 ELEMENTAL FUNCTION psatw_murphykoop(tk)
   IMPLICIT NONE
-  REAL(KIND=wp)             :: psatw_murphykoop
-  REAL(KIND=wp), intent(IN) :: tk
+  REAL(KIND=lp)             :: psatw_murphykoop
+  REAL(KIND=lp), intent(IN) :: tk
 
   ! Eq. (10) of Murphy and Koop (2005)
   psatw_murphykoop = exp( c1w_mk - c2w_mk/tk - c3w_mk*log(tk) + c4w_mk*tk &
@@ -324,8 +324,8 @@ END FUNCTION psatw_murphykoop
 
 ELEMENTAL FUNCTION psati_murphykoop(tk)
   IMPLICIT NONE
-  REAL(KIND=wp)             :: psati_murphykoop
-  REAL(KIND=wp), intent(IN) :: tk
+  REAL(KIND=lp)             :: psati_murphykoop
+  REAL(KIND=lp), intent(IN) :: tk
 
   ! Eq. (7) of Murphy and Koop (2005)
   psati_murphykoop = exp(c1i_mk - c2i_mk/tk + c3i_mk*log(tk) - c4i_mk*tk )
@@ -334,8 +334,8 @@ END FUNCTION psati_murphykoop
 
 ELEMENTAL FUNCTION psatw_murphykoop_derivative(tk)
   IMPLICIT NONE
-  REAL(KIND=wp)             :: psatw_murphykoop_derivative
-  REAL(KIND=wp), intent(IN) :: tk
+  REAL(KIND=lp)             :: psatw_murphykoop_derivative
+  REAL(KIND=lp), intent(IN) :: tk
 
   ! Derivative of Eq. (10) of Murphy and Koop (2005)
   psatw_murphykoop_derivative = &
@@ -347,8 +347,8 @@ END FUNCTION psatw_murphykoop_derivative
 
 ELEMENTAL FUNCTION psati_murphykoop_derivative(tk)
   IMPLICIT NONE
-  REAL(KIND=wp)             :: psati_murphykoop_derivative
-  REAL(KIND=wp), intent(IN) :: tk
+  REAL(KIND=lp)             :: psati_murphykoop_derivative
+  REAL(KIND=lp), intent(IN) :: tk
 
   ! Derivative of Eq. (7) of Murphy and Koop (2005)
   psati_murphykoop_derivative = (c2i_mk/tk**2 + c3i_mk/tk - c4i_mk) * psati_murphykoop(tk)

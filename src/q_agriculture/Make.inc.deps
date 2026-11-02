@@ -95,7 +95,6 @@ mo_q_agr_interface.o: \
   mo_q_pheno_config_class.o \
   mo_q_assimi_config_class.o \
   mo_sb_config_class.o \
-  mo_spq_config_class.o \
   mo_q_agr_config_class.o \
   mo_sb_memory_class.o \
   mo_atm2land_memory_class.o \

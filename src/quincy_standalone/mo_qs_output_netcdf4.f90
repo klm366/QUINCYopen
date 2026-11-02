@@ -46,7 +46,7 @@
 !>
 MODULE mo_qs_output_netcdf4
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_exception,           ONLY: message_text, finish, message
   USE mo_util,                ONLY: int2string, real2string
   USE mo_jsb_model_class,     ONLY: t_jsb_model
@@ -65,7 +65,7 @@ MODULE mo_qs_output_netcdf4
   USE mo_lnd_bgcm_class,    ONLY: get_short_name_for_element_id, get_element_index, &
     &                             ELEM_C_ID, ELEM_N_ID, ELEM_P_ID, ELEM_C13_ID, ELEM_C14_ID, ELEM_N15_ID
 
-  USE mo_jsb_process_class,  ONLY: A2L_, SPQ_, VEG_, RAD_, Q_ASSIMI_, Q_PHENO_, SB_, PHYD_, L2A_, Q_SYL_, Q_AGR_, HYDRO_, SSE_, &
+  USE mo_jsb_process_class,  ONLY: A2L_, VEG_, RAD_, Q_ASSIMI_, Q_PHENO_, SB_, PHYD_, L2A_, Q_SYL_, Q_AGR_, HYDRO_, SSE_, &
     &                              SEB_
   USE mo_jsb_math_constants, ONLY: one_year, one_day
   USE mo_sb_memory_class,       ONLY: t_sb_bgcm_with_components, t_sb_bgcm_with_elements
@@ -76,7 +76,7 @@ MODULE mo_qs_output_netcdf4
 
   USE mo_quincy_model_config,   ONLY: QLAND, QPLANT, QCANOPY, QSOIL
   USE mo_quincy_output_class,   ONLY:  &
-    & unit_flux, unit_pool, unit_soillayer_flux, unit_soillayer_pool, unit_veg_pool_flux,     &
+    & unit_flux, unit_pool, unit_soillayer_flux, unit_soillayer_pool, unit_veg_pool, unit_veg_flux, &
     & unit_hydro_pool, unit_hydro_flux, unit_water_potential, unitless, unit_fraction,        &
     & unit_energy, unit_temperature, unit_speed, unit_size, unit_bulk_dens,                   &
     & unit_cn, unit_nc, unit_np, unit_pn, unit_cp, unit_assimi_rates, unit_rain,              &
@@ -202,7 +202,6 @@ CONTAINS
     dsl4jsb_Use_memory(Q_PHENO_)
     dsl4jsb_Use_memory(RAD_)
     dsl4jsb_Use_memory(SB_)
-    dsl4jsb_Use_memory(SPQ_)
     dsl4jsb_Use_memory(HYDRO_)
     dsl4jsb_Use_memory(SSE_)
     dsl4jsb_Use_memory(SEB_) 
@@ -237,7 +236,6 @@ CONTAINS
     dsl4jsb_Def_memory(Q_PHENO_)
     dsl4jsb_Def_memory(RAD_)
     dsl4jsb_Def_memory(SB_)
-    dsl4jsb_Def_memory(SPQ_)
     dsl4jsb_Def_memory(HYDRO_)
     dsl4jsb_Def_memory(SSE_)
     dsl4jsb_Def_memory(SEB_) 
@@ -260,7 +258,6 @@ CONTAINS
     dsl4jsb_Get_memory(Q_PHENO_)
     dsl4jsb_Get_memory(RAD_)
     dsl4jsb_Get_memory(SB_)
-    dsl4jsb_Get_memory(SPQ_)
     dsl4jsb_Get_memory(HYDRO_)
     dsl4jsb_Get_memory(SSE_)
     dsl4jsb_Get_memory(SEB_)
@@ -330,7 +327,7 @@ CONTAINS
       CALL add_flux_variable(p_current_file, 'swpar_srf_down', dsl4jsb_var(A2L_,swpar_srf_down), unit=unit_energy)
       CALL add_flux_variable(p_current_file, 'lw_down', dsl4jsb_var(A2L_,lw_srf_down), unit=unit_energy)
       ! @TODO: how to  vpd_acc = vpd_acc + (( qsat_mixed(t_air(ipoi),press_srf(ipoi)) - q_air(ipoi) ) / &
-      !                         eps_vpd * press_srf(ipoi) / 1000.0_wp)
+      !                         eps_vpd * press_srf(ipoi) / 1000.0_lp)
       ! @TODO SZ: make new variable, probalby best in ATMLand? -> #92
       CALL add_flux_variable(p_current_file, 'atm_co2', dsl4jsb_var(A2L_,co2_mixing_ratio), unit=unit_fraction)
       CALL add_flux_variable(p_current_file, 'atm_co2_c13', dsl4jsb_var(A2L_,co2_mixing_ratio_C13), unit=unit_fraction)
@@ -390,17 +387,17 @@ CONTAINS
 
         !--- previously soilpoolOrg and as 1D: soilpooldC13DC14dN15 / soilpoolC13C14N15
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_C_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_N_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_P_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_C13_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_C14_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
         CALL add_all_parts_of_sb_bgcm_for_elem(p_current_file, no_prefix, ELEM_N15_ID, &
-          & dsl4jsb_bgcm(SB_,sbbpool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
+          & dsl4jsb_bgcm(SB_,sb_pool), model%config, nsoil_w, nr_of_sb_compartments, sb_model_scheme)
 
         !--- previously soilpoolInOrg_L and as 1D: soilpoolInOrg
         CALL add_sl_pool_variable(p_current_file, 'mineral_assoc_nh4', dsl4jsb_var(SB_,nh4_assoc))
@@ -462,7 +459,7 @@ CONTAINS
         ! -- in sb memory several of these have "mol P m-3 soil" -> now mol/m3 --> is this correct? or not?
         CALL add_sl_pool_variable(p_current_file, 'qmax_po4', dsl4jsb_var(SB_,qmax_po4), l_write_1d=.FALSE.)
         CALL add_sl_pool_variable(p_current_file, 'mm_po4', dsl4jsb_var(SB_,km_adsorpt_po4_sl), l_write_1d=.FALSE.)
-        !--- previously SPQ_ memory
+        !---
         CALL add_sl_pool_variable(p_current_file, 'min_vol', dsl4jsb_var(SB_,volume_min_sl), l_write_1d=.FALSE., unit_sl=unitless)
 
         !*** fluxes
@@ -474,7 +471,7 @@ CONTAINS
         IF(sb_model_scheme == "jsm") THEN
           CALL add_flux_variable(p_current_file, 'leaching_dom_C', dsl4jsb_var(SB_,leaching_dom_carbon))
           CALL add_element_of_sb_bgcm_compartment(p_current_file, 'transport_dom_C', &
-            & dsl4jsb_bgcm(SB_,sbbtransport), ix_dom, ELEM_C_ID, model%config, nsoil_w)
+            & dsl4jsb_bgcm(SB_,sb_transport), ix_dom, ELEM_C_ID, model%config, nsoil_w)
           CALL add_sl_flux_variable(p_current_file, 'lateral_loss_dom_C', dsl4jsb_var(SB_,lateral_loss_dom_carbon_sl), nsoil_w)
           CALL add_sl_flux_variable(p_current_file, 'lateral_loss_dom_13C', dsl4jsb_var(SB_,lateral_loss_dom_carbon13_sl), nsoil_w)
           CALL add_sl_flux_variable(p_current_file, 'lateral_loss_dom_14C', dsl4jsb_var(SB_,lateral_loss_dom_carbon14_sl), nsoil_w)
@@ -531,7 +528,7 @@ CONTAINS
         CALL add_sl_flux_variable(p_current_file, 'lateral_loss_no3', dsl4jsb_var(SB_,lateral_loss_no3_solute_sl), nsoil_w)
         IF(sb_model_scheme == "jsm") THEN
           CALL add_element_of_sb_bgcm_compartment(p_current_file, 'transport_dom_N', &
-            & dsl4jsb_bgcm(SB_,sbbtransport), ix_dom, ELEM_N_ID, model%config, nsoil_w)
+            & dsl4jsb_bgcm(SB_,sb_transport), ix_dom, ELEM_N_ID, model%config, nsoil_w)
           CALL add_sl_flux_variable(p_current_file, 'lateral_loss_dom_N', dsl4jsb_var(SB_,lateral_loss_dom_nitrogen_sl), nsoil_w)
           ! Adsorpt_nh4 : in mo_qs_output_txt: only in soilfluxN_lay (i.e. only layered var not 1D var)
         ENDIF
@@ -568,17 +565,17 @@ CONTAINS
         !@TODO SZ: mol m-3
         !@TODO: but these are (weighted) summes over the whole soil column (and over the output timestep)
         !       -> really not micro mol/m2 ? -> discuss...
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,carbon), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,carbon), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_n', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,nitrogen), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_n', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,nitrogen), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_p', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,phosphorus), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_p', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,phosphorus), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c13', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,carbon13), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c13', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,carbon13), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c14', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,carbon14), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_c14', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,carbon14), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
-        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_n15', dsl4jsb_elem_of_1L_bgcm(SB_,sbbdelta_pools,nitrogen15), &
+        CALL add_sl_flux_variable(p_current_file, 'sb_delta_pool_n15', dsl4jsb_elem_of_1L_bgcm(SB_,sb_delta_pools,nitrogen15), &
           & nsoil_w, out_fact_kind=NO_FACT, l_write_2d=.FALSE., unit_1d='?') ! only write 1D
 
         CALL add_flux_variable(p_current_file, 'sb_total_flux_c', dsl4jsb_var(SB_,total_flux_carbon))
@@ -590,61 +587,35 @@ CONTAINS
 
         IF(flag_mycorrhiza .AND. model%config%qmodel_id == QLAND) THEN
           !--- previously: mycfluxCNP
-          CALL add_all_elements_of_1L_sb_bgcm(p_current_file, 'myc_export', dsl4jsb_bgcm(SB_,sbbmyco_export), nsoil_w)
+          CALL add_all_elements_of_1L_sb_bgcm(p_current_file, 'myc_export', dsl4jsb_bgcm(SB_,sb_myco_export), nsoil_w)
         ENDIF
       END SELECT ! ** if land or soil model
     END IF ! IF model%config%flag_write_sb_output
     
     ! ----------------------------------------------------------------------------------------------------- !
-    !> soil phys output files
+    !>
+    !> 6. hydrology (soil physics) output file
     !>
     SELECT CASE (model%config%qmodel_id)
     CASE (QLAND, QPLANT, QSOIL, QCANOPY)
-      !>
-      !> 6. soil phys quincy output file (spq)
-      !>
-      IF (.NOT. model%config%use_soil_phys_jsbach) THEN
-        CALL add_output_file(p_output, 'SPQ', p_current_file)
-        SELECT CASE (model%config%qmodel_id)
-        CASE (QLAND, QPLANT, QCANOPY)
-          CALL add_pool_variable(p_current_file, 'snow_height', dsl4jsb_var(SPQ_,snow_height), unit_hydro_pool)
-          CALL add_flux_variable(p_current_file, 'evapopot', dsl4jsb_var(SPQ_,evapopot), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'evaporation', dsl4jsb_var(SPQ_,evaporation), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'interception', dsl4jsb_var(SPQ_,interception), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'srf_runoff', dsl4jsb_var(SPQ_,srf_runoff), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'gw_runoff', dsl4jsb_var(SPQ_,gw_runoff), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'drainage', dsl4jsb_var(SPQ_,drainage), unit = unit_hydro_flux)
-          !--- previously: vegfluxEnergy 
-          ! mo_qs_output_txt: vegfluxEnergy [Wm-2] [Wm-2] [Wm-2] [Wm-2] [--] [µmol m-2 s-1] [µmol m-2 s-1] [--] [--] [--]
-          ! NOTE: Qle and Qh had a negative factor USE_DTIME_ONE_NEG_FACT; now also default (USE_NDAT_ACC) i.e. not negated
-          CALL add_flux_variable(p_current_file, 'qh', dsl4jsb_var(SPQ_,sensible_heat_flx), unit=unit_energy)
-          CALL add_flux_variable(p_current_file, 'qle', dsl4jsb_var(SPQ_,latent_heat_flx), unit=unit_energy)
-          ! NOTE: ground heat flux had negated negation in mo_qs_output_txt; now default (USE_NDAT_ACC)
-          CALL add_flux_variable(p_current_file, 'qg', dsl4jsb_var(SPQ_,ground_heat_flx), unit=unit_energy) 
-        END SELECT ! ** if land, plant or canopy model
-      !>
-      !> 7. soil phys jsbach output file (hydro)
-      !>
-      ELSE 
-        CALL add_output_file(p_output, 'HYDRO', p_current_file)
-        CALL add_pool_variable(p_current_file, 'rootzone_soil_moisture', dsl4jsb_var(HYDRO_,wtr_rootzone), unit_hydro_pool)
-        CALL add_sl_pool_variable(p_current_file, 'water_content_soil', dsl4jsb_var(HYDRO_,wtr_soil_sl), &
-          &  unit=unit_hydro_pool, unit_sl=unit_hydro_pool)
-        SELECT CASE (model%config%qmodel_id)
-        CASE (QLAND, QPLANT, QCANOPY)
-          CALL add_pool_variable(p_current_file, 'snow_height', dsl4jsb_var(HYDRO_,weq_snow_soil), unit_hydro_pool)
-          CALL add_flux_variable(p_current_file, 'transpiration', dsl4jsb_var(HYDRO_,transpiration), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'evapopot', dsl4jsb_var(HYDRO_,evapopot), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'evaporation', dsl4jsb_var(HYDRO_,evapo_skin), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'srf_runoff', dsl4jsb_var(HYDRO_,runoff), unit = unit_hydro_flux)
-          CALL add_flux_variable(p_current_file, 'gw_runoff', dsl4jsb_var(HYDRO_,drainage), unit = unit_hydro_flux)
-        END SELECT ! ** if land, plant or canopy model
-      END IF 
+      CALL add_output_file(p_output, 'HYDRO', p_current_file)
+      CALL add_pool_variable(p_current_file, 'rootzone_soil_moisture', dsl4jsb_var(HYDRO_,wtr_rootzone), unit_hydro_pool)
+      CALL add_sl_pool_variable(p_current_file, 'water_content_soil', dsl4jsb_var(HYDRO_,wtr_soil_sl), &
+        &  unit=unit_hydro_pool, unit_sl=unit_hydro_pool)
+      SELECT CASE (model%config%qmodel_id)
+      CASE (QLAND, QPLANT, QCANOPY)
+        CALL add_pool_variable(p_current_file, 'snow_height', dsl4jsb_var(HYDRO_,weq_snow_soil), unit_hydro_pool)
+        CALL add_flux_variable(p_current_file, 'transpiration', dsl4jsb_var(HYDRO_,transpiration), unit = unit_hydro_flux)
+        CALL add_flux_variable(p_current_file, 'evapopot', dsl4jsb_var(HYDRO_,evapopot), unit = unit_hydro_flux)
+        CALL add_flux_variable(p_current_file, 'evaporation', dsl4jsb_var(HYDRO_,evapo_skin), unit = unit_hydro_flux)
+        CALL add_flux_variable(p_current_file, 'srf_runoff', dsl4jsb_var(HYDRO_,runoff), unit = unit_hydro_flux)
+        CALL add_flux_variable(p_current_file, 'gw_runoff', dsl4jsb_var(HYDRO_,drainage), unit = unit_hydro_flux)
+      END SELECT ! ** if land, plant or canopy model
     END SELECT ! ** if land, plant, canopy or soil model
 
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 8. vegetation output file (veg)
+    !> 7. vegetation output file (veg)
     !>
     IF(model%config%flag_write_veg_output) THEN
       nr_of_veg_compartments = get_number_of_veg_compartments()
@@ -662,7 +633,7 @@ CONTAINS
 
           !--- previously: vegpoolC
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_C_ID, nr_of_veg_compartments, l_acc,  &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_c',    dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,carbon))
           CALL add_pool_variable(p_current_file, 'total_veg_c',   dsl4jsb_var(VEG_, veg_pool_total_c), unit_pool)
           CALL add_pool_variable(p_current_file, 'total_veg_c13', dsl4jsb_var(VEG_, veg_pool_total_c13), unit_pool)
@@ -670,25 +641,25 @@ CONTAINS
 
           !--- previously: vegpoolC13C14 / vegpooldC13DC14
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_C13_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_c13', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,carbon13))
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_C14_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_c14', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,carbon14))
 
           !--- previously: vegpoolN
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_N_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_n', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,nitrogen))
           CALL add_pool_variable(p_current_file, 'total_veg_n', dsl4jsb_var(VEG_, veg_pool_total_n), unit_pool)
           !--- previously: vegpoolP
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_P_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_p', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,phosphorus))
           CALL add_pool_variable(p_current_file, 'total_veg_p', dsl4jsb_var(VEG_, veg_pool_total_p), unit_pool)
           !--- previously: vegpooldN15 / vegpoolN15
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'vegpool_', ELEM_N15_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbpool), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_pool), model%config)
           CALL add_pool_variable(p_current_file, 'seed_bed_n15', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_pool,nitrogen15))
           CALL add_pool_variable(p_current_file, 'total_veg_n15', dsl4jsb_var(VEG_, veg_pool_total_n15), unit_pool)
           ! ecopoolCNP -> does currently not work
@@ -726,19 +697,19 @@ CONTAINS
           CALL add_flux_variable(p_current_file, 'uptake_nh4', dsl4jsb_var(VEG_,uptake_nh4))
           CALL add_flux_variable(p_current_file, 'uptake_no3', dsl4jsb_var(VEG_,uptake_no3))
           !@TODO: how to    RecyclingN (sum of recycling_leaf_n recycling_fine_root_n and recycling_heart_wood_n)
-          CALL add_flux_variable(p_current_file, 'reserve_use_n', dsl4jsb_elem_of_1L_bgcm(VEG_,vegbreserve_use,nitrogen))
+          CALL add_flux_variable(p_current_file, 'reserve_use_n', dsl4jsb_elem_of_1L_bgcm(VEG_,veg_reserve_use,nitrogen))
           CALL add_flux_variable(p_current_file, 'fixation_n', dsl4jsb_var(VEG_,n_fixation))
           CALL add_flux_variable(p_current_file, 'fixation_n15', dsl4jsb_var(VEG_,n_fixation_n15))
           CALL add_flux_variable(p_current_file, 'uptake_nh4_n15', dsl4jsb_var(VEG_,uptake_nh4_n15))
           CALL add_flux_variable(p_current_file, 'uptake_no3_n15', dsl4jsb_var(VEG_,uptake_no3_n15))
           CALL add_flux_sum_for_veg_bgcm_element(p_current_file, 'growth_n', ELEM_N_ID, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
           CALL add_element_of_veg_bgcm_compartment(p_current_file, 'growth_sapwood_n15', &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), ix_sap_wood, ELEM_N15_ID, model%config, USE_VEG_FLUX_FACT)
+            & dsl4jsb_bgcm(VEG_,veg_growth), ix_sap_wood, ELEM_N15_ID, model%config, USE_VEG_FLUX_FACT)
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'growth_', ELEM_N_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'litterfall_', ELEM_N_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegblitterfall), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_litterfall), model%config)
           CALL add_flux_variable(p_current_file, 'seed_bed_growth_n', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_growth,nitrogen))
           CALL add_flux_variable(p_current_file, 'seed_bed_litterfall_n', &
             & dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_litterfall,nitrogen))
@@ -746,16 +717,16 @@ CONTAINS
           CALL add_flux_variable(p_current_file, 'uptake_po4', dsl4jsb_var(VEG_,uptake_po4))
           !@TODO -- howto:
           !  recycling_p_acc      = recycling_p_acc       + (recycling_leaf_p(ipoi) + recycling_fine_root_p(ipoi) + &
-          !     recycling_heart_wood_p(ipoi))  * dtime_one *1000000._wp/dtime
+          !     recycling_heart_wood_p(ipoi))  * dtime_one *1000000._lp/dtime
           CALL add_flux_variable(p_current_file, 'reserve_use_p', &
-            & dsl4jsb_elem_of_1L_bgcm(VEG_,vegbreserve_use,phosphorus), USE_VEG_FLUX_FACT)
+            & dsl4jsb_elem_of_1L_bgcm(VEG_,veg_reserve_use,phosphorus), USE_VEG_FLUX_FACT)
           CALL add_flux_sum_for_veg_bgcm_element(p_current_file, 'growth_p', ELEM_P_ID, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
 
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'growth_', ELEM_P_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'litterfall_', ELEM_P_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegblitterfall), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_litterfall), model%config)
           CALL add_flux_variable(p_current_file, 'seed_bed_growth_p', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_growth,phosphorus))
           CALL add_flux_variable(p_current_file, 'seed_bed_litterfall_p', &
             & dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_litterfall,phosphorus))
@@ -830,15 +801,15 @@ CONTAINS
           CALL add_flux_variable(p_current_file, 'leaf_herbivory', dsl4jsb_var(VEG_,herbivory_leaf_resp))
           CALL add_flux_variable(p_current_file, 'fruit_herbivory', dsl4jsb_var(VEG_,herbivory_fruit_resp))
           CALL add_flux_variable(p_current_file, 'reserve_use_c', & 
-            & dsl4jsb_elem_of_1L_bgcm(VEG_,vegbreserve_use,carbon), USE_VEG_FLUX_FACT)
+            & dsl4jsb_elem_of_1L_bgcm(VEG_,veg_reserve_use,carbon), USE_VEG_FLUX_FACT)
           CALL add_flux_variable(p_current_file, 'root_Exudation_c', &
-            & dsl4jsb_elem_of_1L_bgcm(VEG_,vegbexudation,carbon), USE_VEG_FLUX_FACT)
+            & dsl4jsb_elem_of_1L_bgcm(VEG_,veg_exudation,carbon), USE_VEG_FLUX_FACT)
           CALL add_flux_sum_for_veg_bgcm_element(p_current_file, 'growth_c', ELEM_C_ID, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'growth_', ELEM_C_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_growth), model%config)
           CALL add_all_parts_of_veg_bgcm_for_elem(p_current_file, 'litterfall_', ELEM_C_ID, nr_of_veg_compartments, l_acc, &
-            & dsl4jsb_bgcm(VEG_,vegblitterfall), model%config)
+            & dsl4jsb_bgcm(VEG_,veg_litterfall), model%config)
           CALL add_flux_variable(p_current_file, 'seed_bed_growth_c', dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_growth,carbon))
           CALL add_flux_variable(p_current_file, 'seed_bed_litterfall_c', &
             & dsl4jsb_elem_of_1L_bgcm(VEG_,seed_bed_litterfall,carbon))
@@ -847,9 +818,9 @@ CONTAINS
           CALL add_flux_variable(p_current_file, 'maint_resp_c13', dsl4jsb_var(VEG_,maint_respiration_c13))
           CALL add_flux_variable(p_current_file, 'maint_resp_c14', dsl4jsb_var(VEG_,maint_respiration_c14))
           CALL add_element_of_veg_bgcm_compartment(p_current_file, 'growth_sapwood_c13', &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), ix_sap_wood, ELEM_C13_ID, model%config, USE_VEG_FLUX_FACT)
+            & dsl4jsb_bgcm(VEG_,veg_growth), ix_sap_wood, ELEM_C13_ID, model%config, USE_VEG_FLUX_FACT)
           CALL add_element_of_veg_bgcm_compartment(p_current_file, 'growth_sapwood_c14', &
-            & dsl4jsb_bgcm(VEG_,vegbgrowth), ix_sap_wood, ELEM_C14_ID, model%config, USE_VEG_FLUX_FACT)
+            & dsl4jsb_bgcm(VEG_,veg_growth), ix_sap_wood, ELEM_C14_ID, model%config, USE_VEG_FLUX_FACT)
 
         END SELECT ! ** if land, plant or canopy model
 
@@ -867,16 +838,16 @@ CONTAINS
         ! ** only if land: myc_diagnostics -> IF(flag_mycorrhiza)
         !@TODO: howto...
         !  myc_respiration_c_acc = myc_respiration_c_acc + SUM(myc_respiration(ipoi,:) * soil_depth_sl(ipoi,:)) * &
-        !                          molar_mass_C * dtime_one * 1000000._wp / dtime
+        !                          molar_mass_C * dtime_one * 1000000._lp / dtime
         !  f_cm_som_acc          = f_cm_som_acc + organic_cn * molar_mass_C / molar_mass_N * &
         !                          SUM(mycorrhiza_uptake_norg_sl(ipoi,:) * soil_depth_sl(ipoi,:)) * &
-        !                          dtime_one * 1000000._wp / dtime
+        !                          dtime_one * 1000000._lp / dtime
       END SELECT ! ** if land, plant, canopy or soil model
     END IF ! IF model%config%flag_write_veg_output
     
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 9. plant hydraulic output file (phyd)
+    !> 8. plant hydraulic output file (phyd)
     !>
     IF (dsl4jsb_Config(PHYD_)%use_plant_hydraulics) THEN
       SELECT CASE (model%config%qmodel_id)
@@ -889,19 +860,19 @@ CONTAINS
 
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 10. land to atmosphere output file (l2a)
+    !> 9. land to atmosphere output file (l2a)
     !>
     SELECT CASE (model%config%qmodel_id)
     CASE (QLAND)
       CALL add_output_file(p_output, 'L2A', p_current_file)
       CALL add_pool_variable(p_current_file, 'q_total_c', dsl4jsb_var(L2A_,q_total_c))
       CALL add_flux_variable(p_current_file, 'q_c_conservation_test', &
-        &                    dsl4jsb_var(L2A_,q_c_conservation_test), unit=unit_veg_pool_flux)
+        &                    dsl4jsb_var(L2A_,q_c_conservation_test), unit=unit_veg_flux)
     END SELECT ! ** if land mode
 
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 11. quincy sylviculture output file (q_syl)
+    !> 10. quincy sylviculture output file (q_syl)
     !>
     IF (dsl4jsb_Config(Q_SYL_)%active .AND. model%lctlib(tile%lcts(1)%lib_id)%ForestFlag) THEN
       SELECT CASE (model%config%qmodel_id)
@@ -913,7 +884,7 @@ CONTAINS
 
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 12. soil and snow energy output file (sse)
+    !> 11. soil and snow energy output file (sse)
     !>
     SELECT CASE (model%config%qmodel_id)
     CASE (QLAND, QPLANT, QSOIL, QCANOPY)
@@ -921,27 +892,23 @@ CONTAINS
       CALL add_sl_pool_variable(p_current_file, 'rho', dsl4jsb_var(SSE_,bulk_dens_sl), l_write_1d=.FALSE., unit_sl=unit_bulk_dens)
       CALL add_sl_pool_variable(p_current_file, 'temperature_soil', dsl4jsb_var(SSE_,t_soil_sl), l_avg_sl=.TRUE., &
         & l_write_2d=.FALSE., unit=unit_temperature)
-      IF (model%config%use_soil_phys_jsbach) THEN
-        SELECT CASE (model%config%qmodel_id)
-        CASE (QLAND, QPLANT, QCANOPY)
-          ! NOTE: ground heat flux had negated negation in mo_qs_output_txt; now default (USE_NDAT_ACC)
-          CALL add_flux_variable(p_current_file, 'qg', dsl4jsb_var(SSE_,grnd_hflx), unit=unit_energy) 
-        END SELECT ! ** if land, plant or canopy model
-      END IF
+      SELECT CASE (model%config%qmodel_id)
+      CASE (QLAND, QPLANT, QCANOPY)
+        ! NOTE: ground heat flux had negated negation in mo_qs_output_txt; now default (USE_NDAT_ACC)
+        CALL add_flux_variable(p_current_file, 'qg', dsl4jsb_var(SSE_,grnd_hflx), unit=unit_energy) 
+      END SELECT ! ** if land, plant or canopy model
     END SELECT ! ** if land, plant, soil or canopy model
 
     ! ----------------------------------------------------------------------------------------------------- !
     !>
-    !> 13. surface energy balance output file (seb)
+    !> 12. surface energy balance output file (seb)
     !>
-    IF (model%config%use_soil_phys_jsbach) THEN
-      SELECT CASE (model%config%qmodel_id)
-      CASE (QLAND, QPLANT, QCANOPY)
-        CALL add_output_file(p_output, 'SEB', p_current_file)
-        CALL add_flux_variable(p_current_file, 'qh', dsl4jsb_var(SEB_,sensible_hflx), unit=unit_energy)
-        CALL add_flux_variable(p_current_file, 'qle', dsl4jsb_var(SEB_,latent_hflx), unit=unit_energy)
-      END SELECT ! ** if land, plant or canopy model
-    END IF
+    SELECT CASE (model%config%qmodel_id)
+    CASE (QLAND, QPLANT, QCANOPY)
+      CALL add_output_file(p_output, 'SEB', p_current_file)
+      CALL add_flux_variable(p_current_file, 'qh', dsl4jsb_var(SEB_,sensible_hflx), unit=unit_energy)
+      CALL add_flux_variable(p_current_file, 'qle', dsl4jsb_var(SEB_,latent_hflx), unit=unit_energy)
+    END SELECT ! ** if land, plant or canopy model
 
   END SUBROUTINE define_nc4_output_files
 
@@ -1098,7 +1065,7 @@ CONTAINS
       this_flux_unit = unit
     ELSE
       IF (this_fact_kind .EQ. USE_VEG_FLUX_FACT) THEN
-        this_flux_unit = unit_veg_pool_flux
+        this_flux_unit = unit_veg_flux
       ELSE
         this_flux_unit = unit_flux
       ENDIF
@@ -1167,7 +1134,7 @@ CONTAINS
     TYPE(t_jsb_model_config),         INTENT(IN)            :: model_config       !< the model config
       !< the veg bgcm whose compartments are to be summed for the fiven element
     ! ----------------------------------------------------------------------------------------------------- !
-    CHARACTER(len=*), PARAMETER :: unit          = unit_veg_pool_flux !< unit of fluxes from pool variables
+    CHARACTER(len=*), PARAMETER :: unit          = unit_veg_flux      !< unit of fluxes from pool variables
     LOGICAL, PARAMETER          :: l_acc         = .TRUE.             !< pool variables representing fluxes are accumulated
     INTEGER, PARAMETER          :: out_fact_kind = USE_VEG_FLUX_FACT 
       !< id of multiplicative factor used -- apparently this is the one always used when veg pool compartments are summed
@@ -1205,7 +1172,7 @@ CONTAINS
     TYPE(t_jsb_var_real2d),           OPTIONAL, INTENT(IN),    TARGET :: quincy_var         !< the actual variable
     INTEGER,                          OPTIONAL, INTENT(IN)            :: element_id         !< ID of this element or the element to add components for
     TYPE(t_veg_bgcm_with_components), OPTIONAL, INTENT(IN),    TARGET :: veg_bgcm           !< to be accumulated veg bgcm
-      !< -> t_veg_bgcm_with_components could probably be abstracted to t_jsb_pool and treated with select type below, if required
+      !< -> t_veg_bgcm_with_components could probably be abstracted to t_lnd_bgcm and treated with select type below, if required
     TYPE(t_jsb_var_real3d),           OPTIONAL, INTENT(IN),    TARGET :: q_var_3d           !< the actual variable in case of 2D output var (i.e., var with a vertical grid)
     LOGICAL,                          OPTIONAL, INTENT(IN)            :: l_avg_sl           !< only for sl vars: if true average, else (default!) sum
     LOGICAL,                          OPTIONAL, INTENT(IN)            :: l_write_2d         !< only for sl vars: default true - if false do not write per sl
@@ -1339,7 +1306,7 @@ CONTAINS
           CALL finish(TRIM(routine),message_text)
         ENDIF
         ALLOCATE(quincy_output_file%current_var%accumulated_2D(nsoil_w))
-        quincy_output_file%current_var%accumulated_2D(:) = 0._wp
+        quincy_output_file%current_var%accumulated_2D(:) = 0._lp
       ENDIF
     ENDIF
 
@@ -1516,7 +1483,7 @@ CONTAINS
     ! ----------------------------------------------------------------------------------------------------- !
     INTEGER                     :: idx
     INTEGER,          PARAMETER :: out_fact_kind  = USE_VEG_FLUX_FACT
-    CHARACTER(len=*), PARAMETER :: unit           = unit_veg_pool_flux
+    CHARACTER(len=*), PARAMETER :: unit           = unit_veg_flux
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':add_all_elements_of_1L_sb_bgcm'
     ! ----------------------------------------------------------------------------------------------------- !
 
@@ -1552,7 +1519,7 @@ CONTAINS
 
     this_elem_ix = get_element_index(this_element_id, model_config%elements_index_map, routine)
 
-    SELECT TYPE (selected => quincy_sb_bgcm%pool_list(this_compartment_ix)%p%element_list(this_elem_ix)%p)
+    SELECT TYPE (selected => quincy_sb_bgcm%bgcm_list(this_compartment_ix)%p%element_list(this_elem_ix)%p)
     TYPE IS (t_jsb_var_real3d)
       CALL add_sl_flux_variable(quincy_output_file, var_name_prefix, selected, nsoil_w)
     END SELECT
@@ -1579,7 +1546,7 @@ CONTAINS
 
   this_elem_ix = get_element_index(this_element_id, model_config%elements_index_map, routine)
 
-  SELECT TYPE (selected => quincy_veg_bgcm%pool_list(this_compartment_ix)%p%element_list(this_elem_ix)%p)
+  SELECT TYPE (selected => quincy_veg_bgcm%bgcm_list(this_compartment_ix)%p%element_list(this_elem_ix)%p)
   TYPE IS (t_jsb_var_real2d)
     CALL add_flux_variable(quincy_output_file, var_name_prefix, selected, out_fact_kind)
   END SELECT
@@ -1598,8 +1565,8 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     CLASS(t_jsb_tile_abstract), INTENT(IN) :: tile                    !< one tile with data structure for one lct
     INTEGER,                    INTENT(IN) :: iblk                    !< ... 1 in QUINCY ...
     INTEGER,                    INTENT(IN) :: n_output_years          !< number of years to be written into this file
-    REAL(wp),                   INTENT(IN) :: dtime                   !< timestep length
-    REAL(wp),                   INTENT(IN) :: output_interval_in_days !< interval in days (1.0 == one day exactly)
+    REAL(lp),                   INTENT(IN) :: dtime                   !< timestep length
+    REAL(lp),                   INTENT(IN) :: output_interval_in_days !< interval in days (1.0 == one day exactly)
     CHARACTER(len=*),           INTENT(IN) :: output_interval_char    !< output interval tag for filename
     CHARACTER(len=*),           INTENT(IN) :: add_tag                 !< additional tag to add to the files -- e.g. 'spinup'
     CHARACTER(len=*),           INTENT(IN) :: start_date_char         !< start date of the simulation - used for the time axis
@@ -1613,7 +1580,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     INTEGER                                :: ntimesteps        !< number of timesteps to be written into this file (time dim)
     INTEGER                                :: soil_depth_varid, buffer_size
     INTEGER                                :: dim_ids_1d(1), dim_ids_2d(2)
-    REAL(wp),                  ALLOCATABLE :: soil_depth_sl(:)
+    REAL(lp),                  ALLOCATABLE :: soil_depth_sl(:)
     CHARACTER(len=filename_max)            :: this_file_name
     CHARACTER(len=30)                      :: runtime_date_as_str
     CHARACTER(len=*),          PARAMETER   :: file_name_ending        = ".nc"
@@ -1777,7 +1744,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         ENDIF
         ! For time: add calendar
         IF (TRIM(this_q_out_var%var_name) .EQ. name_var_time) THEN
-          IF (.NOT. one_year .EQ. 365._wp) THEN
+          IF (.NOT. one_year .EQ. 365._lp) THEN
             CALL finish(TRIM(routine), 'Attention, variable one_year was not as expected 365 days, but: ' // real2string(one_year))
           ENDIF
           CALL check_nc4_command_stat(nf90_put_att(this_q_out_file%file_id, this_q_out_var%var_id, 'calendar', &
@@ -1787,11 +1754,11 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         IF (this_q_out_var%nr_of_dims == 1) THEN
           IF(ALLOCATED(this_q_out_var%buffer_2D)) DEALLOCATE(this_q_out_var%buffer_2D)
           ALLOCATE(this_q_out_var%buffer_2D(buffer_size))
-          this_q_out_var%buffer_2D(:) = 0._wp
+          this_q_out_var%buffer_2D(:) = 0._lp
         ELSE IF(this_q_out_var%nr_of_dims == 2) THEN
           IF(ALLOCATED(this_q_out_var%buffer_3D)) DEALLOCATE(this_q_out_var%buffer_3D)
           ALLOCATE(this_q_out_var%buffer_3D(this_q_out_var%dim2_len, buffer_size))
-          this_q_out_var%buffer_3D(:, :) = 0._wp
+          this_q_out_var%buffer_3D(:, :) = 0._lp
         ELSE
           WRITE(message_text,*) 'Currently only 1D and 2D variables, please check! Variable name: ' &
             & // TRIM(this_q_out_var%var_name) // ' of file with tag ' // TRIM(this_q_out_file%file_name_tag)
@@ -1828,7 +1795,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         &                         TRIM(runtime_date_as_str)), routine//'metadata:date')
 #endif
       ! Set record variable to first entry
-      this_q_out_file%current_record = 1._wp
+      this_q_out_file%current_record = 1._lp
 
       ! Go to next file in the linked list
       this_q_out_file => this_q_out_file%next_output_file
@@ -1842,8 +1809,6 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> reset acc variables
   !>
   SUBROUTINE reset_nc_acc_vars(tile, options)
-    dsl4jsb_Use_memory(SPQ_)
-    ! ----------------------------------------------------------------------------------------------------- !
     CLASS(t_jsb_tile_abstract), INTENT(IN) :: tile              !< one tile with data structure for one lct
     TYPE(t_jsb_task_options),   INTENT(IN) :: options           !< model options
     ! ----------------------------------------------------------------------------------------------------- !
@@ -1858,16 +1823,12 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':reset_nc_acc_vars'
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Def_memory(SPQ_)
-    ! ----------------------------------------------------------------------------------------------------- !
     model         => Get_model(tile%owner_model_id)
     iblk          = options%iblk
     vgrid_soil_w  => Get_vgrid('soil_depth_water')
     nsoil_w       =  vgrid_soil_w%n_levels
     vgrid_canopy  => Get_vgrid('q_canopy_layer')
     ncanopy       =  vgrid_canopy%n_levels
-    ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_memory(SPQ_)
     ! ----------------------------------------------------------------------------------------------------- !
     
     ! iterate over the linked list of quincy output files
@@ -1886,11 +1847,11 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         SELECT CASE (this_q_out_var%nr_of_dims)
         CASE (1)
           IF (this_q_out_var%l_is_acc_var) THEN
-          this_q_out_var%accumulated = 0._wp
+          this_q_out_var%accumulated = 0._lp
           ENDIF
         CASE (2)
           IF (this_q_out_var%l_is_acc_var) THEN
-            this_q_out_var%accumulated_2D(:) = 0._wp
+            this_q_out_var%accumulated_2D(:) = 0._lp
           ENDIF
         CASE DEFAULT
           WRITE(message_text,*) 'Currently only 1D and 2D variables, please check! Variable name: ' &
@@ -1903,7 +1864,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
       this_q_out_file => this_q_out_file%next_output_file
     ENDDO
 
-    model%quincy_output%ndat_acc = 0._wp
+    model%quincy_output%ndat_acc = 0._lp
   END SUBROUTINE reset_nc_acc_vars
 
   ! ======================================================================================================= !
@@ -1925,9 +1886,9 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     INTEGER                                :: nsoil_w          !< number of soil layers as used/defined by the SB_ process
     INTEGER                                :: ncanopy          !< number of canopy layeres
     INTEGER                                :: iblk
-    REAL(wp),                  ALLOCATABLE :: weighted_layer_value(:)
-    REAL(wp),                  ALLOCATABLE :: soil_depth_sl(:)
-    REAL(WP),                  ALLOCATABLE :: buffered_output_2D(:)
+    REAL(lp),                  ALLOCATABLE :: weighted_layer_value(:)
+    REAL(lp),                  ALLOCATABLE :: soil_depth_sl(:)
+    REAL(lp),                  ALLOCATABLE :: buffered_output_2D(:)
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':write_netcdf4_quincy_buffered'
     ! ----------------------------------------------------------------------------------------------------- !
@@ -1981,7 +1942,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
             CALL write_array_to_1d_var_on_file(buffered_output_2D, this_q_out_var%var_id, &
               & this_q_out_file%file_id, this_q_out_file%current_record, buffer_size)
 
-            this_q_out_var%accumulated = 0.0_wp
+            this_q_out_var%accumulated = 0.0_lp
           ENDIF 
 
         CASE (2)
@@ -1997,7 +1958,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
             ENDIF
             ! Reset the accumulation variables if the output variable is of flux type
             IF (this_q_out_var%l_is_acc_var) THEN
-              this_q_out_var%accumulated_2D = 0.0_wp
+              this_q_out_var%accumulated_2D = 0.0_lp
             ENDIF
           ENDIF
 
@@ -2028,7 +1989,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     ENDDO
 
     DEALLOCATE(soil_depth_sl, weighted_layer_value)
-    model%quincy_output%ndat_acc = 0._wp
+    model%quincy_output%ndat_acc = 0._lp
   END SUBROUTINE write_netcdf4_quincy_buffered
 
   ! ======================================================================================================= !
@@ -2038,28 +1999,28 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   SUBROUTINE accumulate_on_nc_acc_vars(tile, options, output_interval_in_days)
     CLASS(t_jsb_tile_abstract), INTENT(IN) :: tile                     !< one tile with data structure for one lct
     TYPE(t_jsb_task_options),   INTENT(IN) :: options                  !< model options
-    REAL(wp),                   INTENT(IN) :: output_interval_in_days  !< interval in days (1.0 == one day exactly)
+    REAL(lp),                   INTENT(IN) :: output_interval_in_days  !< interval in days (1.0 == one day exactly)
     ! ----------------------------------------------------------------------------------------------------- !
     TYPE(t_jsb_model),          POINTER :: model
     TYPE(t_quincy_outputfile),  POINTER :: this_q_out_file
     TYPE(t_quincy_out_var),     POINTER :: this_q_out_var
     CLASS(t_jsb_var),           POINTER :: this_var
-    REAL(wp)                            :: dtime_one, f_veg_flux_output, this_out_fact
+    REAL(lp)                            :: dtime_one, f_veg_flux_output, this_out_fact
     INTEGER                             :: iblk, ind_var
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':accumulate_on_nc_acc_vars'
     ! ----------------------------------------------------------------------------------------------------- !
     model => Get_model(tile%owner_model_id)
     iblk  = options%iblk
 
-    model%quincy_output%ndat_acc = model%quincy_output%ndat_acc + 1.0_wp
+    model%quincy_output%ndat_acc = model%quincy_output%ndat_acc + 1.0_lp
 
-    IF (output_interval_in_days < 1.0_wp) THEN
-      dtime_one = 1.0_wp                 ! interval = one timestep
+    IF (output_interval_in_days < 1.0_lp) THEN
+      dtime_one = 1.0_lp                 ! interval = one timestep
     ELSE
-      dtime_one = options%dtime / 1000000.0_wp   ! interval > one timestep
+      dtime_one = options%dtime / 1000000.0_lp   ! interval > one timestep
     END IF
     !@TODO: should this still be converted? or what should be done with the fluxes from pools?  
-    f_veg_flux_output = dtime_one * 1000000._wp / options%dtime
+    f_veg_flux_output = dtime_one * 1000000._lp / options%dtime
 
     ! iterate over the linked list of quincy output files
     this_q_out_file => model%quincy_output%first_output_file
@@ -2077,7 +2038,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         IF (this_q_out_var%l_is_acc_var) THEN
           SELECT CASE (this_q_out_var%out_fact_kind)
           CASE (NO_FACT, USE_NDAT_ACC)
-            this_out_fact = 1.0_wp
+            this_out_fact = 1.0_lp
           CASE (USE_VEG_FLUX_FACT)
             this_out_fact = f_veg_flux_output
           CASE DEFAULT
@@ -2122,13 +2083,13 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     CLASS(t_jsb_tile_abstract), INTENT(IN) :: tile             !< one tile with data structure for one lct
     TYPE(t_jsb_task_options),   INTENT(IN) :: options          !< model options
     INTEGER,                    INTENT(IN) :: nc_buffer_index  !< where to write in the buffer (current idx)
-    REAL(wp),                   INTENT(IN) :: elapsed_seconds  !< time in seconds since start
+    REAL(lp),                   INTENT(IN) :: elapsed_seconds  !< time in seconds since start
     ! ----------------------------------------------------------------------------------------------------- !
     TYPE(t_jsb_model),          POINTER :: model
     TYPE(t_quincy_outputfile),  POINTER :: this_q_out_file
     TYPE(t_quincy_out_var),     POINTER :: this_q_out_var
     INTEGER                             :: iblk, ind_var
-    REAL(wp)                            :: output_value
+    REAL(lp)                            :: output_value
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':add_to_nc_buffer'
     ! ----------------------------------------------------------------------------------------------------- !
     model => Get_model(tile%owner_model_id)
@@ -2158,14 +2119,14 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
           ! If it is a FLUX variable use the accumulated values
           IF(this_q_out_var%l_is_acc_var) THEN 
             IF ((this_q_out_var%out_fact_kind .EQ. USE_NDAT_ACC) &
-                & .AND. (model%quincy_output%ndat_acc .GT. 1.0_wp)) THEN
+                & .AND. (model%quincy_output%ndat_acc .GT. 1.0_lp)) THEN
               this_q_out_var%accumulated  = this_q_out_var%accumulated / model%quincy_output%ndat_acc
             ENDIF
             this_q_out_var%buffer_2D(nc_buffer_index) = this_q_out_var%accumulated
 
           ! If it is a POOL variable just update the buffer with the current status of the pool
           ELSE
-            output_value = 0._wp
+            output_value = 0._lp
             IF (ALLOCATED(this_q_out_var%var_container)) THEN
               DO ind_var = 1,SIZE(this_q_out_var%var_container)
                 output_value = output_value &
@@ -2186,7 +2147,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
         CASE (2)
           IF (this_q_out_var%l_is_acc_var) THEN
             IF (this_q_out_var%var_type .EQ. SOIL_LAYERED) THEN
-              IF ((this_q_out_var%out_fact_kind .EQ. USE_NDAT_ACC) .AND. (model%quincy_output%ndat_acc .GT. 1.0_wp)) THEN
+              IF ((this_q_out_var%out_fact_kind .EQ. USE_NDAT_ACC) .AND. (model%quincy_output%ndat_acc .GT. 1.0_lp)) THEN
                 this_q_out_var%buffer_3D(:, nc_buffer_index) = this_q_out_var%accumulated_2D(:) / model%quincy_output%ndat_acc
               ELSE
                 this_q_out_var%buffer_3D(:, nc_buffer_index) = this_q_out_var%accumulated_2D(:)
@@ -2306,7 +2267,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> write 2d var to nc4 output file
   !>
   SUBROUTINE write_array_to_1d_var_on_file(output_values, var_id, file_id, current_record, buffer_size)
-    REAL(wp), INTENT(IN) :: output_values(:)   !< output value to write
+    REAL(lp), INTENT(IN) :: output_values(:)   !< output value to write
     INTEGER,  INTENT(IN) :: var_id            !< ID of var to write to
     INTEGER,  INTENT(IN) :: file_id           !< ID of file to write to
     INTEGER,  INTENT(IN) :: current_record    !< where to write in the record dimension (here: time)
@@ -2325,7 +2286,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> write 3d var to nc4 output file
   !>
   SUBROUTINE write_2d_array_to_2d_var_on_file(output_values, var_id, file_id, current_record, buffer_size, dim2_len)
-    REAL(wp), INTENT(IN) :: output_values(:, :)   !< output value to write
+    REAL(lp), INTENT(IN) :: output_values(:, :)   !< output value to write
     INTEGER,  INTENT(IN) :: var_id            !< ID of var to write to
     INTEGER,  INTENT(IN) :: file_id           !< ID of file to write to
     INTEGER,  INTENT(IN) :: current_record    !< where to write in the record dimension (here: time)
@@ -2362,9 +2323,9 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> Calculated the weighted soil depth sum of the passed layered variable
   !>
   SUBROUTINE calculate_soil_depth_weighted_layer_sum(layered_array, soil_depth_sl, weighted_sum)
-    REAL(wp), INTENT(IN)  :: layered_array(:,:)
-    REAL(wp), INTENT(IN)  :: soil_depth_sl(:)
-    REAL(wp), INTENT(OUT) :: weighted_sum(:)
+    REAL(lp), INTENT(IN)  :: layered_array(:,:)
+    REAL(lp), INTENT(IN)  :: soil_depth_sl(:)
+    REAL(lp), INTENT(OUT) :: weighted_sum(:)
     ! ----------------------------------------------------------------------------------------------------- !
     INTEGER :: idx
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calculate_soil_depth_weighted_layer_sum'
@@ -2379,12 +2340,12 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> Calculated the weighted soil depth avg of the passed layered variable
   !>
   SUBROUTINE calculate_soil_depth_weighted_layer_avg(layered_array, soil_depth_sl, weighted_avg)
-    REAL(wp), INTENT(IN)  :: layered_array(:,:)
-    REAL(wp), INTENT(IN)  :: soil_depth_sl(:)
-    REAL(wp), INTENT(OUT) :: weighted_avg(:)
+    REAL(lp), INTENT(IN)  :: layered_array(:,:)
+    REAL(lp), INTENT(IN)  :: soil_depth_sl(:)
+    REAL(lp), INTENT(OUT) :: weighted_avg(:)
     ! ----------------------------------------------------------------------------------------------------- !
     INTEGER  :: idx
-    REAL(wp) :: soil_depth
+    REAL(lp) :: soil_depth
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calculate_soil_depth_weighted_layer_avg'
     ! ----------------------------------------------------------------------------------------------------- !
     soil_depth = SUM(soil_depth_sl(:))
@@ -2408,11 +2369,11 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':collect_veg_bgcm_pointers_for_element'
     ! ----------------------------------------------------------------------------------------------------- !
     ind = 1
-    nr_of_compartments = SIZE(veg_bgcm%pool_list)
+    nr_of_compartments = SIZE(veg_bgcm%bgcm_list)
 
     DO i_compartment = 1, nr_of_compartments
-      compartment_names(ind) = veg_bgcm%pool_list(i_compartment)%p%shortname
-      compartment_pointers(ind)%p => veg_bgcm%pool_list(i_compartment)%p%element_list(this_elem_idx)%p
+      compartment_names(ind) = veg_bgcm%bgcm_list(i_compartment)%p%shortname
+      compartment_pointers(ind)%p => veg_bgcm%bgcm_list(i_compartment)%p%element_list(this_elem_idx)%p
       ind = ind + 1
     END DO ! compartments
 
@@ -2433,9 +2394,9 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     CHARACTER(len=*), PARAMETER   :: routine = TRIM(modname)//':collect_sb_bgcm_pointers_for_element'
     ! ----------------------------------------------------------------------------------------------------- !
     ! collect compartment names and pointer
-    DO ind = 1,SIZE(quincy_sb_bgcm_struct%pool_list)
-      compartment_names(ind) = quincy_sb_bgcm_struct%pool_list(ind)%p%shortname
-      compartment_pointers(ind)%p => quincy_sb_bgcm_struct%pool_list(ind)%p%element_list(this_elem_idx)%p
+    DO ind = 1,SIZE(quincy_sb_bgcm_struct%bgcm_list)
+      compartment_names(ind) = quincy_sb_bgcm_struct%bgcm_list(ind)%p%shortname
+      compartment_pointers(ind)%p => quincy_sb_bgcm_struct%bgcm_list(ind)%p%element_list(this_elem_idx)%p
     ENDDO
   END SUBROUTINE collect_sb_bgcm_pointers_for_element
 
@@ -2445,7 +2406,7 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
   !> checks that netcdf output is possible with the given output interval 
   !>
   SUBROUTINE assert_possible_output_interval(output_interval_in_days, output_interval_char, caller, tag)
-    REAL(wp),                   INTENT(IN) :: output_interval_in_days !< interval in days (1.0 == one day exactly)
+    REAL(lp),                   INTENT(IN) :: output_interval_in_days !< interval in days (1.0 == one day exactly)
     CHARACTER(len=*),           INTENT(IN) :: output_interval_char    !< output interval tag for filename
     CHARACTER(len=*),           INTENT(IN) :: caller                  !< calling routine
     CHARACTER(len=*), OPTIONAL, INTENT(IN) :: tag                     !< providing more context, e.g. spin-up
@@ -2457,8 +2418,8 @@ END SUBROUTINE add_element_of_veg_bgcm_compartment
     ! with netcdf all 'regular' timesteps are possible, i.e. yearly, weekly, daily and timestep output
     ! monthly output however is not possible
     is_expected_output_interval = (output_interval_in_days == one_year) &
-      & .OR. (output_interval_in_days == 7.0_wp)                        &
-      & .OR. ((output_interval_in_days <= 1.0_wp) .AND. (output_interval_in_days > 0.0_wp))
+      & .OR. (output_interval_in_days == 7.0_lp)                        &
+      & .OR. ((output_interval_in_days <= 1.0_lp) .AND. (output_interval_in_days > 0.0_lp))
 
     IF(PRESENT(tag)) THEN
       this_tag = tag

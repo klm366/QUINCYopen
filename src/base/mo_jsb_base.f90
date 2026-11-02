@@ -41,7 +41,7 @@ CONTAINS
   SUBROUTINE setup_model_vgrid_procconf(namelist_filename)
 
     USE mo_jsb_process_factory,   ONLY: max_no_of_processes, Create_process
-    USE mo_jsb_process_class,     ONLY: A2L_, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, RAD_, Q_ASSIMI_, Q_PHENO_, SB_, PHYD_
+    USE mo_jsb_process_class,     ONLY: A2L_, L2A_, SEB_, TURB_, HYDRO_, VEG_, HD_, RAD_, Q_ASSIMI_, Q_PHENO_, SB_, PHYD_
     USE mo_jsb_config_class,      ONLY: new_model_config
     USE mo_jsb_control,           ONLY: get_no_of_models
     USE mo_jsb_model_class,       ONLY: t_jsb_model, new_model
@@ -148,7 +148,6 @@ CONTAINS
     USE mo_phyd_parameters,           ONLY: init_phyd_parameters
     USE mo_dfire_constants,           ONLY: init_dfire_constants
     USE mo_veg_constants,             ONLY: init_veg_constants
-    USE mo_spq_constants,             ONLY: init_spq_constants
     USE mo_sb_constants,              ONLY: init_sb_constants
     USE mo_phyd_constants,            ONLY: init_phyd_constants
     USE mo_q_agr_constants,           ONLY: init_q_agr_constants
@@ -175,7 +174,6 @@ CONTAINS
     CALL init_qs_atmland_constants
     CALL init_q_assimi_parameters
     CALL init_veg_constants             ! uses Tzero                    defined in mo_jsb_physical_constants
-    CALL init_spq_constants
     CALL init_sb_constants
     CALL init_q_pheno_parameters
     CALL init_phyd_parameters

@@ -60,7 +60,6 @@ mo_sb_memory_class.o: \
   mo_jsb_cqt_class.o \
   mo_jsb_memory_class.o \
   mo_jsb_var_class.o \
-  mo_jsb_pool_class.o \
   mo_jsb_lct_class.o \
   mo_jsb_varlist.o \
   mo_jsb_io.o \
@@ -182,9 +181,9 @@ mo_q_sb_rate_modifier.o: \
   mo_sse_memory_class.o \
   mo_hydro_memory_class.o \
   mo_sb_memory_class.o \
-  mo_spq_constants.o \
   mo_phy_schemes.o \
   mo_veg_constants.o \
+  mo_hydro_constants.o \
   mo_sb_constants.o
 
 mo_q_sb_jsm_processes.o: \
@@ -195,7 +194,7 @@ mo_q_sb_jsm_processes.o: \
   mo_lnd_time_averages.o \
   mo_jsb_physical_constants.o \
   mo_sb_constants.o \
-  mo_spq_util.o \
+  mo_sb_util.o \
   mo_q_sb_jsm_transport.o \
   mo_sb_memory_class.o \
   mo_isotope_util.o

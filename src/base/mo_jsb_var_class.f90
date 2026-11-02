@@ -14,7 +14,7 @@
 MODULE mo_jsb_var_class
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp, dp
+  USE mo_kind,                ONLY: lp, dp
   USE mo_exception,           ONLY: finish, message
   USE mo_jsb_varlist_iface,   ONLY: VARNAME_LEN 
   USE mo_jsb_grid_class,      ONLY: t_jsb_grid, t_jsb_vgrid
@@ -34,10 +34,10 @@ MODULE mo_jsb_var_class
   !! 
   !-----------------------------------------------------------------------------------------------------
   TYPE, ABSTRACT :: t_jsb_var
-    REAL(wp), POINTER     :: ptr1d(:)     => NULL()
-    REAL(wp), POINTER     :: ptr2d(:,:)   => NULL()
-    REAL(wp), POINTER     :: ptr3d(:,:,:) => NULL()
-    REAL(wp), ALLOCATABLE :: field(:,:,:,:,:)
+    REAL(lp), POINTER     :: ptr1d(:)     => NULL()
+    REAL(lp), POINTER     :: ptr2d(:,:)   => NULL()
+    REAL(lp), POINTER     :: ptr3d(:,:,:) => NULL()
+    REAL(lp), ALLOCATABLE :: field(:,:,:,:,:)
 
     CHARACTER(len=VARNAME_LEN)    :: name                      ! Name of variable
     CHARACTER(len=VARNAME_LEN)    :: full_name                 ! Full name of variable in varlist, including prefix and suffix
@@ -68,7 +68,7 @@ MODULE mo_jsb_var_class
   ! t_jsb_var_real1d
   !================================================================================================================================
   TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real1d
-    REAL(wp), POINTER &
+    REAL(lp), POINTER &
       :: ptr(:) => NULL()                    ! associated with ptr1d(:) with dimension ptr1d(1:1)
   END TYPE t_jsb_var_real1d
 
@@ -78,8 +78,8 @@ MODULE mo_jsb_var_class
   !! ics:ice,iblk
   !-----------------------------------------------------------------------------------------------------
   TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real2d
-    REAL(wp), POINTER :: ptr(:,:) => NULL()  ! associated with ptr2d(:,:)
-    REAL(wp), POINTER :: ptrm1(:) => NULL()  ! points to ptr(ics:ice,iblk)
+    REAL(lp), POINTER :: ptr(:,:) => NULL()  ! associated with ptr2d(:,:)
+    REAL(lp), POINTER :: ptrm1(:) => NULL()  ! points to ptr(ics:ice,iblk)
   CONTAINS
     FINAL     :: finalize_jsb_var_real2d
   END TYPE t_jsb_var_real2d
@@ -90,8 +90,8 @@ MODULE mo_jsb_var_class
   !! ics:ice,:,iblk
   !-----------------------------------------------------------------------------------------------------
   TYPE, EXTENDS(t_jsb_var) :: t_jsb_var_real3d
-    REAL(wp), POINTER :: ptr(:,:,:) => NULL()  ! associated with ptr3d(:,:,:)
-    REAL(wp), POINTER :: ptrm1(:,:) => NULL()  ! points to ptr(ics:ice,:,iblk)
+    REAL(lp), POINTER :: ptr(:,:,:) => NULL()  ! associated with ptr3d(:,:,:)
+    REAL(lp), POINTER :: ptrm1(:,:) => NULL()  ! points to ptr(ics:ice,:,iblk)
   CONTAINS
     FINAL     :: finalize_jsb_var_real3d
   END TYPE t_jsb_var_real3d

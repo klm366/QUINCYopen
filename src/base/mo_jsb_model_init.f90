@@ -17,7 +17,7 @@ MODULE mo_jsb_model_init
 
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,             ONLY: wp
+  USE mo_kind,             ONLY: lp
   USE mo_exception,        ONLY: message_text, message, finish
 
   IMPLICIT NONE
@@ -29,11 +29,11 @@ MODULE mo_jsb_model_init
   PUBLIC :: flux_trans_timestep_out_state
 
   ! variables used in the land model driver
-  REAL(wp) :: time_day                      !< displays the 'real time' in days; time_day == 1.0 after one day has passed
+  REAL(lp) :: time_day                      !< displays the 'real time' in days; time_day == 1.0 after one day has passed
   INTEGER  :: time_year                     !< displays the 'real time' in years; the 1st year of a simulation == 1 (not zero)
   INTEGER  :: ntimestep                     !< number of timesteps the model runs
   INTEGER  :: itimestep                     !< current timestep i, looping over timesteps ntimestep
-  REAL(wp) :: timestep_prop_day             !< proportion of one day that is simulated with one timestep (dtime/one_day)
+  REAL(lp) :: timestep_prop_day             !< proportion of one day that is simulated with one timestep (dtime/one_day)
   INTEGER  :: flux_trans_timestep_out_state !< state of the fluxnet diagnostics simulation [0,3], see the below init for details
 
   INTERFACE jsbach_setup_grid
@@ -96,8 +96,8 @@ CONTAINS
     ALLOCATE(grid%lsf(grid%nproma, grid%nblks))
     ALLOCATE(grid%area(grid%nproma, grid%nblks))
     grid%lsm(:,:)  = .TRUE.
-    grid%lsf(:,:)  = 1.0_wp
-    grid%area(:,:) = 1.0_wp
+    grid%lsf(:,:)  = 1.0_lp
+    grid%area(:,:) = 1.0_lp
 
     NULLIFY(model)    ! NULLIFY pointer to model
 
@@ -130,7 +130,6 @@ CONTAINS
     USE mo_jsb4_forcing,          ONLY: setup_forcing, init_forcing   ! setup icon-land forcing_options(:)
     ! process init
     USE mo_veg_init,              ONLY: veg_init
-    USE mo_spq_init,              ONLY: spq_init
     USE mo_hydro_init,            ONLY: hydro_init
     USE mo_sse_init,              ONLY: sse_init
     USE mo_seb_init,              ONLY: seb_init
@@ -192,8 +191,8 @@ CONTAINS
     !>2.0 model options
     !>
     model%options%dtime        = model%config%dtime !< length of one time step
-    model%options%alpha        = 1.0_wp
-      !< in ICON-Land, 'alpha' is derived as alpha = MERGE(1._wp, cvdifts, jsbach_runs_standalone()))
+    model%options%alpha        = 1.0_lp
+      !< in ICON-Land, 'alpha' is derived as alpha = MERGE(1._lp, cvdifts, jsbach_runs_standalone()))
       !< with cvdifts comming from ICON where it is set to 1.5; i.e. standalone: 1.0 // coupled: 1.5
     model%options%iblk         = iblk               !< 
     model%options%nproma       = nproma             !< 
@@ -256,8 +255,8 @@ CONTAINS
       CALL message(TRIM(routine), 'tile%contains_soil        = .TRUE.')
       ALLOCATE(tile%fract(nproma, nblks))
       ALLOCATE(tile%fract_old(nproma, nblks))
-      tile%fract(:,:)           = 1.0_wp
-      tile%fract_old(:,:)       = 1.0_wp
+      tile%fract(:,:)           = 1.0_lp
+      tile%fract_old(:,:)       = 1.0_lp
 
       !! this option is outdated; forcing is always used, but not for test_canopy, as the below CASE indicates :)
       !!
@@ -325,22 +324,16 @@ CONTAINS
         CALL seb_init(tile)
       END IF
       ! hydro_init
-      ! initialize HYDRO_ before VEG_ and SPQ_
+      ! initialize HYDRO_ before VEG_
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
         CALL hydro_init(tile)
-      END IF
-      ! spq_init
-      IF (.NOT. model%config%use_soil_phys_jsbach) THEN
-        IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL, QCANOPY ]) > 0) THEN
-          CALL spq_init(tile)
-        END IF
       END IF
       ! veg_init
       IF (one_of(model%config%qmodel_id, &
           & [ QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION ]) > 0) THEN
         CALL veg_init(tile)
       END IF
-      ! sb_init (needs spq_init to be finished)
+      ! sb_init
       IF (one_of(model%config%qmodel_id, [ QLAND, QPLANT, QSOIL ]) > 0) THEN
         CALL sb_init(tile)
       END IF
@@ -379,7 +372,7 @@ CONTAINS
 
     !>4.0 Time init for e.g. the time loop in the quincy_qs_model_driver
     !>
-    time_day          = 0.0_wp                                        !! equals 1.0 after one day has passed (i.e. start with zero)
+    time_day          = 0.0_lp                                        !! equals 1.0 after one day has passed (i.e. start with zero)
     time_year         = 1                                             !! the 1st year of a simulation == 1 (not zero)
     ntimestep         = forcing_options%Timesteps(model%config%dtime) !! number of time steps (considers the simulation_mode static & transient)
     timestep_prop_day = model%config%dtime / one_day                  !! proportion of one day that is simulated with one timestep

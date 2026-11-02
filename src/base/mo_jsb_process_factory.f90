@@ -35,7 +35,6 @@ MODULE mo_jsb_process_factory
   USE mo_phyd_memory_class,    ONLY: t_phyd_memory
   USE mo_q_syl_memory_class,   ONLY: t_q_syl_memory
   USE mo_q_agr_memory_class,   ONLY: t_q_agr_memory
-  USE mo_spq_memory_class,     ONLY: t_spq_memory
 
 !!#ifndef __NO_JSBACH_HD__
 !!  USE mo_hd_memory_class,      ONLY: t_hd_memory
@@ -66,8 +65,6 @@ MODULE mo_jsb_process_factory
   USE mo_q_syl_config_class,   ONLY: t_q_syl_config
   USE mo_q_agr_interface,      ONLY: Register_q_agr_tasks
   USE mo_q_agr_config_class,   ONLY: t_q_agr_config
-  USE mo_q_spq_interface,      ONLY: Register_spq_tasks_quincy
-  USE mo_spq_config_class,     ONLY: t_spq_config
   USE mo_alcc_config_class,    ONLY: t_alcc_config
 !!#ifndef __NO_JSBACH_HD__
 !!  USE mo_hd_interface,         ONLY: Register_hd_tasks
@@ -75,7 +72,7 @@ MODULE mo_jsb_process_factory
 !!#endif
 
   USE mo_jsb_process_class, ONLY: A2L_, L2A_, SEB_, TURB_, SSE_, HYDRO_, VEG_, HD_, Q_ASSIMI_, Q_PHENO_, &
-    & SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, SPQ_, ALCC_
+    & SB_, DFIRE_, PHYD_, RAD_, Q_SYL_, Q_AGR_, ALCC_
   
   IMPLICIT NONE
   PRIVATE
@@ -147,9 +144,6 @@ CONTAINS
   CASE (Q_AGR_)
     CALL Register_q_agr_tasks(return_ptr, model_id)
     ALLOCATE(t_q_agr_config::return_ptr%config)
-  CASE (SPQ_)
-    CALL Register_spq_tasks_quincy(return_ptr, model_id)
-    ALLOCATE(t_spq_config::return_ptr%config)
   CASE (ALCC_)
     ALLOCATE(t_alcc_config::return_ptr%config)
 ! #ifndef __NO_JSBACH_HD__
@@ -184,7 +178,6 @@ CONTAINS
     USE mo_rad_memory_class,     ONLY: max_no_of_rad_vars       => max_no_of_vars
     USE mo_q_syl_memory_class,   ONLY: max_no_of_q_syl_vars     => max_no_of_vars
     USE mo_q_agr_memory_class,   ONLY: max_no_of_q_agr_vars     => max_no_of_vars
-    USE mo_spq_memory_class,     ONLY: max_no_of_spq_vars       => max_no_of_vars
 !!#ifndef __NO_JSBACH_HD__
 !!    USE mo_hd_memory_class,      ONLY: max_no_of_hd_vars => max_no_of_vars
 !!#endif
@@ -243,9 +236,6 @@ CONTAINS
     CASE (Q_AGR_)
       ALLOCATE(t_q_agr_memory::return_ptr)
       return_ptr%max_no_of_vars = max_no_of_q_agr_vars
-    CASE (SPQ_)
-      ALLOCATE(t_spq_memory::return_ptr)
-      return_ptr%max_no_of_vars = max_no_of_spq_vars
 !!#ifndef __NO_JSBACH_HD__
 !!    CASE (HD_)
 !!      ALLOCATE(t_hd_memory::return_ptr)

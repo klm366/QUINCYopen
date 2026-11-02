@@ -18,7 +18,7 @@
 MODULE mo_phyd_init
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_exception,           ONLY: message, finish
   USE mo_jsb_control,         ONLY: debug_on
 
@@ -101,8 +101,8 @@ CONTAINS
 
     ! Initialse Stem and leaf water potentials with zero assuming super well saturated
     ! leaves and stem
-    psi_leaf(:,:) = 0.0_wp
-    psi_stem(:,:) = 0.0_wp
+    psi_leaf(:,:) = 0.0_lp
+    psi_stem(:,:) = 0.0_lp
 
     IF (dsl4jsb_Config(PHYD_)%use_plant_hydraulics) THEN
       CALL message(TRIM(routine), ' Using plant hydraulics')

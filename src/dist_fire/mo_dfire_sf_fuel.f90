@@ -16,7 +16,7 @@
 MODULE mo_dfire_sf_fuel
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_jsb_control,         ONLY: debug_on
   USE mo_exception,           ONLY: message
 
@@ -85,9 +85,9 @@ CONTAINS
   !> Calculate dead and live fuel
   !>
   SUBROUTINE calc_sf_fuel(density_human_population, lightning_frequency)
-    REAL(wp), intent(in) :: density_human_population !< average human population density in the grid cell
+    REAL(lp), intent(in) :: density_human_population !< average human population density in the grid cell
                                                      !< [individuals km-2]
-    REAL(wp), intent(in) :: lightning_frequency      !< avrg number of all lightnings [ha-1 d-1]
+    REAL(lp), intent(in) :: lightning_frequency      !< avrg number of all lightnings [ha-1 d-1]
     ! ----------------------------------------------------------------------------------------------------- !
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_sf_fuel'
 

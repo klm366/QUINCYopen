@@ -24,7 +24,7 @@ MODULE mo_sync
 !-------------------------------------------------------------------------
 
 
-USE mo_kind,               ONLY: sp, wp, dp, i4, i8
+USE mo_kind,               ONLY: sp, lp, dp, i4, i8
 ! USE mo_exception,          ONLY: finish, message, message_text
 ! USE mo_exception,          ONLY: warning
 ! USE mo_model_domain,       ONLY: t_patch
@@ -1290,7 +1290,7 @@ CONTAINS
 
 !   INTEGER :: nblks, n_idx, n_idx_g, jb, jl, i_l, i_g
 !   LOGICAL :: remap
-!   REAL(wp), ALLOCATABLE :: z_idx(:,:)
+!   REAL(lp), ALLOCATABLE :: z_idx(:,:)
 !   TYPE(t_grid_domain_decomp_info), POINTER :: decomp_info
 
 ! #ifdef __SX__
@@ -1337,7 +1337,7 @@ CONTAINS
 !   if(ubound(idx,2) /= nblks)  CALL finish('sync_idx','ubound(idx,2) /= nblks')
 
 !   ALLOCATE(z_idx(nproma,nblks))
-!   z_idx = 0._wp
+!   z_idx = 0._lp
 
 !   ! Set z_idx with the global 1D-index of all points
 
@@ -1351,9 +1351,9 @@ CONTAINS
 !       i_l = idx_1d(idx(jl,jb),blk(jl,jb))
 
 !       IF(i_l <= 0 .or. i_l > n_idx) THEN
-!         z_idx(jl,jb) = 0._wp
+!         z_idx(jl,jb) = 0._lp
 !       ELSE
-!         z_idx(jl,jb) = REAL(decomp_info%glb_index(i_l),wp)
+!         z_idx(jl,jb) = REAL(decomp_info%glb_index(i_l),lp)
 !       ENDIF
 
 !     END DO
@@ -1562,7 +1562,7 @@ CONTAINS
 !   INTEGER, OPTIONAL, INTENT(IN) :: opt_iroot
 !   INTEGER                       :: global_sum
 !   ! local variables
-!   REAL(wp)                      :: z_aux, z_auxs
+!   REAL(lp)                      :: z_aux, z_auxs
 !   INTEGER                       :: p_comm_glob
 !   start_sync_timer(timer_global_sum)
 
@@ -1572,8 +1572,8 @@ CONTAINS
 !     p_comm_glob = glob_comm(comm_lev)
 !   ENDIF
 
-!   z_aux  =  REAL(zfield,wp)
-!   z_auxs = 0._wp
+!   z_aux  =  REAL(zfield,lp)
+!   z_auxs = 0._lp
 !   z_auxs = p_sum(z_aux, comm=p_comm_glob, root=opt_iroot)
 
 !   global_sum = NINT(z_auxs)
@@ -2382,7 +2382,7 @@ END FUNCTION global_sum_array_2d_dp
 
 !   INTEGER, INTENT(IN) :: zfield
 !   INTEGER  :: global_min
-!   REAL(wp) :: global_min_check
+!   REAL(lp) :: global_min_check
 
 !   IF(comm_lev==0) THEN
 !     global_min = p_min(zfield, comm=p_comm_work)
@@ -2391,7 +2391,7 @@ END FUNCTION global_sum_array_2d_dp
 !   ENDIF
 
 !   IF(p_test_run .AND. do_sync_checks) THEN
-!     global_min_check = REAL(global_min, KIND=wp)
+!     global_min_check = REAL(global_min, KIND=lp)
 !     CALL check_result( (/ global_min_check /), 'global_min' )
 !   ENDIF
 
@@ -2502,7 +2502,7 @@ END FUNCTION global_sum_array_2d_dp
 
 !   INTEGER, INTENT(IN) :: zfield
 !   INTEGER  :: global_max
-!   REAL(wp) :: global_max_check
+!   REAL(lp) :: global_max_check
 !   INTEGER  :: pcomm
 
 !   IF(comm_lev==0) THEN
@@ -2518,7 +2518,7 @@ END FUNCTION global_sum_array_2d_dp
 !   ENDIF
 
 !   IF(p_test_run .AND. do_sync_checks) THEN
-!     global_max_check = REAL(global_max, KIND=wp)
+!     global_max_check = REAL(global_max, KIND=lp)
 !     CALL check_result( (/ global_max_check /), 'global_max' )
 !   ENDIF
 
@@ -3376,11 +3376,11 @@ END FUNCTION global_sum_array_2d_dp
 
 !    TYPE(t_patch), INTENT(INOUT) :: p_patch
 
-!    REAL(wp) :: cellstat(0:7),edgestat(0:6),vertstat(0:5), csmax(0:6),csmin(0:6),csavg(0:7), &
+!    REAL(lp) :: cellstat(0:7),edgestat(0:6),vertstat(0:5), csmax(0:6),csmin(0:6),csavg(0:7), &
 !                esmax(0:6),esmin(0:6),esavg(0:6),vsmax(0:5),vsmin(0:5),vsavg(0:5),avglat,avglon
 !    INTEGER  :: i_nchdom, i, i_pe, max_nprecv, i1, i2, i1m, i2m
 !    INTEGER,  ALLOCATABLE :: nprecv_buf(:),displs(:),recvlist_buf(:)
-!    REAL(wp), ALLOCATABLE :: avglat_buf(:),avglon_buf(:)
+!    REAL(lp), ALLOCATABLE :: avglat_buf(:),avglon_buf(:)
 !    INTEGER :: np_recv
 !    INTEGER, ALLOCATABLE :: pelist_recv(:)
 
@@ -3389,50 +3389,50 @@ END FUNCTION global_sum_array_2d_dp
 !    i_nchdom = MAX(1,p_patch%n_childdom)
 
 !    cellstat(0) = REAL(nproma*(p_patch%cells%end_blk(grf_bdywidth_c,1)-1) + &
-!                       p_patch%cells%end_idx(grf_bdywidth_c,1),wp)
+!                       p_patch%cells%end_idx(grf_bdywidth_c,1),lp)
 !    cellstat(1) = REAL(nproma*(p_patch%cells%end_blk(min_rlcell_int,i_nchdom)-1) + &
-!                       p_patch%cells%end_idx(min_rlcell_int,i_nchdom),wp) - cellstat(0)
+!                       p_patch%cells%end_idx(min_rlcell_int,i_nchdom),lp) - cellstat(0)
 !    cellstat(2) = REAL(nproma*(p_patch%cells%end_blk(min_rlcell_int-1,i_nchdom)-1) + &
-!                       p_patch%cells%end_idx(min_rlcell_int-1,i_nchdom),wp) - cellstat(0)
+!                       p_patch%cells%end_idx(min_rlcell_int-1,i_nchdom),lp) - cellstat(0)
 !    cellstat(3) = REAL(nproma*(p_patch%cells%end_blk(min_rlcell_int-2,i_nchdom)-1) + &
-!                       p_patch%cells%end_idx(min_rlcell_int-2,i_nchdom),wp) - cellstat(0)
+!                       p_patch%cells%end_idx(min_rlcell_int-2,i_nchdom),lp) - cellstat(0)
 !    cellstat(4) = REAL(nproma*(p_patch%cells%end_blk(min_rlcell_int-2,i_nchdom)-1) + &
-!                       p_patch%cells%end_idx(min_rlcell_int-2,i_nchdom),wp)
-!    cellstat(5) = REAL(get_np_send(p_patch%comm_pat_c),wp)
-!    cellstat(6) = REAL(get_np_recv(p_patch%comm_pat_c),wp)
+!                       p_patch%cells%end_idx(min_rlcell_int-2,i_nchdom),lp)
+!    cellstat(5) = REAL(get_np_send(p_patch%comm_pat_c),lp)
+!    cellstat(6) = REAL(get_np_recv(p_patch%comm_pat_c),lp)
 
 !    ! The purpose of this is to compute average quantities only over those PEs
 !    ! that actually contain grid points of a given model domain (relevant in the case
 !    ! of processor splitting)
-!    IF (cellstat(1) > 0._wp) THEN
-!      cellstat(7) = 1._wp
+!    IF (cellstat(1) > 0._lp) THEN
+!      cellstat(7) = 1._lp
 !    ELSE
-!      cellstat(7) = 0._wp
+!      cellstat(7) = 0._lp
 !    ENDIF
 
 !    edgestat(0) = REAL(nproma*(p_patch%edges%end_blk(grf_bdywidth_e,1)-1) + &
-!                       p_patch%edges%end_idx(grf_bdywidth_e,1),wp)
+!                       p_patch%edges%end_idx(grf_bdywidth_e,1),lp)
 !    edgestat(1) = REAL(nproma*(p_patch%edges%end_blk(min_rledge_int,i_nchdom)-1) + &
-!                       p_patch%edges%end_idx(min_rledge_int,i_nchdom),wp) - edgestat(0)
+!                       p_patch%edges%end_idx(min_rledge_int,i_nchdom),lp) - edgestat(0)
 !    edgestat(2) = REAL(nproma*(p_patch%edges%end_blk(min_rledge_int-1,i_nchdom)-1) + &
-!                       p_patch%edges%end_idx(min_rledge_int-1,i_nchdom),wp) - edgestat(0)
+!                       p_patch%edges%end_idx(min_rledge_int-1,i_nchdom),lp) - edgestat(0)
 !    edgestat(3) = REAL(nproma*(p_patch%edges%end_blk(min_rledge_int-2,i_nchdom)-1) + &
-!                       p_patch%edges%end_idx(min_rledge_int-2,i_nchdom),wp) - edgestat(0)
+!                       p_patch%edges%end_idx(min_rledge_int-2,i_nchdom),lp) - edgestat(0)
 !    edgestat(4) = REAL(nproma*(p_patch%edges%end_blk(min_rledge_int-3,i_nchdom)-1) + &
-!                       p_patch%edges%end_idx(min_rledge_int-3,i_nchdom),wp) - edgestat(0)
-!    edgestat(5) = REAL(get_np_send(p_patch%comm_pat_e),wp)
-!    edgestat(6) = REAL(get_np_recv(p_patch%comm_pat_e),wp)
+!                       p_patch%edges%end_idx(min_rledge_int-3,i_nchdom),lp) - edgestat(0)
+!    edgestat(5) = REAL(get_np_send(p_patch%comm_pat_e),lp)
+!    edgestat(6) = REAL(get_np_recv(p_patch%comm_pat_e),lp)
 
 !    vertstat(0) = REAL(nproma*(p_patch%verts%end_blk(grf_bdywidth_c,1)-1) + &
-!                       p_patch%verts%end_idx(grf_bdywidth_c,1),wp)
+!                       p_patch%verts%end_idx(grf_bdywidth_c,1),lp)
 !    vertstat(1) = REAL(nproma*(p_patch%verts%end_blk(min_rlvert_int,i_nchdom)-1) + &
-!                       p_patch%verts%end_idx(min_rlvert_int,i_nchdom),wp) - vertstat(0)
+!                       p_patch%verts%end_idx(min_rlvert_int,i_nchdom),lp) - vertstat(0)
 !    vertstat(2) = REAL(nproma*(p_patch%verts%end_blk(min_rlvert_int-1,i_nchdom)-1) + &
-!                       p_patch%verts%end_idx(min_rlvert_int-1,i_nchdom),wp) - vertstat(0)
+!                       p_patch%verts%end_idx(min_rlvert_int-1,i_nchdom),lp) - vertstat(0)
 !    vertstat(3) = REAL(nproma*(p_patch%verts%end_blk(min_rlvert_int-2,i_nchdom)-1) + &
-!                       p_patch%verts%end_idx(min_rlvert_int-2,i_nchdom),wp) - vertstat(0)
-!    vertstat(4) = REAL(get_np_send(p_patch%comm_pat_v),wp)
-!    vertstat(5) = REAL(get_np_recv(p_patch%comm_pat_v),wp)
+!                       p_patch%verts%end_idx(min_rlvert_int-2,i_nchdom),lp) - vertstat(0)
+!    vertstat(4) = REAL(get_np_send(p_patch%comm_pat_v),lp)
+!    vertstat(5) = REAL(get_np_recv(p_patch%comm_pat_v),lp)
 
 !    ! Question: how can I exclude PEs containing zero grid points of a model domain
 !    ! from global minimum computation?
@@ -3441,16 +3441,16 @@ END FUNCTION global_sum_array_2d_dp
 !    DO i = 0, 7
 !      csavg(i) = global_sum_array(cellstat(i))
 !    ENDDO
-!    csavg(0:6) = csavg(0:6)/MAX(1._wp,csavg(7))
+!    csavg(0:6) = csavg(0:6)/MAX(1._lp,csavg(7))
 !    esmax = global_max(edgestat)
 !    esmin = global_min(edgestat)
 !    DO i = 0, 6
-!      esavg(i) = global_sum_array(edgestat(i))/MAX(1._wp,csavg(7))
+!      esavg(i) = global_sum_array(edgestat(i))/MAX(1._lp,csavg(7))
 !    ENDDO
 !    vsmax = global_max(vertstat)
 !    vsmin = global_min(vertstat)
 !    DO i = 0, 5
-!      vsavg(i) = global_sum_array(vertstat(i))/MAX(1._wp,csavg(7))
+!      vsavg(i) = global_sum_array(vertstat(i))/MAX(1._lp,csavg(7))
 !    ENDDO
 
 !    WRITE(message_text,'(a,i4)') 'grid ',p_patch%id
@@ -3515,8 +3515,8 @@ END FUNCTION global_sum_array_2d_dp
 !      max_nprecv = NINT(csmax(6))
 
 !      ! Compute average latitude and longitude over prognostic grid points (including nest boundary)
-!      avglat = 0._wp
-!      avglon = 0._wp
+!      avglat = 0._lp
+!      avglon = 0._lp
 !      i2m = p_patch%cells%end_blk(min_rlcell_int,i_nchdom)
 !      DO i2 = 1, i2m
 !        i1m = nproma
@@ -3527,12 +3527,12 @@ END FUNCTION global_sum_array_2d_dp
 !        ENDDO
 !      ENDDO
 
-!      IF (cellstat(0)+cellstat(1) > 0._wp) THEN
-!        avglat = avglat/(cellstat(0)+cellstat(1))*180._wp/pi
-!        avglon = avglon/(cellstat(0)+cellstat(1))*180._wp/pi
+!      IF (cellstat(0)+cellstat(1) > 0._lp) THEN
+!        avglat = avglat/(cellstat(0)+cellstat(1))*180._lp/pi
+!        avglon = avglon/(cellstat(0)+cellstat(1))*180._lp/pi
 !      ELSE
-!        avglat = 0._wp
-!        avglon = 0._wp
+!        avglat = 0._lp
+!        avglon = 0._lp
 !      ENDIF
 
 !      ALLOCATE(nprecv_buf(p_n_work),displs(p_n_work),recvlist_buf(max_nprecv*p_n_work), &

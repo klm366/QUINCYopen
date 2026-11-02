@@ -18,7 +18,7 @@
 MODULE mo_phyd_process
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_jsb_impl_constants,  ONLY: true, false, test_false_true
   USE mo_jsb_control,         ONLY: debug_on
   USE mo_exception,           ONLY: message
@@ -114,18 +114,18 @@ CONTAINS
     USE mo_jsb_impl_constants,      ONLY: true, false, test_false_true
     USE mo_phyd_constants,        ONLY: mpa_to_pa, pa_to_mpa, kg_h2o_to_mol
     ! ----------------------------------------------------------------------------------------------------- !
-    REAL(wp),     INTENT(in)    :: t_air                            !< air temp
+    REAL(lp),     INTENT(in)    :: t_air                            !< air temp
     ! ----------------------------------------------------------------------------------------------------- !
-    REAL(wp),     INTENT(inout) :: psi_leaf                         !< leaf water potential
-    REAL(wp),     INTENT(inout) :: psi_stem                         !< stem water potential
+    REAL(lp),     INTENT(inout) :: psi_leaf                         !< leaf water potential
+    REAL(lp),     INTENT(inout) :: psi_stem                         !< stem water potential
     ! ----------------------------------------------------------------------------------------------------- !
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_plant_hydraulics'
     ! ----------------------------------------------------------------------------------------------------- !
 
     ! Dummy code just to have some output
 
-    psi_leaf = 1.1_wp
-    psi_stem = t_air - 3.0_wp
+    psi_leaf = 1.1_lp
+    psi_stem = t_air - 3.0_lp
 
   END SUBROUTINE calc_plant_hydraulics 
 

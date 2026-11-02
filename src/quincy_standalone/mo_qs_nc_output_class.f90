@@ -16,9 +16,9 @@
 !>#### defines QUINCY model parameters, units and helpers for model output
 !>
 MODULE mo_qs_nc_output_class
-#ifndef __NO_QUINCY__
+#ifndef __NO_JSBACH__
 
-  USE mo_kind,              ONLY: wp
+  USE mo_kind,              ONLY: lp
   USE mo_io_units,          ONLY: filename_max
   USE mo_jsb_var_class,     ONLY: t_jsb_var_p, t_jsb_var_real2d, t_jsb_var_real3d
   USE mo_jsb_varlist_iface, ONLY: VARNAME_LEN
@@ -53,7 +53,7 @@ MODULE mo_qs_nc_output_class
   TYPE :: t_quincy_output
     INTEGER                             :: nr_of_output_files  = 0
       !< counter for number of output files
-    REAL(wp)                            :: ndat_acc            = 0._wp
+    REAL(lp)                            :: ndat_acc            = 0._lp
       !< "timestep counter for averaging" (from mo_qs_output_txt)
     !@TODO: rename or change comment
     TYPE(t_quincy_outputfile), POINTER  :: first_output_file   => NULL()
@@ -120,15 +120,15 @@ MODULE mo_qs_nc_output_class
       !< set to the id of an element, if var is an element itself or a collection of compartments
     INTEGER                         :: out_fact_kind    = NO_FACT
       !< if a conversion/averaging factor is to be used upon output writing
-    REAL(wp)                        :: accumulated      = 0._wp
-    REAL(wp), ALLOCATABLE           :: accumulated_2D(:)
+    REAL(lp)                        :: accumulated      = 0._lp
+    REAL(lp), ALLOCATABLE           :: accumulated_2D(:)
 
     INTEGER                         :: dim2_len = 0
       !< Size of 2 dim (nsoil_layer or ncanopy_layer)
 
     ! buffered data to be written only once per year
-    REAL(wp), ALLOCATABLE           :: buffer_2D(:)
-    REAL(wp), ALLOCATABLE           :: buffer_3D(:,:)
+    REAL(lp), ALLOCATABLE           :: buffer_2D(:)
+    REAL(lp), ALLOCATABLE           :: buffer_3D(:,:)
 
     TYPE(t_quincy_out_var), POINTER :: next_var         => NULL()
       !< pointer to the next output variable in this file

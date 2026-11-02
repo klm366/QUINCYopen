@@ -25,7 +25,7 @@ mo_jsb_impl_constants.o: \
 mo_util.o: \
   mo_kind.o \
   mo_math_utilities.o \
-  mo_qs_icon_adapter.o \
+  mo_util_string.o \
   mo_jsb_io_netcdf.o \
   mo_jsb_io.o \
   mo_exception.o

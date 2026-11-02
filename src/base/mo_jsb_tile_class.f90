@@ -12,6 +12,7 @@
 !> ---------------------------------------
 !>
 !>### Definition of abstract class and methods for tiles
+!>
 !> The most important components of a tile instance are
 !>
 !> - the fraction of a grid box that the tile occupies
@@ -27,7 +28,7 @@ MODULE mo_jsb_tile_class
 #ifndef __NO_JSBACH__
 
   USE mo_jsb_control,         ONLY: debug_on, acc_stream, acc_async_sync
-  USE mo_kind,                ONLY: wp, dp
+  USE mo_kind,                ONLY: lp, dp
   USE mo_exception,           ONLY: message, finish
   USE mo_io_units,            ONLY: filename_max
   USE mo_jsb_impl_constants,  ONLY: SHORT_NAME_LEN
@@ -39,10 +40,7 @@ MODULE mo_jsb_tile_class
   USE mo_jsb_var_class,       ONLY: t_jsb_var_p, t_jsb_var, t_jsb_var_real2d, t_jsb_var_real3d
   ! USE mo_jsb_cqt_class,       ONLY: t_jsb_consQuan_p
   ! USE mo_jsb_lcc_class,       ONLY: t_jsb_lcc_proc_p
-#ifndef __NO_QUINCY__
   USE mo_lnd_bgcm_store,      ONLY: t_lnd_bgcm_store
-#endif
-
 
   IMPLICIT NONE
   PRIVATE
@@ -54,42 +52,45 @@ MODULE mo_jsb_tile_class
 !!$  INTEGER, PARAMETER :: max_depth_of_tile_tree = 3
 
   ! Declarations for aggregators
+
+  !> Abstract type for aggregator operators
   TYPE, ABSTRACT :: t_jsb_aggregator
     CHARACTER(len=25) :: name    !< Aggregators are distinguished by using unique names
   CONTAINS
     ! Begin/End routines enable multi-stream OpenACC aggregation
-    PROCEDURE(begin_interface),        DEFERRED             :: BeginAggregate !< Start  multi-stream aggregation (useful for OpenACC)
-    PROCEDURE(end_interface),          DEFERRED             :: EndAggregate   !< Finish multi-stream aggregation (useful for OpenACC)
-    PROCEDURE(aggregate_interface_2d), DEFERRED             :: Aggregate_2d !< Aggregate operator for 2d variables
-    PROCEDURE(aggregate_interface_3d), DEFERRED             :: Aggregate_3d !< Aggregate operator for 3d variables
-    GENERIC                                                 :: Aggregate => Aggregate_2d, Aggregate_3d
+    PROCEDURE(begin_interface),        DEFERRED :: BeginAggregate !< Start  multi-stream aggregation
+    PROCEDURE(end_interface),          DEFERRED :: EndAggregate   !< Finish multi-stream aggregation
+    PROCEDURE(aggregate_interface_2d), DEFERRED :: Aggregate_2d   !< Aggregate operator for 2d variables
+    PROCEDURE(aggregate_interface_3d), DEFERRED :: Aggregate_3d   !< Aggregate operator for 3d variables
+    GENERIC                                     :: Aggregate => Aggregate_2d, Aggregate_3d
   END TYPE t_jsb_aggregator
 
+  !> A type to hold vectors of pointers to t_jsb_aggregator objects
   TYPE t_jsb_aggregator_p
     CLASS(t_jsb_aggregator), POINTER :: p => NULL()
   END TYPE t_jsb_aggregator_p
 
   ! Declarations for tile
   TYPE, ABSTRACT, EXTENDS(t_State) :: t_jsb_tile_abstract
-    TYPE(t_jsb_lct),        ALLOCATABLE    :: lcts(:)              !< List of land cover types for tile
-                                                                   !< The first entry is always the primary LCT for this tile;
-                                                                   !< the remaining lcts are those inherited for aggregation
+    TYPE(t_jsb_lct), ALLOCATABLE    :: lcts(:) !< List of land cover types for tile;
+                                               !< The first entry is always the primary LCT for this tile;
+                                               !< The remaining lcts are those inherited for aggregation
     ! Convinience settings to easily check primary LCT types and those of the child tiles
-    LOGICAL                                :: is_vegetation = .FALSE.         !< whether primary lct is VEG_TYPE
-    LOGICAL                                :: is_bare = .FALSE.               !< whether primary lct is BARE_TYPE
-    LOGICAL                                :: is_land = .FALSE.               !< whether primary lct is LAND_TYPE
-    LOGICAL                                :: is_glacier = .FALSE.            !< whether primary lct is GLACIER_TYPE
-    LOGICAL                                :: is_lake = .FALSE.               !< whether primary lct is LAKE_TYPE
-    LOGICAL                                :: contains_vegetation = .FALSE.   !< whether any lct of tile is VEG_TYPE
-    LOGICAL                                :: contains_bare = .FALSE.         !< whether any lct of tile is BARE_TYPE
-    LOGICAL                                :: contains_land = .FALSE.         !< whether any lct of tile is LAND_TYPE
-    LOGICAL                                :: contains_glacier = .FALSE.      !< whether any lct of tile is GLACIER_TYPE
-    LOGICAL                                :: contains_lake = .FALSE.         !< whether any lct of tile is LAKE_TYPE
-    LOGICAL                                :: contains_soil = .FALSE.         !< whether any lct of tile is one that has soil
+    LOGICAL                                :: is_vegetation = .FALSE.       !< Whether primary lct is VEG_TYPE
+    LOGICAL                                :: is_bare = .FALSE.             !< Whether primary lct is BARE_TYPE
+    LOGICAL                                :: is_land = .FALSE.             !< Whether primary lct is LAND_TYPE
+    LOGICAL                                :: is_glacier = .FALSE.          !< Whether primary lct is GLACIER_TYPE
+    LOGICAL                                :: is_lake = .FALSE.             !< Whether primary lct is LAKE_TYPE
+    LOGICAL                                :: contains_vegetation = .FALSE. !< Whether any lct of tile is VEG_TYPE
+    LOGICAL                                :: contains_bare = .FALSE.       !< Whether any lct of tile is BARE_TYPE
+    LOGICAL                                :: contains_land = .FALSE.       !< Whether any lct of tile is LAND_TYPE
+    LOGICAL                                :: contains_glacier = .FALSE.    !< Whether any lct of tile is GLACIER_TYPE
+    LOGICAL                                :: contains_lake = .FALSE.       !< Whether any lct of tile is LAKE_TYPE
+    LOGICAL                                :: contains_soil = .FALSE.       !< Whether any lct of tile is one that has soil
     !
     INTEGER,                ALLOCATABLE    :: process_action(:)
-    REAL(wp),                     POINTER  :: fract     (:,:)          !< Fraction of this tile (relative to grid box)
-    REAL(wp),                     POINTER  :: fract_old (:,:)          !< Old fractions of this tile (relative to grid box)
+    REAL(lp),                     POINTER  :: fract     (:,:)          !< Fraction of this tile (relative to grid box)
+    REAL(lp),                     POINTER  :: fract_old (:,:)          !< Old fractions of this tile (relative to grid box)
     CHARACTER(LEN=filename_max)            :: fract_filename           !< Name of file to read tile fractions from. The variable
                                                                        !< names must be either "fract[_max]_"//tile%name,
                                                                        !< or specified by fract_varname (in the use case).
@@ -217,9 +218,9 @@ MODULE mo_jsb_tile_class
   END INTERFACE
 
   TYPE, EXTENDS(t_jsb_aggregator) :: t_jsb_aggregator_weighted_by_fract
-    REAL(wp), ALLOCATABLE :: fractions(:,:,:) ! R: (grid%nproma, grid%nblks, no_children))
-    REAL(wp), ALLOCATABLE :: fract_sum(:,:)
-    REAL(wp), ALLOCATABLE :: data_sum(:,:)
+    REAL(lp), ALLOCATABLE :: fractions(:,:,:) ! R: (grid%nproma, grid%nblks, no_children))
+    REAL(lp), ALLOCATABLE :: fract_sum(:,:)
+    REAL(lp), ALLOCATABLE :: data_sum(:,:)
 
     INTEGER :: stream, original_stream !< OpenACC variables for multi-stream aggregation
   CONTAINS
@@ -352,7 +353,7 @@ CONTAINS
 
     CLASS(t_jsb_tile_abstract), INTENT(in)    :: this
     INTEGER,                    INTENT(in)    :: ics, ice, iblk
-    REAL(wp), OPTIONAL,         INTENT(inout) :: &
+    REAL(lp), OPTIONAL,         INTENT(inout) :: &
       & fract(:),        &
       & fract_old(:)
 
@@ -360,7 +361,7 @@ CONTAINS
 
     IF (PRESENT(fract)) THEN
        IF (SIZE(fract) /= ice-ics+1) CALL finish(TRIM(routine), 'Dimension mismatch')
-       fract(:) = 1.0_wp
+       fract(:) = 1.0_lp
     !   fract(:) = this%fract(ics:ice, iblk)
     END IF
 
@@ -374,7 +375,7 @@ CONTAINS
   SUBROUTINE Get_fraction_2d(this, fract, fract_old)
 
     CLASS(t_jsb_tile_abstract), INTENT(in)    :: this
-    REAL(wp), OPTIONAL,         INTENT(inout) :: &
+    REAL(lp), OPTIONAL,         INTENT(inout) :: &
       & fract(:,:),        &
       & fract_old(:,:)
 
@@ -523,7 +524,7 @@ CONTAINS
 
     INTEGER :: no_children, i
     CLASS(t_jsb_tile_abstract), POINTER :: current
-    ! REAL(wp), ALLOCATABLE :: fract(:), fract_sum(:)
+    ! REAL(lp), ALLOCATABLE :: fract(:), fract_sum(:)
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':Set_fractions_aggregator_1d'
 
@@ -543,7 +544,7 @@ CONTAINS
       ! ALLOCATE(fract_sum(ice-ics+1))
       ! fract(:) = tile%fract(ics:ice,iblk)
       ! fract_sum(:) = SUM(this%fractions(ics:ice,iblk,:), DIM=2)
-      ! ! IF (ASSOCIATED(tile%parent) .AND. ANY( fract_sum(:) < 1._wp - EPSILON(1._wp) .AND. fract(:) > 0._wp)) THEN
+      ! ! IF (ASSOCIATED(tile%parent) .AND. ANY( fract_sum(:) < 1._lp - EPSILON(1._lp) .AND. fract(:) > 0._lp)) THEN
       ! !   CALL message(TRIM(routine), 'Sum of child tile fractions on tile '//TRIM(tile%name)//': '//&
       ! !     &                         real2string(MINVAL(fract_sum(:)))//' - '//real2string(MAXVAL(fract_sum(:))), &
       ! !     &          all_print=.TRUE.)
@@ -563,7 +564,7 @@ CONTAINS
 
     INTEGER :: no_children, i
     CLASS(t_jsb_tile_abstract), POINTER :: current
-    ! REAL(wp), ALLOCATABLE :: fract(:), fract_sum(:)
+    ! REAL(lp), ALLOCATABLE :: fract(:), fract_sum(:)
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':Set_fractions_aggregator_2d'
 
@@ -584,7 +585,7 @@ CONTAINS
       ! ALLOCATE(fract_sum(ice-ics+1))
       ! fract(:) = tile%fract(ics:ice,iblk)
       ! fract_sum(:) = SUM(this%fractions(ics:ice,iblk,:), DIM=2)
-      ! ! IF (ASSOCIATED(tile%parent) .AND. ANY( fract_sum(:) < 1._wp - EPSILON(1._wp) .AND. fract(:) > 0._wp)) THEN
+      ! ! IF (ASSOCIATED(tile%parent) .AND. ANY( fract_sum(:) < 1._lp - EPSILON(1._lp) .AND. fract(:) > 0._lp)) THEN
       ! !   CALL message(TRIM(routine), 'Sum of child tile fractions on tile '//TRIM(tile%name)//': '//&
       ! !     &                         real2string(MINVAL(fract_sum(:)))//' - '//real2string(MAXVAL(fract_sum(:))), &
       ! !     &          all_print=.TRUE.)
@@ -611,8 +612,8 @@ CONTAINS
     ! CLASS(t_jsb_tile_abstract), POINTER :: current
     ! TYPE(t_jsb_var_real2d), POINTER :: var_tmp
     CLASS(t_jsb_var), POINTER            :: var_tmp
-    REAL(wp), ALLOCATABLE :: data(:,:), fractions(:,:)    ! Collected data and fractions from children
-    REAL(wp)              :: fract_sum(ice-ics+1)
+    REAL(lp), ALLOCATABLE :: data(:,:), fractions(:,:)    ! Collected data and fractions from children
+    REAL(lp)              :: fract_sum(ice-ics+1)
     REAL(dp) :: missval
 
     CHARACTER(len=256) :: routine
@@ -645,9 +646,9 @@ CONTAINS
     ALLOCATE(fractions(nc,no_children))
 
     j = 0
-    fractions(:,:) = 0._wp
-    fract_sum(:)   = 0._wp
-    data     (:,:) = 0._wp
+    fractions(:,:) = 0._lp
+    fract_sum(:)   = 0._lp
+    data     (:,:) = 0._lp
 
     ! current => tile%first_child_tile
     DO i=1,no_children
@@ -681,7 +682,7 @@ CONTAINS
     IF (j == 0) CALL finish(TRIM(routine), 'Variable '//TRIM(var%name)//' not found in any of children of tile '//&
       &                                    TRIM(tile%name)//' - this should not happen!')
 
-    ! IF (ANY(fract_sum(:) > 1._wp + EPSILON(1._wp))) THEN
+    ! IF (ANY(fract_sum(:) > 1._lp + EPSILON(1._lp))) THEN
     !   ! print*, fract_sum
     !   CALL message(TRIM(routine), 'On tile '//TRIM(tile%name)//': fract_sum > 1 - '// &
     !     &                         real2string(MINVAL(fract_sum(:)))//' - '//real2string(MAXVAL(fract_sum(:))), &
@@ -696,7 +697,7 @@ CONTAINS
       ! For tiles where variable is not defined data(:,tile) is 0
       var%ptr(ics:ice,iblk) = SUM(fractions(:,:) * data(:,:), DIM=2)
     ELSE
-      WHERE (fract_sum(:) > 0._wp)
+      WHERE (fract_sum(:) > 0._lp)
         var%ptr(ics:ice,iblk) = SUM(fractions(:,:) * data(:,:), DIM=2) / fract_sum(:)
       !ELSE WHERE
       !  var%ptr(ics:ice,iblk) = missval
@@ -727,8 +728,8 @@ CONTAINS
     ! CLASS(t_jsb_tile_abstract), POINTER :: current
     ! TYPE(t_jsb_var_real3d), POINTER :: var_tmp
     CLASS(t_jsb_var), POINTER :: var_tmp
-    REAL(wp), ALLOCATABLE :: data(:,:,:), fractions(:,:)    ! Collected data and fractions from children
-    REAL(wp)              :: fract_sum(ice-ics+1)
+    REAL(lp), ALLOCATABLE :: data(:,:,:), fractions(:,:)    ! Collected data and fractions from children
+    REAL(lp)              :: fract_sum(ice-ics+1)
     REAL(dp) :: missval
 
     CHARACTER(len=256) :: routine
@@ -762,9 +763,9 @@ CONTAINS
     ALLOCATE(fractions(nc,                  no_children))
 
     j = 0
-    fractions(:,:)   = 0._wp
-    fract_sum(:  )   = 0._wp
-    data     (:,:,:) = 0._wp
+    fractions(:,:)   = 0._lp
+    fract_sum(:  )   = 0._lp
+    data     (:,:,:) = 0._lp
     ! current => tile%first_child_tile
     DO i=1,no_children
       ! IF (ASSOCIATED(current%mem(iproc)%p)) THEN   ! Process is active on child tile
@@ -793,7 +794,7 @@ CONTAINS
     IF (j == 0) CALL finish(TRIM(routine), 'Variable '//TRIM(var%name)//' not found in any of children of tile '//&
       &                                    TRIM(tile%name)//' - this should not happen!')
 
-    ! IF (ANY(fract_sum(:) > 1._wp + EPSILON(1._wp))) THEN
+    ! IF (ANY(fract_sum(:) > 1._lp + EPSILON(1._lp))) THEN
     !   CALL message(TRIM(routine), 'On tile '//TRIM(tile%name)//': fract_sum > 1 - '// &
     !     &                         real2string(MINVAL(fract_sum(:)))//' - '//real2string(MAXVAL(fract_sum(:))), &
     !     &          all_print=.TRUE.)
@@ -808,7 +809,7 @@ CONTAINS
         ! For tiles where variable is not defined data(:,ilev,tile) is 0
         var%ptr(ics:ice,ilev,iblk) = SUM(fractions(:,:) * data(:,ilev,:), DIM=2)
       ELSE
-        WHERE (fract_sum(:) > 0._wp)
+        WHERE (fract_sum(:) > 0._lp)
           var%ptr(ics:ice,ilev,iblk) = SUM(fractions(:,:) * data(:,ilev,:), DIM=2) / fract_sum(:)
         ! ELSE WHERE
           ! var%ptr(ics:ice,ilev,iblk) = missval

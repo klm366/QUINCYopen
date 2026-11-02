@@ -19,7 +19,7 @@
 !-------------------------------------------------------------------------------------
 MODULE mo_decomposition_tools
   !-------------------------------------------------------------------------
-  USE mo_kind,               ONLY: i8, wp
+  USE mo_kind,               ONLY: i8, lp
   ! USE mo_exception,          ONLY: finish
   ! USE mo_io_units,           ONLY: find_next_free_unit
   ! USE mo_math_utilities
@@ -163,7 +163,7 @@ CONTAINS
 !     INTEGER :: cpu_m, n_cells_m, i, j
 !     INTEGER(i8) :: lat_sum
 !     INTEGER :: max_lat_i, max_lon_i, min_lat_i, min_lon_i
-!     REAL(wp) :: max_lat, max_lon, min_lat, min_lon, avglat, scalexp
+!     REAL(lp) :: max_lat, max_lon, min_lat, min_lon, avglat, scalexp
 !     !-----------------------------------------------------------------------
 
 !     ! If there is only 1 CPU for distribution, we are done
@@ -200,7 +200,7 @@ CONTAINS
 !     avglat  = flp_lat(INT(lat_sum/INT(n_cells,i8)))
 
 !     ! account somehow for convergence of meridians - this formula is just empiric
-!     scalexp = 1._wp - MAX(0._wp,ABS(max_lat)-1._wp,ABS(min_lat)-1._wp)
+!     scalexp = 1._lp - MAX(0._lp,ABS(max_lat)-1._lp,ABS(min_lat)-1._lp)
 !     min_lon = min_lon*(COS(avglat))**scalexp
 !     max_lon = max_lon*(COS(avglat))**scalexp
 

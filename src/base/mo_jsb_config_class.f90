@@ -14,7 +14,7 @@
 MODULE mo_jsb_config_class
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,              ONLY: wp
+  USE mo_kind,              ONLY: lp
   USE mo_io_units,          ONLY: filename_max
   USE mo_exception,         ONLY: message, finish, message_text
   USE mo_jsb_io_netcdf,     ONLY: t_input_file
@@ -27,8 +27,8 @@ MODULE mo_jsb_config_class
 
   !-----------------------------------------------------------------------------------------------------
   !> model configuration TYPE
-  !! 
-  !! 
+  !!
+  !!
   !-----------------------------------------------------------------------------------------------------
   TYPE t_jsb_model_config
     CHARACTER(len=filename_max)    :: grid_filename
@@ -44,7 +44,7 @@ MODULE mo_jsb_config_class
     CHARACTER(len=10)              :: tpe_scheme       ! For terraplanet setup: open/closed
     CHARACTER(len=10)              :: hsm_mode
     CHARACTER(len=10), ALLOCATABLE :: output_tiles(:)  ! List of tile names for which output should be generated
-    
+
     ! Characteristics of bgc material in this model: flags specifying used elements and bookkeeping vector for elements used
     ! Note: no logical for carbon because we presuppose that it is always used!
     LOGICAL                        :: force_c_isotopes      !< If c isotopes forcing should be used (else use atmland constant)
@@ -64,12 +64,11 @@ MODULE mo_jsb_config_class
     INTEGER                     :: slow_sb_pool_spinup_accelerator_length !< The length (loop times) of spin-up accelerator
     INTEGER                     :: slow_sb_pool_spinup_accelerator_start_year !< The year in which the spin-up accelerator should first be executed
     INTEGER                     :: slow_sb_pool_spinup_accelerator_max_executions !< maximum number of executions of spin-up accelerator
-    
+
     !! QUINCY added !!
     !! BASE_CTL
-    REAL(wp)          :: dtime                                    !< length of one time step in seconds; base_ctl namelist: dtime_step_length_sec
+    REAL(lp)          :: dtime                                    !< length of one time step in seconds; base_ctl namelist: dtime_step_length_sec
     CHARACTER(len=20) :: quincy_model_name                        !< quincy model-mode [land, plant, soil, canopy, test_canopy, test_radiation]
-    LOGICAL           :: use_soil_phys_jsbach                     !< use either quincy SPQ_ or jsbach soil-physic processes
     CHARACTER(len=50) :: git_branch                               !< branch for which the binary was compiled
     CHARACTER(len=8)  :: git_commit_SHA                           !< sha of commit used for this binary
     LOGICAL           :: code_has_changed_since_SHA               !< logical indicating if there has been any changes since last commit
@@ -97,14 +96,14 @@ MODULE mo_jsb_config_class
     LOGICAL           :: set_parameter_values_proportional        !< if TRUE: change the default (hardcoded) parameter values by proportion as defined in namelist
     LOGICAL           :: flag_climate_forcing_one_year
     ! GRID_CTL
-    REAL(wp)          :: lat
-    REAL(wp)          :: lon
+    REAL(lp)          :: lat
+    REAL(lp)          :: lon
     !! other parameters than namelist parameters => not set via namelist but at model runtime
-    INTEGER           :: qmodel_id                          !< defines the applied model configuration (quincy_model_name)
-    LOGICAL           :: l_transient_forcing_mode, &        !< set to TRUE if forcing_options%forcing_mode == transient
-                         l_transient_spinup, &              !< TRUE for forcing_mode=='transient' and model spinup, otherwise FALSE
-                         l_transient_spinup_rewind_forcing  !< TRUE at the timestep after one transient spinup period has finished (e.g. after 1930 for 1901-1930)
-    LOGICAL           :: l_static_forcing_mode              !< set to TRUE if forcing_options%forcing_mode == static
+    INTEGER           :: qmodel_id                      !< defines the applied model configuration (quincy_model_name)
+    LOGICAL           :: l_transient_forcing_mode, &    !< set to TRUE if forcing_options%forcing_mode == transient
+                         l_spinup, &                    !< TRUE for forcing_mode=='transient' and model spin-up, otherwise FALSE
+                         l_spinup_rewind_forcing        !< TRUE at the timestep after one transient spinup period has finished (e.g. after 1930 for 1901-1930)
+    LOGICAL           :: l_static_forcing_mode          !< set to TRUE if forcing_options%forcing_mode == static
 
     LOGICAL                        :: init_from_ifs    ! Initialize from IFS analysis; quincy standalone: hardcoded FALSE
     CHARACTER(len=:), ALLOCATABLE  :: ifs_filename
@@ -114,8 +113,8 @@ MODULE mo_jsb_config_class
 
   !-----------------------------------------------------------------------------------------------------
   !> Abstract TYPE for process and model configuration
-  !! 
-  !! 
+  !!
+  !!
   !-----------------------------------------------------------------------------------------------------
   TYPE, ABSTRACT :: t_jsb_config
     LOGICAL :: active
@@ -134,7 +133,7 @@ MODULE mo_jsb_config_class
 
   ! note from JanEngel *slmtemp
   ! https://de.wikibooks.org/wiki/Fortran:_Fortran_2003:_Zeiger#Abstraktes_Interface
-  ! defines that the TYPE itself is passed to the procedure (i.e. t_*_config -> init_config subroutine) 
+  ! defines that the TYPE itself is passed to the procedure (i.e. t_*_config -> init_config subroutine)
   ABSTRACT INTERFACE
     SUBROUTINE Init_config(config)
       IMPORT :: t_jsb_config    ! makes t_jsb_config accessible within this (abstract) interface
@@ -150,8 +149,8 @@ CONTAINS
 
   !-----------------------------------------------------------------------------------------------------
   !> create and init model config
-  !! 
-  !! 
+  !!
+  !!
   !-----------------------------------------------------------------------------------------------------
   FUNCTION new_model_config(namelist_filename) RESULT(model_config)
 
@@ -164,8 +163,8 @@ CONTAINS
     TYPE(t_jsb_model_config), POINTER    :: model_config
 
     ! GRID_CTL
-    REAL(wp)                    :: latitude
-    REAL(wp)                    :: longitude
+    REAL(lp)                    :: latitude
+    REAL(lp)                    :: longitude
     CHARACTER(len=filename_max) :: grid_filename
     CHARACTER(len=30)           :: grid_name
     INTEGER                     :: MODEL_JSBACH, MODEL_QUINCY
@@ -178,9 +177,8 @@ CONTAINS
     !   grid_name
 
     ! BASE_CTL
-    REAL(wp)                    :: dtime_step_length_sec                      !< model-variable: dtime 
+    REAL(lp)                    :: dtime_step_length_sec                      !< model-variable: dtime
     CHARACTER(len=20)           :: quincy_model_name
-    LOGICAL                     :: use_soil_phys_jsbach
     CHARACTER(len=80)           :: git_branch                               !< branch for which the binary was compiled
     CHARACTER(len=8)            :: git_commit_SHA                           !< sha of commit used for this binary
     LOGICAL                     :: code_has_changed_since_SHA               !< logical indicating if there has been any changes since last commit
@@ -189,7 +187,7 @@ CONTAINS
     CHARACTER(len=20)           :: output_txt_file_set
     CHARACTER(8)                :: output_interval_pool          , &
                                    output_interval_flux
-    CHARACTER(8)                :: output_interval_pool_spinup   , & 
+    CHARACTER(8)                :: output_interval_pool_spinup   , &
                                    output_interval_flux_spinup
     INTEGER                     :: output_start_first_day_year   , &
                                    output_end_last_day_year
@@ -213,6 +211,7 @@ CONTAINS
     LOGICAL                     :: include_carbon14           !< element variables in bgc_material (infrastructure)
     LOGICAL                     :: include_nitrogen15         !< element variables in bgc_material (infrastructure)
 
+    LOGICAL                     :: l_spinup                   !< TRUE for forcing_mode=='transient' and model spin-up; otherwise FALSE (default)
     LOGICAL                     :: flag_slow_sb_pool_spinup_accelerator !< accelerating slow pool turnover during spin-up
     INTEGER                     :: slow_sb_pool_spinup_accelerator_frequency !< The freqency [years] to execute spin-up accelerator
     INTEGER                     :: slow_sb_pool_spinup_accelerator_length !< The length (loop times) of spin-up accelerator
@@ -232,10 +231,9 @@ CONTAINS
     LOGICAL                     :: init_from_ifs
     CHARACTER(len=filename_max) :: ifs_filename
 
-    NAMELIST /base_ctl/                           &  
+    NAMELIST /base_ctl/                           &
         dtime_step_length_sec                   , &
         quincy_model_name                       , &
-        use_soil_phys_jsbach                    , &
         git_branch                              , &
         git_commit_SHA                          , &
         code_has_changed_since_SHA              , &
@@ -272,7 +270,7 @@ CONTAINS
         slow_sb_pool_spinup_accelerator_start_year, &
         slow_sb_pool_spinup_accelerator_max_executions, &
         enforce_water_budget
-                          
+
     ! NAMELIST /jsb_model_nml/  &
     !   use_tmx, &
     !   use_lakes, &
@@ -293,13 +291,8 @@ CONTAINS
 
     ! Set defaults
     ! BASE_CTL
-    dtime_step_length_sec                   = 1800.0_wp   ! length of one time step in seconds
+    dtime_step_length_sec                   = 1800.0_lp   ! length of one time step in seconds
     quincy_model_name                       = 'land'      ! default is the coupled veg-soil model, a.k.a. land
-#ifdef __QUINCY_STANDALONE__
-    use_soil_phys_jsbach                    = .FALSE.     ! with quincy standalone the default is to not use the "jsbach soil physic" but SPQ_
-#else
-    use_soil_phys_jsbach                    = .TRUE.
-#endif
     git_branch                              = 'not_set'   ! branch for which the binary was compiled
     git_commit_SHA                          = 'not_set'   ! commit SHA of the executed binary
     simulation_run_by                       = 'not_set'   ! person who executed the simulation
@@ -351,7 +344,7 @@ CONTAINS
     include_carbon13                        = .TRUE.
     include_carbon14                        = .TRUE.
     include_nitrogen15                      = .TRUE.
-
+    l_spinup                                = .FALSE.
     flag_slow_sb_pool_spinup_accelerator    = .FALSE.
     slow_sb_pool_spinup_accelerator_frequency = 100
     slow_sb_pool_spinup_accelerator_length = 1000
@@ -380,12 +373,11 @@ CONTAINS
 
     model_config%dtime                                  = dtime_step_length_sec
     model_config%quincy_model_name                      = quincy_model_name
-    model_config%use_soil_phys_jsbach                   = use_soil_phys_jsbach
     model_config%git_branch                             = git_branch
     model_config%git_commit_SHA                         = git_commit_SHA
     model_config%code_has_changed_since_SHA             = code_has_changed_since_SHA
     model_config%simulation_run_by                      = simulation_run_by
-    model_config%netcdf_output_var_list              = netcdf_output_var_list
+    model_config%netcdf_output_var_list                 = netcdf_output_var_list
     model_config%output_txt_file_set                    = TRIM(output_txt_file_set)
     model_config%output_interval_pool                   = output_interval_pool
     model_config%output_interval_flux                   = output_interval_flux
@@ -393,8 +385,8 @@ CONTAINS
     model_config%output_interval_flux_spinup            = output_interval_flux_spinup
     model_config%output_start_first_day_year            = output_start_first_day_year
     model_config%output_end_last_day_year               = output_end_last_day_year
-    model_config%forcing_file_start_yr                  = forcing_file_start_yr 
-    model_config%forcing_file_last_yr                   = forcing_file_last_yr  
+    model_config%forcing_file_start_yr                  = forcing_file_start_yr
+    model_config%forcing_file_last_yr                   = forcing_file_last_yr
     model_config%fluxnet_type_transient_timestep_output = fluxnet_type_transient_timestep_output
     model_config%fluxnet_static_forc_start_yr           = fluxnet_static_forc_start_yr
     model_config%fluxnet_static_forc_last_yr            = fluxnet_static_forc_last_yr
@@ -412,6 +404,7 @@ CONTAINS
     model_config%include_carbon13                       = include_carbon13
     model_config%include_carbon14                       = include_carbon14
     model_config%include_nitrogen15                     = include_nitrogen15
+    model_config%l_spinup                               = l_spinup
     CALL setup_element_index_map_in_config(model_config, routine)
 
     model_config%flag_slow_sb_pool_spinup_accelerator   = flag_slow_sb_pool_spinup_accelerator
@@ -419,7 +412,7 @@ CONTAINS
     model_config%slow_sb_pool_spinup_accelerator_length = slow_sb_pool_spinup_accelerator_length
     model_config%slow_sb_pool_spinup_accelerator_start_year = slow_sb_pool_spinup_accelerator_start_year
     model_config%slow_sb_pool_spinup_accelerator_max_executions = slow_sb_pool_spinup_accelerator_max_executions
-    
+
     model_config%model_scheme_char = tolower(model_scheme)
     SELECT CASE (TRIM(model_config%model_scheme_char))
     CASE ("jsbach")
@@ -495,7 +488,7 @@ CONTAINS
     ! information for logfile
     CALL message(TRIM(caller), 'Mapping of element ID -> IND:')
 
-    ! carbon 
+    ! carbon
     ! is presumed to always be used, with ID = IND = 1 (thus call first for carbon!)
     CALL setup_element(config, .TRUE., ELEM_C_ID, 'C', caller)
     ! nitrogen
@@ -508,9 +501,9 @@ CONTAINS
     CALL setup_element(config, config%include_carbon14, ELEM_C14_ID, 'C14', caller)
     ! nitrogen15
     CALL setup_element(config, config%include_nitrogen15, ELEM_N15_ID, 'N15', caller)
-    
+
   END SUBROUTINE setup_element_index_map_in_config
-  
+
   ! ======================================================================================================= !
   !>
   !> Small helper to setup a given element according to its given flag

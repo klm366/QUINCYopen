@@ -1,3 +1,57 @@
+
+# Release notes for 202Y.MM-X--QSn
+### scientific changes
+
+
+### model infrastructure
+
+
+### scripting environment
+
+
+### changes only relevant for ICON-Land
+
+
+
+# Release notes for 2026.10
+### scientific changes
+* /
+
+### model infrastructure
+* Fixed a internal cray compiler error by refactoring the use of the canopy_conductance_scheme namelist parameter:
+it is now an integer from an enumator instead of a string.
+* Replace INT by NINT to properly determine the nearest integer preventing runtime errors
+* Use `mo_util_string` directly instead of the `mo_jsb_utils_iface` adapter module (removed), syncronize with an ICON-Land change
+* Fix unrealistic soil temperature changes during water freezing or ice melting periods, syncronize with ICON-Land
+* Improve inline code documentation of the SSE modules, syncronize with ICON-Land
+* Implement new working-precision kind mo_kind::lp, syncronize with ICON-Land
+* Fix `is_newyear` not returning TRUE at the first timestep of the transient simulation after spinup, and make
+`is_newyear`/`is_newday` robust against round-off in the accumulated `time_day` (QS time adapter and driver only)
+
+### scripting environment
+* Update the prepare_sim_quincy.sh for Trinity College Dublin (TCD) after changes of soil physics processes
+
+### meta data
+* Added AGENTS.md file to provide some persistent memory describing the model for AI coding agents.
+
+### changes only relevant for ICON-Land
+* Reduce the number of aggregated variables (ASSIMI, VEG) in canopy model-mode
+
+
+# Release notes for 2026.04--QS1
+### scientific changes
+* Remove the SPQ_ process: soil physics quincy, a rather simple version of the jsbach physics processes
+
+### model infrastructure
+* Improve inline code documentation - syncronize with ICON-Land
+* Cleanup model infrastructure: remove and refactor all code related to operator overload procedures of `t_jsb_pool` and rename to `t_lnd_bgcm`
+* Add new LOGICAL option `l_exclude_weathering`, used to disable P weathering in SB_ process during model spin-up
+
+### changes only relevant for ICON-Land
+* Enable output for additional P and C isotope variables in ICON-Land
+* Remove all `__NO_QUINCY__` cpp flags to reduce code complexity in ICON-Land, not relevant for QS
+
+
 # Release notes for 2026.04
 ### model infrastructure
 * Change default configuration from SPQ_ process to jsbach-physics processes, modify and rename usecases accordingly
@@ -29,6 +83,7 @@
 * refactoring to simplify the spinup accelerator, suppress carbon-conservation test after accelerator execution
 * Split-off mo_quincy_output_class parts only required in QS (and only when using netcdf)
 * Clean up use of mo util: remove duplicated routines and better adhere to the adaptor concept
+* Change default configuration from SPQ_ process to jsbach-physics processes, modify and rename usecases accordingly
 
 ### scripting environment
 * Add new documentation `code_development_guidelines.md` providing a brief overview about how to contribute to QS code development
@@ -74,6 +129,7 @@
 * modify usecase 36, add new u37,38,39, medium-long test simulations with SPQ_, jsbach soil-physics, simple soil model and jsm, land model-model
 * add a new site list TIBETP for the Tibetan Plateau, with transient and static forcing, and daily time-steps, 9 sites, permafrost-affected and mountainous
 * modify `prepare_sim_quincy.sh` runscript, add new slurm partition (MPI-BGC, Jena), increase max runtime of jobs to minimize the risk of jobs being finished at 'maxtime' due to high runtime at high i/o load at the HPC
+* update scripts for creating and preprocessing drylands site-set forcing with the new data directly from Fluxnet  
 
 
 # QS version consistent with icon-2025.10 release

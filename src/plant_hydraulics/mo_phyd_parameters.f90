@@ -18,13 +18,13 @@
 MODULE mo_phyd_parameters
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_jsb_impl_constants,  ONLY: def_parameters
 
   IMPLICIT NONE
   PUBLIC
 
-  REAL(wp), SAVE :: &
+  REAL(lp), SAVE :: &
     &         hydraulic_solver_precision = def_parameters
 
   CHARACTER(len=*), PARAMETER, PRIVATE :: modname = 'mo_phyd_parameters'
@@ -40,7 +40,7 @@ CONTAINS
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':init_phyd_parameters'
 
-    hydraulic_solver_precision       = 1e-06_wp
+    hydraulic_solver_precision       = 1e-06_lp
   END SUBROUTINE init_phyd_parameters
 
 #endif

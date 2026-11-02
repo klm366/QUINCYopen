@@ -14,7 +14,7 @@
 MODULE mo_jsb_memory_class
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,              ONLY: wp, dp
+  USE mo_kind,              ONLY: lp, dp
   USE mo_exception,         ONLY: finish
   USE mo_jsb_config_class,  ONLY: t_jsb_config
   USE mo_jsb_grid_class,    ONLY: t_jsb_grid, t_jsb_vgrid
@@ -25,12 +25,12 @@ MODULE mo_jsb_memory_class
   ! USE mo_jsb_varlist_iface, ONLY: is_variable_in_output
   ! USE mo_jsb_var_class,     ONLY: t_jsb_var_p, t_jsb_var, t_jsb_var_real1d, t_jsb_var_real2d, t_jsb_var_real3d, &
   !   &                             REAL1D, REAL2D, REAL3D
-  USE mo_jsb_pool_class,    ONLY: t_jsb_pool
+  USE mo_lnd_bgcm_class,    ONLY: t_lnd_bgcm
   ! USE mo_jsb_io,            ONLY: t_cf, t_grib1, t_grib2, &
   !   &                             GRID_LONLAT,GRID_UNSTRUCTURED, GRID_UNSTRUCTURED_CELL, GRID_CELL, missval, tables
   ! USE mo_jsb_io_iface,      ONLY: t_cf_var, t_grib2_var, grib2_var
   USE mo_util,              ONLY: int2string
-  ! USE mo_jsb_utils_iface,   ONLY: assign_if_present
+  ! USE mo_fortran_tools,     ONLY: assign_if_present
   ! modified for QUINCY
   USE mo_jsb_var_class,     ONLY: t_jsb_var_p, t_jsb_var, &
     &                             t_jsb_var_real1d, t_jsb_var_real2d, t_jsb_var_real3d, &
@@ -58,8 +58,7 @@ MODULE mo_jsb_memory_class
     INTEGER :: max_no_of_vars = 0
     INTEGER :: no_of_vars = 0
     LOGICAL :: has_bgc_materials = .FALSE.
-    CLASS(t_jsb_pool), POINTER :: pools         => NULL()
-    CLASS(t_jsb_pool), POINTER :: bgc_material  => NULL()   ! TODO t_jsb_memory rename 't_jsb_pool' -> 't_lnd_bgc_material'
+    CLASS(t_lnd_bgcm), POINTER :: bgc_material  => NULL()   ! TODO t_jsb_memory rename 't_lnd_bgcm' -> 't_lnd_bgc_material'
     CHARACTER(LEN=:), ALLOCATABLE :: varlist_name
     TYPE(t_jsb_var_p), ALLOCATABLE :: vars(:)
     LOGICAL :: in_var_groups = .FALSE. !< Whether variables of this memory are in any var group
@@ -72,7 +71,7 @@ MODULE mo_jsb_memory_class
     ! PROCEDURE                                    :: t_jsb_memory_add_var_r3d
     PROCEDURE                                    :: t_jsb_memory_add_pool
                                                     !< Add a (hierarchical) pool structure to memory
-                                                    !< (sub-pools and elements)
+                                                    !< (sub-bgcm and elements)
     ! PROCEDURE                                    :: t_jsb_memory_add_pool_var_r2d
                                                     !< Add a 2d variable to pool (non-elements)
     ! GENERIC                                      :: Add_var => t_jsb_memory_add_var_r1d, t_jsb_memory_add_var_r2d, &
@@ -140,9 +139,9 @@ CONTAINS
 !     LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
 !     LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-!     REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+!     REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
 !     INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-!     REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+!     REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
 !     LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
 !     REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
 !     LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
@@ -192,7 +191,11 @@ CONTAINS
 !     this_list => Get_varlist(TRIM(mem%varlist_name), hgrid%host_patch_id)
 ! 
 !     IF (PRESENT(output_level)) THEN
-!       no_groups = 2 * (4 - output_level)
+        ! Number of standard output groups: 2 groups per output_level:
+        ! jsb_all_<output_level> and jsb_<process>_<output_level>
+        ! e.g. 8 groups for MINIMUM(output_level=1): 2xMINIMUM + 2xBASIC + 2xMEDIUM + 2xFULL
+        !      2 groups for FULL   (output_level=4): 2xFULL
+!        no_groups = 2 * (5 - output_level)
 !     ELSE
 !       no_groups = 0
 !     END IF
@@ -205,7 +208,10 @@ CONTAINS
 !       groups(3) = 'jsb_'//mem%owner_proc_name//'_all'
 !       IF (PRESENT(output_level)) THEN                            ! Variable specific setting of output level
 !         igroup = 4
-!         DO out_level=output_level,3
+          ! Variables with lower output level are included in higher level output groups: Variables with an output
+          ! level of e.g. BASIC are included in "group:jsb_all_medium" and "group:jsb_all_full" and in the corresponding
+          ! process groups.
+!         DO out_level=output_level,4
 !           out_level_name = Get_var_group_name(out_level)
 !           groups(igroup)   = 'jsb_all_'//out_level_name ! var group jsb_all_<level>
 !           groups(igroup+1) = 'jsb_'//mem%owner_proc_name//'_'//out_level_name ! var group jsb_<process>_<level>
@@ -300,9 +306,9 @@ CONTAINS
   !   INTEGER,              INTENT(in), OPTIONAL :: cons_quan_type_id   ! type id of the conserved quantity (mo_jsb_cqt_class)
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-  !   REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+  !   REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
   !   INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-  !   REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+  !   REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
   !   LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
   !   REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
   !   LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
@@ -457,9 +463,9 @@ CONTAINS
   !   INTEGER,              INTENT(in), OPTIONAL :: cons_quan_type_id   ! type id of the conserved quantity (mo_jsb_cqt_class)
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-  !   REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+  !   REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
   !   INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-  !   REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+  !   REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
   !   LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
   !   REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
   !   LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
@@ -602,7 +608,7 @@ CONTAINS
   ! END SUBROUTINE t_jsb_memory_add_var_r3d
 
   ! ======================================================================================================= !
-  !> add element variables of t_jsb_pool to teh var_lists, i.e., output & restart
+  !> add element variables of t_lnd_bgcm to teh var_lists, i.e., output & restart
   !>
   !>   not needed in QUINCY as output works differently,
   !>   but use this routine anyway for compatibility between QS & IQ
@@ -617,7 +623,7 @@ CONTAINS
   
     CLASS(t_jsb_memory),   INTENT(inout)        :: mem                 ! memory structure
   !!$    TYPE(t_jsb_varlist),  INTENT(inout)        :: this_list           ! list
-    CLASS(t_jsb_pool),    TARGET,  INTENT(inout) :: pool                ! reference to pool
+    CLASS(t_lnd_bgcm),    TARGET,  INTENT(inout) :: pool                ! reference to pool
     TYPE(t_jsb_grid),     POINTER, INTENT(in)  :: hgrid               ! horizontal grid type
     TYPE(t_jsb_vgrid),    POINTER, INTENT(in)  :: vgrid_2d            ! vertical grid type
     TYPE(t_jsb_vgrid),    POINTER, INTENT(in)  :: vgrid_3d            ! vertical grid type
@@ -629,9 +635,9 @@ CONTAINS
     LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
     LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
     LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-    REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+    REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
     INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-    REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+    REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
     LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
     REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
     LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
@@ -658,7 +664,7 @@ CONTAINS
   
     ! lrestart_loc = .FALSE.
     ! CALL assign_if_present(lrestart_loc, lrestart)
-    ! lrestart_loc = lrestart_loc .AND. .NOT. ASSOCIATED(pool%pool_list)  ! Only elements on leaves are only put into restart file
+    ! lrestart_loc = lrestart_loc .AND. .NOT. ASSOCIATED(pool%bgcm_list)  ! Only elements on leaves are only put into restart file
   
     pool%owner_model_id = mem%owner_model_id
   
@@ -721,9 +727,9 @@ CONTAINS
       END DO
     END IF
   
-    IF (ASSOCIATED(pool%pool_list)) THEN
-      DO i=1,SIZE(pool%pool_list)
-        CALL mem%Add_var(pool%pool_list(i)%p,       &
+    IF (ASSOCIATED(pool%bgcm_list)) THEN
+      DO i=1,SIZE(pool%bgcm_list)
+        CALL mem%Add_var(pool%bgcm_list(i)%p,       &
           & hgrid, vgrid_2d, vgrid_3d, grib1, grib2, prefix//'_'//pool%shortname, suffix,             &
           & loutput=loutput, lcontainer=lcontainer,                                        &
           & lrestart=lrestart, lrestart_cont=lrestart_cont, initval_r=initval_r, isteptype=isteptype,              &
@@ -747,7 +753,7 @@ CONTAINS
   ! 
   !   CLASS(t_jsb_memory),  INTENT(inout)        :: mem                 ! memory structure
   ! !!$    TYPE(t_jsb_varlist),  INTENT(inout)        :: this_list           ! list
-  !   CLASS(t_jsb_pool),    INTENT(inout)           :: pool                ! reference to pool
+  !   CLASS(t_lnd_bgcm),    INTENT(inout)           :: pool                ! reference to pool
   !   CHARACTER(len=*),     INTENT(in)           :: name                ! name of variable
   !   TYPE(t_jsb_var_real2d), TARGET, INTENT(inout) :: var              ! reference to jsbach var
   !   TYPE(t_jsb_grid),     POINTER, INTENT(in)  :: hgrid               ! horizontal grid type
@@ -761,9 +767,9 @@ CONTAINS
   !   LOGICAL,              INTENT(in), OPTIONAL :: lcontainer          ! container flag
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart            ! restart flag
   !   LOGICAL,              INTENT(in), OPTIONAL :: lrestart_cont       ! continue restart if var not available
-  !   REAL(wp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
+  !   REAL(lp),             INTENT(in), OPTIONAL :: initval_r           ! value if var not available
   !   INTEGER,              INTENT(in), OPTIONAL :: isteptype           ! type of statistical processing
-  !   REAL(wp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
+  !   REAL(lp),             INTENT(in), OPTIONAL :: resetval_r          ! reset value (after accumulation)
   !   LOGICAL,              INTENT(in), OPTIONAL :: lmiss               ! missing value flag
   !   REAL(dp),             INTENT(in), OPTIONAL :: missval_r           ! missing value
   !   LOGICAL,              INTENT(in), OPTIONAL :: l_aggregate_all     ! aggregate over all child tiles?
@@ -932,7 +938,7 @@ CONTAINS
     INTEGER,                INTENT(in)     :: ics, ice, iblk
     INTEGER,                INTENT(in)     :: no_children ! of the parent tile
     TYPE(t_jsb_var_real2d), INTENT(in)     :: var         ! of the parent tile: tile%mem(iproc)%p%var
-    REAL(wp), POINTER                      :: var_collected(:,:)
+    REAL(lp), POINTER                      :: var_collected(:,:)
 
     INTEGER :: i
 
@@ -953,7 +959,7 @@ CONTAINS
     INTEGER,                INTENT(in)     :: ics, ice, iblk
     INTEGER,                INTENT(in)     :: no_children ! of the parent tile
     TYPE(t_jsb_var_real3d), INTENT(in)     :: var         ! of the parent tile: tile%mem(iproc)%p%var
-    REAL(wp), POINTER                      :: var_collected(:,:,:)
+    REAL(lp), POINTER                      :: var_collected(:,:,:)
 
     INTEGER :: i !, iproc
 
@@ -977,7 +983,7 @@ CONTAINS
   !   INTEGER,             INTENT(in)     :: ics, ice, iblk
   !   INTEGER,             INTENT(in)     :: no_children ! of the parent tile
   !   CLASS(t_jsb_var),    INTENT(in)     :: var         ! of the parent tile only to find child memories
-  !   REAL(wp),            INTENT(in)     :: var_handdown(:,:) ! e.g. corresponds to (ics:ice,no_children)
+  !   REAL(lp),            INTENT(in)     :: var_handdown(:,:) ! e.g. corresponds to (ics:ice,no_children)
   ! 
   !   INTEGER :: i !, iproc
   ! 
@@ -997,12 +1003,12 @@ CONTAINS
   !   INTEGER,             INTENT(in)     :: no_children   ! of the parent tile
   !   CLASS(t_jsb_var),    INTENT(in)     :: var           ! of the parent tile: tile%mem(iproc)%p%var
   !                                                        ! R: kann man auf TYPE(t_jsb_var_real2d) setzen
-  !   REAL(wp),            INTENT(in)     :: fract_st(:,:) ! fract_st(:,:) =tile%aggregators(1)%p%fractions(ics:ice,iblk,:)
-  !   REAL(wp), allocatable               :: var_averaged(:)
+  !   REAL(lp),            INTENT(in)     :: fract_st(:,:) ! fract_st(:,:) =tile%aggregators(1)%p%fractions(ics:ice,iblk,:)
+  !   REAL(lp), allocatable               :: var_averaged(:)
   ! 
   !   ! local variables
   !   INTEGER :: i
-  !   REAL(wp), allocatable               :: var_collected(:,:)
+  !   REAL(lp), allocatable               :: var_collected(:,:)
   !   CHARACTER(len=*), PARAMETER :: routine = modname//':Average_over_children'
   ! 
   !   ALLOCATE(var_collected(ice-ics+1,no_children))
@@ -1048,7 +1054,7 @@ CONTAINS
     LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
     INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
     CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
-    REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r        ! value if var not available
+    REAL(lp),               OPTIONAL, INTENT(in)      :: initval_r        ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all  ! aggregate over all child tiles?
     INTEGER,                OPTIONAL, INTENT(in)      :: isteptype        ! type of statistical processing
 
@@ -1109,7 +1115,7 @@ CONTAINS
     LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
     INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
     CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
-    REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
+    REAL(lp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
     INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
     INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)
@@ -1176,7 +1182,7 @@ CONTAINS
     LOGICAL,                OPTIONAL, INTENT(in)      :: lrestart_cont  ! continue restart if var not available
     INTEGER,                OPTIONAL, INTENT(in)      :: output_level   ! minimum level of output groups this var belongs to
     CHARACTER(len=*),       OPTIONAL, INTENT(in)      :: output_groups(:) ! vector of additional output groups this var belongs to
-    REAL(wp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
+    REAL(lp),               OPTIONAL, INTENT(in)      :: initval_r      ! value if var not available
     LOGICAL,                OPTIONAL, INTENT(in)      :: l_aggregate_all ! aggregate over all child tiles?
     INTEGER,                OPTIONAL, INTENT(in)      :: isteptype      ! type of statistical processing
     INTEGER,                OPTIONAL, INTENT(in)      :: cons_quan_type_id   ! type id of a conserved quantity (mo_jsb_cqt_class)

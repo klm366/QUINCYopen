@@ -13,9 +13,9 @@
 !>
 MODULE mo_qs_set_parameters
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_exception,           ONLY: message_text, message, finish
-  USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_wp
+  USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_lp
 
   IMPLICIT NONE
   PRIVATE
@@ -30,385 +30,348 @@ MODULE mo_qs_set_parameters
     !LOGICAL            :: active   ! de/activate this TYPE (this is non-functional for now 20161004)
     CHARACTER(LEN=30)  :: filename = 'parameter_slm_run.list'                 ! filename
     ! lnd_q_assimi_nml
-    REAL(wp)           :: jmax2n
-    REAL(wp)           :: vcmax2n
-    REAL(wp)           :: pepc2n
-    REAL(wp)           :: chl2n
-    REAL(wp)           :: k1_fn_struc
-    REAL(wp)           :: E0kc
-    REAL(wp)           :: E1kc
-    REAL(wp)           :: E0ko
-    REAL(wp)           :: E1ko
-    REAL(wp)           :: E0pcp
-    REAL(wp)           :: E1pcp
-    REAL(wp)           :: E0v
-    REAL(wp)           :: E1v
-    REAL(wp)           :: t_jmax_offset
-    REAL(wp)           :: t_jmax_slope
-    REAL(wp)           :: t_jmax_opt_min
-    REAL(wp)           :: t_jmax_opt_max
-    REAL(wp)           :: Tref_pepc
-    REAL(wp)           :: Tbase_pepc
-    REAL(wp)           :: alpha_i
-    REAL(wp)           :: pO2
-    REAL(wp)           :: CiCa_default_C3
-    REAL(wp)           :: CiCa_default_C4
-    REAL(wp)           :: ps_it_max
-    REAL(wp)           :: ci_max
-    REAL(wp)           :: Dwv2co2_air
-    REAL(wp)           :: Dwv2co2_turb
-    REAL(wp)           :: discr_ps_a_C13
-    REAL(wp)           :: discr_ps_b_C13
-    REAL(wp)           :: discr_ps_c_C13
-    REAL(wp)           :: discr_ps_a_C14
-    REAL(wp)           :: discr_ps_b_C14
-    REAL(wp)           :: discr_ps_c_C14
-    REAL(wp)           :: discr_ps_phi
-    REAL(wp)           :: ka
-    REAL(wp)           :: kn
-    REAL(wp)           :: soa_b
-    REAL(wp)           :: soa_t_s
+    REAL(lp)           :: jmax2n
+    REAL(lp)           :: vcmax2n
+    REAL(lp)           :: pepc2n
+    REAL(lp)           :: chl2n
+    REAL(lp)           :: k1_fn_struc
+    REAL(lp)           :: E0kc
+    REAL(lp)           :: E1kc
+    REAL(lp)           :: E0ko
+    REAL(lp)           :: E1ko
+    REAL(lp)           :: E0pcp
+    REAL(lp)           :: E1pcp
+    REAL(lp)           :: E0v
+    REAL(lp)           :: E1v
+    REAL(lp)           :: t_jmax_offset
+    REAL(lp)           :: t_jmax_slope
+    REAL(lp)           :: t_jmax_opt_min
+    REAL(lp)           :: t_jmax_opt_max
+    REAL(lp)           :: Tref_pepc
+    REAL(lp)           :: Tbase_pepc
+    REAL(lp)           :: alpha_i
+    REAL(lp)           :: pO2
+    REAL(lp)           :: CiCa_default_C3
+    REAL(lp)           :: CiCa_default_C4
+    REAL(lp)           :: ps_it_max
+    REAL(lp)           :: ci_max
+    REAL(lp)           :: Dwv2co2_air
+    REAL(lp)           :: Dwv2co2_turb
+    REAL(lp)           :: discr_ps_a_C13
+    REAL(lp)           :: discr_ps_b_C13
+    REAL(lp)           :: discr_ps_c_C13
+    REAL(lp)           :: discr_ps_a_C14
+    REAL(lp)           :: discr_ps_b_C14
+    REAL(lp)           :: discr_ps_c_C14
+    REAL(lp)           :: discr_ps_phi
+    REAL(lp)           :: ka
+    REAL(lp)           :: kn
+    REAL(lp)           :: soa_b
+    REAL(lp)           :: soa_t_s
     ! lnd_q_pheno_nml
-    REAL(wp)           :: gdd_t_air_threshold
-    REAL(wp)           :: k_leafon_canopy
+    REAL(lp)           :: gdd_t_air_threshold
+    REAL(lp)           :: k_leafon_canopy
     ! jsb_rad_nml
-    REAL(wp)           :: kbl0_vis
-    REAL(wp)           :: kdf0_vis
-    REAL(wp)           :: kbl0_nir
-    REAL(wp)           :: kdf0_nir
-    REAL(wp)           :: rho2sbeta
-    REAL(wp)           :: k_csf
-    REAL(wp)           :: min_cos_zenith_angle_rad
-    REAL(wp)           :: rad2ppfd
+    REAL(lp)           :: kbl0_vis
+    REAL(lp)           :: kdf0_vis
+    REAL(lp)           :: kbl0_nir
+    REAL(lp)           :: kdf0_nir
+    REAL(lp)           :: rho2sbeta
+    REAL(lp)           :: k_csf
+    REAL(lp)           :: min_cos_zenith_angle_rad
+    REAL(lp)           :: rad2ppfd
     ! qs_shared_nml
-    REAL(wp)           :: mavg_period_weekly
-    REAL(wp)           :: mavg_period_monthly
-    REAL(wp)           :: mavg_period_yearly
-    REAL(wp)           :: mavg_period_tsoa
-    REAL(wp)           :: mavg_period_tuptake
-    REAL(wp)           :: mavg_period_tlabile
-    REAL(wp)           :: mavg_period_tphen
-    REAL(wp)           :: mavg_period_tenzyme
-    REAL(wp)           :: mavg_period_tresidual
-    REAL(wp)           :: mavg_period_tfrac
-    REAL(wp)           :: mavg_period_tcnl
-    REAL(wp)           :: mavg_period_talloc
-    REAL(wp)           :: mavg_period_talloc_dynamic
-    REAL(wp)           :: mavg_period_tacclim
-    REAL(wp)           :: mavg_period_tmic
-    REAL(wp)           :: mavg_period_tgrowth
-    REAL(wp)           :: mavg_period_tvegdyn
-    ! lnd_spq_nml
-    REAL(wp)           :: soil_heat_cap
-    REAL(wp)           :: soil_therm_cond
-    REAL(wp)           :: InterceptionEfficiency
-    REAL(wp)           :: w_skin_max
-    REAL(wp)           :: drain_frac
-    REAL(wp)           :: fdrain_srf_runoff
-    REAL(wp)           :: height_wind
-    REAL(wp)           :: wpot_pwp
-    REAL(wp)           :: wpot_fc
-    REAL(wp)           :: wpot_min
-    REAL(wp)           :: k_pwp_a
-    REAL(wp)           :: k_pwp_c
-    REAL(wp)           :: k_pwp_s
-    REAL(wp)           :: k_pwp_sc
-    REAL(wp)           :: k_pwp_at
-    REAL(wp)           :: k_pwp_bt
-    REAL(wp)           :: k_fc_a
-    REAL(wp)           :: k_fc_c
-    REAL(wp)           :: k_fc_s
-    REAL(wp)           :: k_fc_sc
-    REAL(wp)           :: k_fc_at
-    REAL(wp)           :: k_fc_bt
-    REAL(wp)           :: k_fc_ct
-    REAL(wp)           :: k_sat_a
-    REAL(wp)           :: k_sat_c
-    REAL(wp)           :: k_sat_s
-    REAL(wp)           :: k_sat_sc
-    REAL(wp)           :: k_sat_at
-    REAL(wp)           :: k_sat_bt
-    REAL(wp)           :: k_sat_ct
-    REAL(wp)           :: k_sat_dt
-    REAL(wp)           :: kdiff_sat_max
-    REAL(wp)           :: f_psensi_soil_sand
-    REAL(wp)           :: f_psensi_soil_silt
-    REAL(wp)           :: f_psensi_soil_awc_prescribe
-    REAL(wp)           :: f_psensi_bulk_density
+    REAL(lp)           :: mavg_period_weekly
+    REAL(lp)           :: mavg_period_monthly
+    REAL(lp)           :: mavg_period_yearly
+    REAL(lp)           :: mavg_period_tsoa
+    REAL(lp)           :: mavg_period_tuptake
+    REAL(lp)           :: mavg_period_tlabile
+    REAL(lp)           :: mavg_period_tphen
+    REAL(lp)           :: mavg_period_tenzyme
+    REAL(lp)           :: mavg_period_tresidual
+    REAL(lp)           :: mavg_period_tfrac
+    REAL(lp)           :: mavg_period_tcnl
+    REAL(lp)           :: mavg_period_talloc
+    REAL(lp)           :: mavg_period_talloc_dynamic
+    REAL(lp)           :: mavg_period_tacclim
+    REAL(lp)           :: mavg_period_tmic
+    REAL(lp)           :: mavg_period_tgrowth
+    REAL(lp)           :: mavg_period_tvegdyn
     ! lnd_veg_nml
-    REAL(wp)           :: fresp_growth
-    REAL(wp)           :: fmaint_rate_base
-    REAL(wp)           :: fmaint_rate_wood
-    REAL(wp)           :: t_maint_k1
-    REAL(wp)           :: t_maint_k2
-    REAL(wp)           :: t_maint_k3
-    REAL(wp)           :: f_resp_acclim
-    REAL(wp)           :: t_acclim_zero
-    REAL(wp)           :: k0_fn_pepc_C3
-    REAL(wp)           :: k0_fn_pepc_C4
-    REAL(wp)           :: jmax2vcmax_C3
-    REAL(wp)           :: jmax2vcmax_C4
-    REAL(wp)           :: tau_labile
-    REAL(wp)           :: lambda_labile_temp
-    REAL(wp)           :: k_labile_temp
-    REAL(wp)           :: lambda_labile_theta
-    REAL(wp)           :: k_labile_theta
-    REAL(wp)           :: lambda_phiphen
-    REAL(wp)           :: k_phiphen
-    REAL(wp)           :: lambda_phimaint
-    REAL(wp)           :: k_phimaint
-    REAL(wp)           :: lambda_phimaint_nut
-    REAL(wp)           :: k_phimaint_nut
-    REAL(wp)           :: lambda_phistore
-    REAL(wp)           :: k_phistore
-    REAL(wp)           :: knut_labile
-    REAL(wp)           :: lambda_sinklim_ps
-    REAL(wp)           :: k_sinklim_ps
-    REAL(wp)           :: k_cnp_sinklim_ps
-    REAL(wp)           :: beta_sinklim_ps_min
-    REAL(wp)           :: fstore_leaf_max
-    REAL(wp)           :: fstore_fine_root_max
-    REAL(wp)           :: fstore_sap_wood_max
-    REAL(wp)           :: k_phi_interact
-    REAL(wp)           :: resorp_fract_leaf
-    REAL(wp)           :: resorp_fract_wood
-    REAL(wp)           :: root2leaf_cn
-    REAL(wp)           :: wood2leaf_cn
-    REAL(wp)           :: root2leaf_np
-    REAL(wp)           :: wood2leaf_np
-    REAL(wp)           :: tau_nutrient_recycling
-    REAL(wp)           :: kappa_f_demand_nc
-    REAL(wp)           :: kappa_f_demand_pn
-    REAL(wp)           :: k_f_demand
-    REAL(wp)           :: k_cost_symb_bnf
-    REAL(wp)           :: k1_temp_bnf
-    REAL(wp)           :: k2_temp_bnf
-    REAL(wp)           :: k3_temp_bnf
-    REAL(wp)           :: k4_temp_bnf
-    REAL(wp)           :: transform_cost_nh4
-    REAL(wp)           :: transform_cost_no3
-    REAL(wp)           :: transform_cost_org
-    REAL(wp)           :: f_nacq_nh4
-    REAL(wp)           :: f_nacq_no3
-    REAL(wp)           :: eta_nfixation
-    REAL(wp)           :: k0_fn_chl_C3
-    REAL(wp)           :: k0_fn_chl_C4
-    REAL(wp)           :: k1_fn_chl_C3
-    REAL(wp)           :: k1_fn_chl_C4
-    REAL(wp)           :: kfn_chl
-    REAL(wp)           :: min_lai
-    REAL(wp)           :: target_lai_max
-    REAL(wp)           :: max_leaf_shedding_rate
-    REAL(wp)           :: background_mort_rate_tree
-    REAL(wp)           :: background_mort_rate_grass
-    REAL(wp)           :: lambda_mort_light
-    REAL(wp)           :: k_mort_light
-    REAL(wp)           :: lambda_est_temp
-    REAL(wp)           :: k_est_temp
-    REAL(wp)           :: lambda_est_moist
-    REAL(wp)           :: k_est_moist
-    REAL(wp)           :: k2_mort_greff
-    REAL(wp)           :: k3_mort_greff
-    REAL(wp)           :: min_greff
-    REAL(wp)           :: max_crown_area
-    REAL(wp)           :: min_diameter
-    REAL(wp)           :: k_crown_area
-    REAL(wp)           :: k_rp
-    REAL(wp)           :: k_fpc
-    REAL(wp)           :: fpc_max
-    REAL(wp)           :: carbon_per_dryweight_leaf
-    REAL(wp)           :: min_height
-    REAL(wp)           :: sm2lm_grass
-    REAL(wp)           :: lambda_fruit_alloc
-    REAL(wp)           :: k1_fruit_alloc
-    REAL(wp)           :: k3_fruit_alloc
-    REAL(wp)           :: k4_fruit_alloc
-    REAL(wp)           :: k1_root_alloc
-    REAL(wp)           :: leaf2root_min_ratio
-    REAL(wp)           :: leaf2root_max_ratio
-    REAL(wp)           :: delta_n_fraction
-    REAL(wp)           :: delta_n_leaf
-    REAL(wp)           :: f_myc_exudation_max
-    REAL(wp)           :: f_mycorrhization_max
-    REAL(wp)           :: rfr_ratio_toc
-    REAL(wp)           :: k_r2fr_chl
+    REAL(lp)           :: fresp_growth
+    REAL(lp)           :: fmaint_rate_base
+    REAL(lp)           :: fmaint_rate_wood
+    REAL(lp)           :: t_maint_k1
+    REAL(lp)           :: t_maint_k2
+    REAL(lp)           :: t_maint_k3
+    REAL(lp)           :: f_resp_acclim
+    REAL(lp)           :: t_acclim_zero
+    REAL(lp)           :: k0_fn_pepc_C3
+    REAL(lp)           :: k0_fn_pepc_C4
+    REAL(lp)           :: jmax2vcmax_C3
+    REAL(lp)           :: jmax2vcmax_C4
+    REAL(lp)           :: tau_labile
+    REAL(lp)           :: lambda_labile_temp
+    REAL(lp)           :: k_labile_temp
+    REAL(lp)           :: lambda_labile_theta
+    REAL(lp)           :: k_labile_theta
+    REAL(lp)           :: lambda_phiphen
+    REAL(lp)           :: k_phiphen
+    REAL(lp)           :: lambda_phimaint
+    REAL(lp)           :: k_phimaint
+    REAL(lp)           :: lambda_phimaint_nut
+    REAL(lp)           :: k_phimaint_nut
+    REAL(lp)           :: lambda_phistore
+    REAL(lp)           :: k_phistore
+    REAL(lp)           :: knut_labile
+    REAL(lp)           :: lambda_sinklim_ps
+    REAL(lp)           :: k_sinklim_ps
+    REAL(lp)           :: k_cnp_sinklim_ps
+    REAL(lp)           :: beta_sinklim_ps_min
+    REAL(lp)           :: fstore_leaf_max
+    REAL(lp)           :: fstore_fine_root_max
+    REAL(lp)           :: fstore_sap_wood_max
+    REAL(lp)           :: k_phi_interact
+    REAL(lp)           :: resorp_fract_leaf
+    REAL(lp)           :: resorp_fract_wood
+    REAL(lp)           :: root2leaf_cn
+    REAL(lp)           :: wood2leaf_cn
+    REAL(lp)           :: root2leaf_np
+    REAL(lp)           :: wood2leaf_np
+    REAL(lp)           :: tau_nutrient_recycling
+    REAL(lp)           :: kappa_f_demand_nc
+    REAL(lp)           :: kappa_f_demand_pn
+    REAL(lp)           :: k_f_demand
+    REAL(lp)           :: k_cost_symb_bnf
+    REAL(lp)           :: k1_temp_bnf
+    REAL(lp)           :: k2_temp_bnf
+    REAL(lp)           :: k3_temp_bnf
+    REAL(lp)           :: k4_temp_bnf
+    REAL(lp)           :: transform_cost_nh4
+    REAL(lp)           :: transform_cost_no3
+    REAL(lp)           :: transform_cost_org
+    REAL(lp)           :: f_nacq_nh4
+    REAL(lp)           :: f_nacq_no3
+    REAL(lp)           :: eta_nfixation
+    REAL(lp)           :: k0_fn_chl_C3
+    REAL(lp)           :: k0_fn_chl_C4
+    REAL(lp)           :: k1_fn_chl_C3
+    REAL(lp)           :: k1_fn_chl_C4
+    REAL(lp)           :: kfn_chl
+    REAL(lp)           :: min_lai
+    REAL(lp)           :: target_lai_max
+    REAL(lp)           :: max_leaf_shedding_rate
+    REAL(lp)           :: background_mort_rate_tree
+    REAL(lp)           :: background_mort_rate_grass
+    REAL(lp)           :: lambda_mort_light
+    REAL(lp)           :: k_mort_light
+    REAL(lp)           :: lambda_est_temp
+    REAL(lp)           :: k_est_temp
+    REAL(lp)           :: lambda_est_moist
+    REAL(lp)           :: k_est_moist
+    REAL(lp)           :: k2_mort_greff
+    REAL(lp)           :: k3_mort_greff
+    REAL(lp)           :: min_greff
+    REAL(lp)           :: max_crown_area
+    REAL(lp)           :: min_diameter
+    REAL(lp)           :: k_crown_area
+    REAL(lp)           :: k_rp
+    REAL(lp)           :: k_fpc
+    REAL(lp)           :: fpc_max
+    REAL(lp)           :: carbon_per_dryweight_leaf
+    REAL(lp)           :: min_height
+    REAL(lp)           :: sm2lm_grass
+    REAL(lp)           :: lambda_fruit_alloc
+    REAL(lp)           :: k1_fruit_alloc
+    REAL(lp)           :: k3_fruit_alloc
+    REAL(lp)           :: k4_fruit_alloc
+    REAL(lp)           :: k1_root_alloc
+    REAL(lp)           :: leaf2root_min_ratio
+    REAL(lp)           :: leaf2root_max_ratio
+    REAL(lp)           :: delta_n_fraction
+    REAL(lp)           :: delta_n_leaf
+    REAL(lp)           :: f_myc_exudation_max
+    REAL(lp)           :: f_mycorrhization_max
+    REAL(lp)           :: rfr_ratio_toc
+    REAL(lp)           :: k_r2fr_chl
     ! lnd_sb_nml
-    REAL(wp)           :: tau_soluable_litter
-    REAL(wp)           :: tau_metabolic_litter
-    REAL(wp)           :: tau_structural_litter
-    REAL(wp)           :: tau_woody_litter
-    REAL(wp)           :: tau_fast
-    REAL(wp)           :: tau_slow
-    REAL(wp)           :: tau_biomineralisation
-    REAL(wp)           :: temp_ref_tresponse
-    REAL(wp)           :: ea_depolymerisation
-    REAL(wp)           :: ea_mic_uptake
-    REAL(wp)           :: ea_sorption
-    REAL(wp)           :: ea_desorption
-    REAL(wp)           :: ea_hsc
-    REAL(wp)           :: ea_decomposition
-    REAL(wp)           :: ed_decomposition
-    REAL(wp)           :: t_ref_decomposition
-    REAL(wp)           :: k1_afps
-    REAL(wp)           :: k2_afps
-    REAL(wp)           :: kmr_depolymerisation
-    REAL(wp)           :: kmr_mic_uptake
-    REAL(wp)           :: kmr_hsc
-    REAL(wp)           :: kmr_sorption
-    REAL(wp)           :: kmr_decomposition
-    REAL(wp)           :: k_diff_org
-    REAL(wp)           :: rho_bulk_org
-    REAL(wp)           :: carbon_per_dryweight_SOM
-    REAL(wp)           :: k_adsorpt_dom
-    REAL(wp)           :: k_desorpt_dom
-    REAL(wp)           :: k_adsorpt_det
-    REAL(wp)           :: k_desorpt_det
-    REAL(wp)           :: k_adsorpt_nh4
-    REAL(wp)           :: k_desorpt_nh4
-    REAL(wp)           :: k_adsorpt_po4
-    REAL(wp)           :: k_desorpt_po4
-    REAL(wp)           :: k_adsorpt_f_po4
-    REAL(wp)           :: k_desorpt_f_po4
-    REAL(wp)           :: microbial_cn
-    REAL(wp)           :: microbial_np
-    REAL(wp)           :: microbial_nue
-    REAL(wp)           :: microbial_pue
-    REAL(wp)           :: microbial_cue
-    REAL(wp)           :: microbial_cue_max
-    REAL(wp)           :: microbial_cue_min
-    REAL(wp)           :: frac_woody2dec_litter
-    REAL(wp)           :: frac_litter2fast_som
-    REAL(wp)           :: frac_fast2slow_som
-    REAL(wp)           :: frac_slow2fast_som
-    REAL(wp)           :: fc_woody2polymeric
-    REAL(wp)           :: fc_soluable2dom
-    REAL(wp)           :: k_mort_microbial
-    REAL(wp)           :: min_mic_biomass
-    REAL(wp)           :: vmax_mic_uptake
-    REAL(wp)           :: km_mic_uptake
-    REAL(wp)           :: km_depolymerisation
-    REAL(wp)           :: vmax_depolymerisation_residue
-    REAL(wp)           :: vmax_depolymerisation_litter
-    REAL(wp)           :: f_soluable_residue
-    REAL(wp)           :: f_soluable_leaf
-    REAL(wp)           :: f_soluable_fine_root
-    REAL(wp)           :: f_soluable_fruit
-    REAL(wp)           :: f_soluable_seed_bed
-    REAL(wp)           :: fc_soluable_max
-    REAL(wp)           :: k_fc_soluable
-    REAL(wp)           :: k_fn_soluable
-    REAL(wp)           :: k_fp_soluable
-    REAL(wp)           :: lc_leaf_max
-    REAL(wp)           :: lc_leaf2sla
-    REAL(wp)           :: lc_fine_root
-    REAL(wp)           :: lc_coarse_root
-    REAL(wp)           :: lc_woody_litter
-    REAL(wp)           :: lc_fruit
-    REAL(wp)           :: lc_seed_bed
-    REAL(wp)           :: mycorrhiza_cue
-    REAL(wp)           :: mycorrhiza_cn
-    REAL(wp)           :: mycorrhiza_np
-    REAL(wp)           :: f_maxresp_myc
-    REAL(wp)           :: f_surface_myc2fineroot
-    REAL(wp)           :: km1_up_nh4
-    REAL(wp)           :: km2_up_nh4
-    REAL(wp)           :: km1_up_no3
-    REAL(wp)           :: km2_up_no3
-    REAL(wp)           :: km1_up_po4
-    REAL(wp)           :: km2_up_po4
-    REAL(wp)           :: vmax_mic_uptake_nh4
-    REAL(wp)           :: km_mic_uptake_nh4
-    REAL(wp)           :: vmax_mic_uptake_no3
-    REAL(wp)           :: km_mic_uptake_no3
-    REAL(wp)           :: f_mic_carrier_n
-    REAL(wp)           :: vmax_plant_uptake_nh4
-    REAL(wp)           :: km_plant_uptake_nh4
-    REAL(wp)           :: vmax_plant_uptake_no3
-    REAL(wp)           :: km_plant_uptake_no3
-    REAL(wp)           :: f_plant_carrier_n
-    REAL(wp)           :: vmax_mic_uptake_po4
-    REAL(wp)           :: km_mic_uptake_po4
-    REAL(wp)           :: vmax_plant_uptake_po4
-    REAL(wp)           :: km_plant_uptake_po4
-    REAL(wp)           :: k_mic_uptake_nh4
-    REAL(wp)           :: k_plant_uptake_nh4
-    REAL(wp)           :: k_mic_uptake_no3
-    REAL(wp)           :: k_plant_uptake_no3
-    REAL(wp)           :: k_mic_uptake_po4
-    REAL(wp)           :: k_plant_uptake_po4
-    REAL(wp)           :: f_mic_carrier_po4
-    REAL(wp)           :: f_plant_carrier_po4
-    REAL(wp)           :: vmax_nitrification_nh4
-    REAL(wp)           :: km_nitrification_nh4
-    REAL(wp)           :: f_nit_carrier_nh4
-    REAL(wp)           :: vmax_denitrification_no3
-    REAL(wp)           :: km_denit_no3
-    REAL(wp)           :: f_denit_carrier_no3
-    REAL(wp)           :: qmax_po4_mineral
-    REAL(wp)           :: qmax_nh4_clay
-    REAL(wp)           :: km_adsorpt_mineral_po4
-    REAL(wp)           :: km_adsorpt_OM_po4
-    REAL(wp)           :: ea_nitrification
-    REAL(wp)           :: ed_nitrification
-    REAL(wp)           :: t_opt_nitrification
-    REAL(wp)           :: f_nit_noy
-    REAL(wp)           :: f_nit_n2o
-    REAL(wp)           :: ea_denitrification
-    REAL(wp)           :: vmax_nitrification
-    REAL(wp)           :: vmax_denitrification
-    REAL(wp)           :: km_denitrification_c
-    REAL(wp)           :: km_denitrification_no3
-    REAL(wp)           :: f_denit_noy
-    REAL(wp)           :: f_denit_n2o
-    REAL(wp)           :: ea_gasdiffusion
-    REAL(wp)           :: lambda_anvf
-    REAL(wp)           :: k_anvf
-    REAL(wp)           :: floss_nmin
-    REAL(wp)           :: fnit_nmin
-    REAL(wp)           :: fleach_nh4
-    REAL(wp)           :: fleach_po4
-    REAL(wp)           :: km_asymb_bnf
-    REAL(wp)           :: vmax_asymb_bnf
-    REAL(wp)           :: eta_mic_uptake_nh4
-    REAL(wp)           :: eta_mic_uptake_no3
-    REAL(wp)           :: eta_plant_uptake_nh4
-    REAL(wp)           :: eta_plant_uptake_no3
-    REAL(wp)           :: eta_nitrification
-    REAL(wp)           :: eta_nitrate_production
-    REAL(wp)           :: eta_denitrification
-    REAL(wp)           :: eta_ammonification
-    REAL(wp)           :: eta_volatilisation_nh3
-    REAL(wp)           :: k_weath_mineral
-    REAL(wp)           :: eq_sorp_mineral_po4
-    REAL(wp)           :: k_occlude_po4
-    REAL(wp)           :: vmax_biochem_po4
-    REAL(wp)           :: km_mic_biochem_po4
-    REAL(wp)           :: km_dip_biochem_po4
-    REAL(wp)           :: km_rootc_biochem_po4
-    REAL(wp)           :: km_rootc_weath_po4
-    REAL(wp)           :: km_root_enzyme_weath_po4
-    REAL(wp)           :: biomin_threshold_pc_ratio_mic_res
-    REAL(wp)           :: fc_p_res2dom
-    REAL(wp)           :: fc_n_res2dom
-    REAL(wp)           :: f_norg_limit
-    REAL(wp)           :: f_tau_myc
-    REAL(wp)           :: km_priming
-    REAL(wp)           :: km_up_org
-    REAL(wp)           :: myc_root_coverage_max
-    REAL(wp)           :: resp_priming
-    REAL(wp)           :: vmax_uptake_norg
-    REAL(wp)           :: k_fast_som_cn_max
-    REAL(wp)           :: k_fast_som_cn_min
-    REAL(wp)           :: f_fast_som_cn
-    REAL(wp)           :: k_slow_som_cn
-    REAL(wp)           :: k_fast_som_np
-    REAL(wp)           :: k_slow_som_np
-    REAL(wp)           :: f_psensi_soil_p_depth
-    REAL(wp)           :: f_psensi_soil_p_labile
-    REAL(wp)           :: f_psensi_soil_p_slow
-    REAL(wp)           :: f_psensi_soil_p_occluded
-    REAL(wp)           :: f_psensi_soil_p_primary
-    REAL(wp)           :: f_psensi_qmax_org_fine_particle
+    REAL(lp)           :: tau_soluable_litter
+    REAL(lp)           :: tau_metabolic_litter
+    REAL(lp)           :: tau_structural_litter
+    REAL(lp)           :: tau_woody_litter
+    REAL(lp)           :: tau_fast
+    REAL(lp)           :: tau_slow
+    REAL(lp)           :: tau_biomineralisation
+    REAL(lp)           :: temp_ref_tresponse
+    REAL(lp)           :: ea_depolymerisation
+    REAL(lp)           :: ea_mic_uptake
+    REAL(lp)           :: ea_sorption
+    REAL(lp)           :: ea_desorption
+    REAL(lp)           :: ea_hsc
+    REAL(lp)           :: ea_decomposition
+    REAL(lp)           :: ed_decomposition
+    REAL(lp)           :: t_ref_decomposition
+    REAL(lp)           :: k1_afps
+    REAL(lp)           :: k2_afps
+    REAL(lp)           :: kmr_depolymerisation
+    REAL(lp)           :: kmr_mic_uptake
+    REAL(lp)           :: kmr_hsc
+    REAL(lp)           :: kmr_sorption
+    REAL(lp)           :: kmr_decomposition
+    REAL(lp)           :: k_diff_org
+    REAL(lp)           :: rho_bulk_org
+    REAL(lp)           :: carbon_per_dryweight_SOM
+    REAL(lp)           :: k_adsorpt_dom
+    REAL(lp)           :: k_desorpt_dom
+    REAL(lp)           :: k_adsorpt_det
+    REAL(lp)           :: k_desorpt_det
+    REAL(lp)           :: k_adsorpt_nh4
+    REAL(lp)           :: k_desorpt_nh4
+    REAL(lp)           :: k_adsorpt_po4
+    REAL(lp)           :: k_desorpt_po4
+    REAL(lp)           :: k_adsorpt_f_po4
+    REAL(lp)           :: k_desorpt_f_po4
+    REAL(lp)           :: microbial_cn
+    REAL(lp)           :: microbial_np
+    REAL(lp)           :: microbial_nue
+    REAL(lp)           :: microbial_pue
+    REAL(lp)           :: microbial_cue
+    REAL(lp)           :: microbial_cue_max
+    REAL(lp)           :: microbial_cue_min
+    REAL(lp)           :: frac_woody2dec_litter
+    REAL(lp)           :: frac_litter2fast_som
+    REAL(lp)           :: frac_fast2slow_som
+    REAL(lp)           :: frac_slow2fast_som
+    REAL(lp)           :: fc_woody2polymeric
+    REAL(lp)           :: fc_soluable2dom
+    REAL(lp)           :: k_mort_microbial
+    REAL(lp)           :: min_mic_biomass
+    REAL(lp)           :: vmax_mic_uptake
+    REAL(lp)           :: km_mic_uptake
+    REAL(lp)           :: km_depolymerisation
+    REAL(lp)           :: vmax_depolymerisation_residue
+    REAL(lp)           :: vmax_depolymerisation_litter
+    REAL(lp)           :: f_soluable_residue
+    REAL(lp)           :: f_soluable_leaf
+    REAL(lp)           :: f_soluable_fine_root
+    REAL(lp)           :: f_soluable_fruit
+    REAL(lp)           :: f_soluable_seed_bed
+    REAL(lp)           :: fc_soluable_max
+    REAL(lp)           :: k_fc_soluable
+    REAL(lp)           :: k_fn_soluable
+    REAL(lp)           :: k_fp_soluable
+    REAL(lp)           :: lc_leaf_max
+    REAL(lp)           :: lc_leaf2sla
+    REAL(lp)           :: lc_fine_root
+    REAL(lp)           :: lc_coarse_root
+    REAL(lp)           :: lc_woody_litter
+    REAL(lp)           :: lc_fruit
+    REAL(lp)           :: lc_seed_bed
+    REAL(lp)           :: mycorrhiza_cue
+    REAL(lp)           :: mycorrhiza_cn
+    REAL(lp)           :: mycorrhiza_np
+    REAL(lp)           :: f_maxresp_myc
+    REAL(lp)           :: f_surface_myc2fineroot
+    REAL(lp)           :: km1_up_nh4
+    REAL(lp)           :: km2_up_nh4
+    REAL(lp)           :: km1_up_no3
+    REAL(lp)           :: km2_up_no3
+    REAL(lp)           :: km1_up_po4
+    REAL(lp)           :: km2_up_po4
+    REAL(lp)           :: vmax_mic_uptake_nh4
+    REAL(lp)           :: km_mic_uptake_nh4
+    REAL(lp)           :: vmax_mic_uptake_no3
+    REAL(lp)           :: km_mic_uptake_no3
+    REAL(lp)           :: f_mic_carrier_n
+    REAL(lp)           :: vmax_plant_uptake_nh4
+    REAL(lp)           :: km_plant_uptake_nh4
+    REAL(lp)           :: vmax_plant_uptake_no3
+    REAL(lp)           :: km_plant_uptake_no3
+    REAL(lp)           :: f_plant_carrier_n
+    REAL(lp)           :: vmax_mic_uptake_po4
+    REAL(lp)           :: km_mic_uptake_po4
+    REAL(lp)           :: vmax_plant_uptake_po4
+    REAL(lp)           :: km_plant_uptake_po4
+    REAL(lp)           :: k_mic_uptake_nh4
+    REAL(lp)           :: k_plant_uptake_nh4
+    REAL(lp)           :: k_mic_uptake_no3
+    REAL(lp)           :: k_plant_uptake_no3
+    REAL(lp)           :: k_mic_uptake_po4
+    REAL(lp)           :: k_plant_uptake_po4
+    REAL(lp)           :: f_mic_carrier_po4
+    REAL(lp)           :: f_plant_carrier_po4
+    REAL(lp)           :: vmax_nitrification_nh4
+    REAL(lp)           :: km_nitrification_nh4
+    REAL(lp)           :: f_nit_carrier_nh4
+    REAL(lp)           :: vmax_denitrification_no3
+    REAL(lp)           :: km_denit_no3
+    REAL(lp)           :: f_denit_carrier_no3
+    REAL(lp)           :: qmax_po4_mineral
+    REAL(lp)           :: qmax_nh4_clay
+    REAL(lp)           :: km_adsorpt_mineral_po4
+    REAL(lp)           :: km_adsorpt_OM_po4
+    REAL(lp)           :: ea_nitrification
+    REAL(lp)           :: ed_nitrification
+    REAL(lp)           :: t_opt_nitrification
+    REAL(lp)           :: f_nit_noy
+    REAL(lp)           :: f_nit_n2o
+    REAL(lp)           :: ea_denitrification
+    REAL(lp)           :: vmax_nitrification
+    REAL(lp)           :: vmax_denitrification
+    REAL(lp)           :: km_denitrification_c
+    REAL(lp)           :: km_denitrification_no3
+    REAL(lp)           :: f_denit_noy
+    REAL(lp)           :: f_denit_n2o
+    REAL(lp)           :: ea_gasdiffusion
+    REAL(lp)           :: lambda_anvf
+    REAL(lp)           :: k_anvf
+    REAL(lp)           :: floss_nmin
+    REAL(lp)           :: fnit_nmin
+    REAL(lp)           :: fleach_nh4
+    REAL(lp)           :: fleach_po4
+    REAL(lp)           :: km_asymb_bnf
+    REAL(lp)           :: vmax_asymb_bnf
+    REAL(lp)           :: eta_mic_uptake_nh4
+    REAL(lp)           :: eta_mic_uptake_no3
+    REAL(lp)           :: eta_plant_uptake_nh4
+    REAL(lp)           :: eta_plant_uptake_no3
+    REAL(lp)           :: eta_nitrification
+    REAL(lp)           :: eta_nitrate_production
+    REAL(lp)           :: eta_denitrification
+    REAL(lp)           :: eta_ammonification
+    REAL(lp)           :: eta_volatilisation_nh3
+    REAL(lp)           :: k_weath_mineral
+    REAL(lp)           :: eq_sorp_mineral_po4
+    REAL(lp)           :: k_occlude_po4
+    REAL(lp)           :: vmax_biochem_po4
+    REAL(lp)           :: km_mic_biochem_po4
+    REAL(lp)           :: km_dip_biochem_po4
+    REAL(lp)           :: km_rootc_biochem_po4
+    REAL(lp)           :: km_rootc_weath_po4
+    REAL(lp)           :: km_root_enzyme_weath_po4
+    REAL(lp)           :: biomin_threshold_pc_ratio_mic_res
+    REAL(lp)           :: fc_p_res2dom
+    REAL(lp)           :: fc_n_res2dom
+    REAL(lp)           :: f_norg_limit
+    REAL(lp)           :: f_tau_myc
+    REAL(lp)           :: km_priming
+    REAL(lp)           :: km_up_org
+    REAL(lp)           :: myc_root_coverage_max
+    REAL(lp)           :: resp_priming
+    REAL(lp)           :: vmax_uptake_norg
+    REAL(lp)           :: k_fast_som_cn_max
+    REAL(lp)           :: k_fast_som_cn_min
+    REAL(lp)           :: f_fast_som_cn
+    REAL(lp)           :: k_slow_som_cn
+    REAL(lp)           :: k_fast_som_np
+    REAL(lp)           :: k_slow_som_np
+    REAL(lp)           :: f_psensi_soil_p_depth
+    REAL(lp)           :: f_psensi_soil_p_labile
+    REAL(lp)           :: f_psensi_soil_p_slow
+    REAL(lp)           :: f_psensi_soil_p_occluded
+    REAL(lp)           :: f_psensi_soil_p_primary
+    REAL(lp)           :: f_psensi_qmax_org_fine_particle
   CONTAINS
     PROCEDURE :: read_param => read_parameter_slm_list
     PROCEDURE :: set_param  => set_parameter_slm_values_with_list_values
@@ -425,69 +388,69 @@ MODULE mo_qs_set_parameters
     !LOGICAL            :: active
     CHARACTER(LEN=30)   :: filename = 'parameter_slm_run.list'                 ! filename
 
-    REAL(wp)            :: sla
-    REAL(wp)            :: sigma_vis
-    REAL(wp)            :: sigma_nir
-    REAL(wp)            :: omega_clumping
-    REAL(wp)            :: crown_shape_factor
-    REAL(wp)            :: cn_leaf
-    REAL(wp)            :: cn_leaf_min
-    REAL(wp)            :: cn_leaf_max
-    REAL(wp)            :: np_leaf
-    REAL(wp)            :: np_leaf_min
-    REAL(wp)            :: np_leaf_max
-    REAL(wp)            :: k0_fn_struc
-    REAL(wp)            :: fn_oth_min
-    REAL(wp)            :: t_jmax_opt
-    REAL(wp)            :: t_jmax_omega
-    REAL(wp)            :: g0
-    REAL(wp)            :: g1_medlyn
-    REAL(wp)            :: g1_bberry
-    REAL(wp)            :: gmin
+    REAL(lp)            :: sla
+    REAL(lp)            :: sigma_vis
+    REAL(lp)            :: sigma_nir
+    REAL(lp)            :: omega_clumping
+    REAL(lp)            :: crown_shape_factor
+    REAL(lp)            :: cn_leaf
+    REAL(lp)            :: cn_leaf_min
+    REAL(lp)            :: cn_leaf_max
+    REAL(lp)            :: np_leaf
+    REAL(lp)            :: np_leaf_min
+    REAL(lp)            :: np_leaf_max
+    REAL(lp)            :: k0_fn_struc
+    REAL(lp)            :: fn_oth_min
+    REAL(lp)            :: t_jmax_opt
+    REAL(lp)            :: t_jmax_omega
+    REAL(lp)            :: g0
+    REAL(lp)            :: g1_medlyn
+    REAL(lp)            :: g1_bberry
+    REAL(lp)            :: gmin
     ! turnover times
-    REAL(wp)            :: tau_leaf
-    REAL(wp)            :: tau_fine_root
-    REAL(wp)            :: tau_coarse_root
-    REAL(wp)            :: tau_branch
-    REAL(wp)            :: tau_sap_wood
-    REAL(wp)            :: tau_fruit
-    REAL(wp)            :: tau_seed_litter
-    REAL(wp)            :: tau_seed_est
-    REAL(wp)            :: tau_mycorrhiza
+    REAL(lp)            :: tau_leaf
+    REAL(lp)            :: tau_fine_root
+    REAL(lp)            :: tau_coarse_root
+    REAL(lp)            :: tau_branch
+    REAL(lp)            :: tau_sap_wood
+    REAL(lp)            :: tau_fruit
+    REAL(lp)            :: tau_seed_litter
+    REAL(lp)            :: tau_seed_est
+    REAL(lp)            :: tau_mycorrhiza
     ! N uptake parameters
-    REAL(wp)            :: vmax_uptake_n
-    REAL(wp)            :: vmax_uptake_p
-    REAL(wp)            :: bnf_base
-    REAL(wp)            :: vmax_symb_bnf
-    REAL(wp)            :: km_symb_bnf
+    REAL(lp)            :: vmax_uptake_n
+    REAL(lp)            :: vmax_uptake_p
+    REAL(lp)            :: bnf_base
+    REAL(lp)            :: vmax_symb_bnf
+    REAL(lp)            :: km_symb_bnf
     ! Vegetation dynamics parameters
-    REAL(wp)            :: lambda_est_light
-    REAL(wp)            :: k_est_light
-    REAL(wp)            :: seed_size
-    REAL(wp)            :: k1_mort_greff
+    REAL(lp)            :: lambda_est_light
+    REAL(lp)            :: k_est_light
+    REAL(lp)            :: seed_size
+    REAL(lp)            :: k1_mort_greff
     ! Phenology parameters
-    REAL(wp)            :: beta_soil_flush
-    REAL(wp)            :: beta_soil_senescence
-    REAL(wp)            :: gdd_req_max
-    REAL(wp)            :: k_gdd_dormance
-    REAL(wp)            :: t_air_senescence
-    REAL(wp)            :: min_leaf_age
+    REAL(lp)            :: beta_soil_flush
+    REAL(lp)            :: beta_soil_senescence
+    REAL(lp)            :: gdd_req_max
+    REAL(lp)            :: k_gdd_dormance
+    REAL(lp)            :: t_air_senescence
+    REAL(lp)            :: min_leaf_age
     ! Allocation parameters
-    REAL(wp)            :: frac_sapwood_branch
-    REAL(wp)            :: wood_density
-    REAL(wp)            :: k_latosa
-    REAL(wp)            :: k_crtos
-    REAL(wp)            :: k_rtos
-    REAL(wp)            :: k2_fruit_alloc
-    REAL(wp)            :: allom_k1
-    REAL(wp)            :: allom_k2
-    REAL(wp)            :: phi_leaf_min
-    REAL(wp)            :: k_root
-    REAL(wp)            :: k_sapwood
-    REAL(wp)            :: c0_allom
-    REAL(wp)            :: fstore_target
+    REAL(lp)            :: frac_sapwood_branch
+    REAL(lp)            :: wood_density
+    REAL(lp)            :: k_latosa
+    REAL(lp)            :: k_crtos
+    REAL(lp)            :: k_rtos
+    REAL(lp)            :: k2_fruit_alloc
+    REAL(lp)            :: allom_k1
+    REAL(lp)            :: allom_k2
+    REAL(lp)            :: phi_leaf_min
+    REAL(lp)            :: k_root
+    REAL(lp)            :: k_sapwood
+    REAL(lp)            :: c0_allom
+    REAL(lp)            :: fstore_target
     ! Soil
-    REAL(wp)            :: k_root_dist
+    REAL(lp)            :: k_root_dist
 
   END TYPE t_parameters_lctlib_from_file
 
@@ -523,385 +486,348 @@ CONTAINS
     ! ---------------------------
     ! 0.2 Local
     ! lnd_q_assimi_nml
-    REAL(wp)           :: jmax2n
-    REAL(wp)           :: vcmax2n
-    REAL(wp)           :: pepc2n
-    REAL(wp)           :: chl2n
-    REAL(wp)           :: k1_fn_struc
-    REAL(wp)           :: E0kc
-    REAL(wp)           :: E1kc
-    REAL(wp)           :: E0ko
-    REAL(wp)           :: E1ko
-    REAL(wp)           :: E0pcp
-    REAL(wp)           :: E1pcp
-    REAL(wp)           :: E0v
-    REAL(wp)           :: E1v
-    REAL(wp)           :: t_jmax_offset
-    REAL(wp)           :: t_jmax_slope
-    REAL(wp)           :: t_jmax_opt_min
-    REAL(wp)           :: t_jmax_opt_max
-    REAL(wp)           :: Tref_pepc
-    REAL(wp)           :: Tbase_pepc
-    REAL(wp)           :: alpha_i
-    REAL(wp)           :: pO2
-    REAL(wp)           :: CiCa_default_C3
-    REAL(wp)           :: CiCa_default_C4
-    REAL(wp)           :: ps_it_max
-    REAL(wp)           :: ci_max
-    REAL(wp)           :: Dwv2co2_air
-    REAL(wp)           :: Dwv2co2_turb
-    REAL(wp)           :: discr_ps_a_C13
-    REAL(wp)           :: discr_ps_b_C13
-    REAL(wp)           :: discr_ps_c_C13
-    REAL(wp)           :: discr_ps_a_C14
-    REAL(wp)           :: discr_ps_b_C14
-    REAL(wp)           :: discr_ps_c_C14
-    REAL(wp)           :: discr_ps_phi
-    REAL(wp)           :: ka
-    REAL(wp)           :: kn
-    REAL(wp)           :: soa_b
-    REAL(wp)           :: soa_t_s
+    REAL(lp)           :: jmax2n
+    REAL(lp)           :: vcmax2n
+    REAL(lp)           :: pepc2n
+    REAL(lp)           :: chl2n
+    REAL(lp)           :: k1_fn_struc
+    REAL(lp)           :: E0kc
+    REAL(lp)           :: E1kc
+    REAL(lp)           :: E0ko
+    REAL(lp)           :: E1ko
+    REAL(lp)           :: E0pcp
+    REAL(lp)           :: E1pcp
+    REAL(lp)           :: E0v
+    REAL(lp)           :: E1v
+    REAL(lp)           :: t_jmax_offset
+    REAL(lp)           :: t_jmax_slope
+    REAL(lp)           :: t_jmax_opt_min
+    REAL(lp)           :: t_jmax_opt_max
+    REAL(lp)           :: Tref_pepc
+    REAL(lp)           :: Tbase_pepc
+    REAL(lp)           :: alpha_i
+    REAL(lp)           :: pO2
+    REAL(lp)           :: CiCa_default_C3
+    REAL(lp)           :: CiCa_default_C4
+    REAL(lp)           :: ps_it_max
+    REAL(lp)           :: ci_max
+    REAL(lp)           :: Dwv2co2_air
+    REAL(lp)           :: Dwv2co2_turb
+    REAL(lp)           :: discr_ps_a_C13
+    REAL(lp)           :: discr_ps_b_C13
+    REAL(lp)           :: discr_ps_c_C13
+    REAL(lp)           :: discr_ps_a_C14
+    REAL(lp)           :: discr_ps_b_C14
+    REAL(lp)           :: discr_ps_c_C14
+    REAL(lp)           :: discr_ps_phi
+    REAL(lp)           :: ka
+    REAL(lp)           :: kn
+    REAL(lp)           :: soa_b
+    REAL(lp)           :: soa_t_s
     ! lnd_q_pheno_nml
-    REAL(wp)           :: gdd_t_air_threshold
-    REAL(wp)           :: k_leafon_canopy
+    REAL(lp)           :: gdd_t_air_threshold
+    REAL(lp)           :: k_leafon_canopy
     ! jsb_rad_nml
-    REAL(wp)           :: kbl0_vis
-    REAL(wp)           :: kdf0_vis
-    REAL(wp)           :: kbl0_nir
-    REAL(wp)           :: kdf0_nir
-    REAL(wp)           :: rho2sbeta
-    REAL(wp)           :: k_csf
-    REAL(wp)           :: min_cos_zenith_angle_rad
-    REAL(wp)           :: rad2ppfd
+    REAL(lp)           :: kbl0_vis
+    REAL(lp)           :: kdf0_vis
+    REAL(lp)           :: kbl0_nir
+    REAL(lp)           :: kdf0_nir
+    REAL(lp)           :: rho2sbeta
+    REAL(lp)           :: k_csf
+    REAL(lp)           :: min_cos_zenith_angle_rad
+    REAL(lp)           :: rad2ppfd
     ! qs_shared_nml
-    REAL(wp)           :: mavg_period_weekly
-    REAL(wp)           :: mavg_period_monthly
-    REAL(wp)           :: mavg_period_yearly
-    REAL(wp)           :: mavg_period_tsoa
-    REAL(wp)           :: mavg_period_tuptake
-    REAL(wp)           :: mavg_period_tlabile
-    REAL(wp)           :: mavg_period_tphen
-    REAL(wp)           :: mavg_period_tenzyme
-    REAL(wp)           :: mavg_period_tresidual
-    REAL(wp)           :: mavg_period_tfrac
-    REAL(wp)           :: mavg_period_tcnl
-    REAL(wp)           :: mavg_period_talloc
-    REAL(wp)           :: mavg_period_talloc_dynamic
-    REAL(wp)           :: mavg_period_tacclim
-    REAL(wp)           :: mavg_period_tmic
-    REAL(wp)           :: mavg_period_tgrowth
-    REAL(wp)           :: mavg_period_tvegdyn
-    ! lnd_spq_nml
-    REAL(wp)           :: soil_heat_cap
-    REAL(wp)           :: soil_therm_cond
-    REAL(wp)           :: InterceptionEfficiency
-    REAL(wp)           :: w_skin_max
-    REAL(wp)           :: drain_frac
-    REAL(wp)           :: fdrain_srf_runoff
-    REAL(wp)           :: height_wind
-    REAL(wp)           :: wpot_pwp
-    REAL(wp)           :: wpot_fc
-    REAL(wp)           :: wpot_min
-    REAL(wp)           :: k_pwp_a
-    REAL(wp)           :: k_pwp_c
-    REAL(wp)           :: k_pwp_s
-    REAL(wp)           :: k_pwp_sc
-    REAL(wp)           :: k_pwp_at
-    REAL(wp)           :: k_pwp_bt
-    REAL(wp)           :: k_fc_a
-    REAL(wp)           :: k_fc_c
-    REAL(wp)           :: k_fc_s
-    REAL(wp)           :: k_fc_sc
-    REAL(wp)           :: k_fc_at
-    REAL(wp)           :: k_fc_bt
-    REAL(wp)           :: k_fc_ct
-    REAL(wp)           :: k_sat_a
-    REAL(wp)           :: k_sat_c
-    REAL(wp)           :: k_sat_s
-    REAL(wp)           :: k_sat_sc
-    REAL(wp)           :: k_sat_at
-    REAL(wp)           :: k_sat_bt
-    REAL(wp)           :: k_sat_ct
-    REAL(wp)           :: k_sat_dt
-    REAL(wp)           :: kdiff_sat_max
-    REAL(wp)           :: f_psensi_soil_sand
-    REAL(wp)           :: f_psensi_soil_silt
-    REAL(wp)           :: f_psensi_soil_awc_prescribe
-    REAL(wp)           :: f_psensi_bulk_density
+    REAL(lp)           :: mavg_period_weekly
+    REAL(lp)           :: mavg_period_monthly
+    REAL(lp)           :: mavg_period_yearly
+    REAL(lp)           :: mavg_period_tsoa
+    REAL(lp)           :: mavg_period_tuptake
+    REAL(lp)           :: mavg_period_tlabile
+    REAL(lp)           :: mavg_period_tphen
+    REAL(lp)           :: mavg_period_tenzyme
+    REAL(lp)           :: mavg_period_tresidual
+    REAL(lp)           :: mavg_period_tfrac
+    REAL(lp)           :: mavg_period_tcnl
+    REAL(lp)           :: mavg_period_talloc
+    REAL(lp)           :: mavg_period_talloc_dynamic
+    REAL(lp)           :: mavg_period_tacclim
+    REAL(lp)           :: mavg_period_tmic
+    REAL(lp)           :: mavg_period_tgrowth
+    REAL(lp)           :: mavg_period_tvegdyn
     ! lnd_veg_nml
-    REAL(wp)           :: fresp_growth
-    REAL(wp)           :: fmaint_rate_base
-    REAL(wp)           :: fmaint_rate_wood
-    REAL(wp)           :: t_maint_k1
-    REAL(wp)           :: t_maint_k2
-    REAL(wp)           :: t_maint_k3
-    REAL(wp)           :: f_resp_acclim
-    REAL(wp)           :: t_acclim_zero
-    REAL(wp)           :: k0_fn_pepc_C3
-    REAL(wp)           :: k0_fn_pepc_C4
-    REAL(wp)           :: jmax2vcmax_C3
-    REAL(wp)           :: jmax2vcmax_C4
-    REAL(wp)           :: tau_labile
-    REAL(wp)           :: lambda_labile_temp
-    REAL(wp)           :: k_labile_temp
-    REAL(wp)           :: lambda_labile_theta
-    REAL(wp)           :: k_labile_theta
-    REAL(wp)           :: lambda_phiphen
-    REAL(wp)           :: k_phiphen
-    REAL(wp)           :: lambda_phimaint
-    REAL(wp)           :: k_phimaint
-    REAL(wp)           :: lambda_phimaint_nut
-    REAL(wp)           :: k_phimaint_nut
-    REAL(wp)           :: lambda_phistore
-    REAL(wp)           :: k_phistore
-    REAL(wp)           :: knut_labile
-    REAL(wp)           :: lambda_sinklim_ps
-    REAL(wp)           :: k_sinklim_ps
-    REAL(wp)           :: k_cnp_sinklim_ps
-    REAL(wp)           :: beta_sinklim_ps_min
-    REAL(wp)           :: fstore_leaf_max
-    REAL(wp)           :: fstore_fine_root_max
-    REAL(wp)           :: fstore_sap_wood_max
-    REAL(wp)           :: k_phi_interact
-    REAL(wp)           :: resorp_fract_leaf
-    REAL(wp)           :: resorp_fract_wood
-    REAL(wp)           :: root2leaf_cn
-    REAL(wp)           :: wood2leaf_cn
-    REAL(wp)           :: root2leaf_np
-    REAL(wp)           :: wood2leaf_np
-    REAL(wp)           :: tau_nutrient_recycling
-    REAL(wp)           :: kappa_f_demand_nc
-    REAL(wp)           :: kappa_f_demand_pn
-    REAL(wp)           :: k_f_demand
-    REAL(wp)           :: k_cost_symb_bnf
-    REAL(wp)           :: k1_temp_bnf
-    REAL(wp)           :: k2_temp_bnf
-    REAL(wp)           :: k3_temp_bnf
-    REAL(wp)           :: k4_temp_bnf
-    REAL(wp)           :: transform_cost_nh4
-    REAL(wp)           :: transform_cost_no3
-    REAL(wp)           :: transform_cost_org
-    REAL(wp)           :: f_nacq_nh4
-    REAL(wp)           :: f_nacq_no3
-    REAL(wp)           :: eta_nfixation
-    REAL(wp)           :: k0_fn_chl_C3
-    REAL(wp)           :: k0_fn_chl_C4
-    REAL(wp)           :: k1_fn_chl_C3
-    REAL(wp)           :: k1_fn_chl_C4
-    REAL(wp)           :: kfn_chl
-    REAL(wp)           :: min_lai
-    REAL(wp)           :: target_lai_max
-    REAL(wp)           :: max_leaf_shedding_rate
-    REAL(wp)           :: background_mort_rate_tree
-    REAL(wp)           :: background_mort_rate_grass
-    REAL(wp)           :: lambda_mort_light
-    REAL(wp)           :: k_mort_light
-    REAL(wp)           :: lambda_est_temp
-    REAL(wp)           :: k_est_temp
-    REAL(wp)           :: lambda_est_moist
-    REAL(wp)           :: k_est_moist
-    REAL(wp)           :: k2_mort_greff
-    REAL(wp)           :: k3_mort_greff
-    REAL(wp)           :: min_greff
-    REAL(wp)           :: max_crown_area
-    REAL(wp)           :: min_diameter
-    REAL(wp)           :: k_crown_area
-    REAL(wp)           :: k_rp
-    REAL(wp)           :: k_fpc
-    REAL(wp)           :: fpc_max
-    REAL(wp)           :: carbon_per_dryweight_leaf
-    REAL(wp)           :: min_height
-    REAL(wp)           :: sm2lm_grass
-    REAL(wp)           :: lambda_fruit_alloc
-    REAL(wp)           :: k1_fruit_alloc
-    REAL(wp)           :: k3_fruit_alloc
-    REAL(wp)           :: k4_fruit_alloc
-    REAL(wp)           :: k1_root_alloc
-    REAL(wp)           :: leaf2root_min_ratio
-    REAL(wp)           :: leaf2root_max_ratio
-    REAL(wp)           :: delta_n_fraction
-    REAL(wp)           :: delta_n_leaf
-    REAL(wp)           :: f_myc_exudation_max
-    REAL(wp)           :: f_mycorrhization_max
-    REAL(wp)           :: rfr_ratio_toc
-    REAL(wp)           :: k_r2fr_chl
+    REAL(lp)           :: fresp_growth
+    REAL(lp)           :: fmaint_rate_base
+    REAL(lp)           :: fmaint_rate_wood
+    REAL(lp)           :: t_maint_k1
+    REAL(lp)           :: t_maint_k2
+    REAL(lp)           :: t_maint_k3
+    REAL(lp)           :: f_resp_acclim
+    REAL(lp)           :: t_acclim_zero
+    REAL(lp)           :: k0_fn_pepc_C3
+    REAL(lp)           :: k0_fn_pepc_C4
+    REAL(lp)           :: jmax2vcmax_C3
+    REAL(lp)           :: jmax2vcmax_C4
+    REAL(lp)           :: tau_labile
+    REAL(lp)           :: lambda_labile_temp
+    REAL(lp)           :: k_labile_temp
+    REAL(lp)           :: lambda_labile_theta
+    REAL(lp)           :: k_labile_theta
+    REAL(lp)           :: lambda_phiphen
+    REAL(lp)           :: k_phiphen
+    REAL(lp)           :: lambda_phimaint
+    REAL(lp)           :: k_phimaint
+    REAL(lp)           :: lambda_phimaint_nut
+    REAL(lp)           :: k_phimaint_nut
+    REAL(lp)           :: lambda_phistore
+    REAL(lp)           :: k_phistore
+    REAL(lp)           :: knut_labile
+    REAL(lp)           :: lambda_sinklim_ps
+    REAL(lp)           :: k_sinklim_ps
+    REAL(lp)           :: k_cnp_sinklim_ps
+    REAL(lp)           :: beta_sinklim_ps_min
+    REAL(lp)           :: fstore_leaf_max
+    REAL(lp)           :: fstore_fine_root_max
+    REAL(lp)           :: fstore_sap_wood_max
+    REAL(lp)           :: k_phi_interact
+    REAL(lp)           :: resorp_fract_leaf
+    REAL(lp)           :: resorp_fract_wood
+    REAL(lp)           :: root2leaf_cn
+    REAL(lp)           :: wood2leaf_cn
+    REAL(lp)           :: root2leaf_np
+    REAL(lp)           :: wood2leaf_np
+    REAL(lp)           :: tau_nutrient_recycling
+    REAL(lp)           :: kappa_f_demand_nc
+    REAL(lp)           :: kappa_f_demand_pn
+    REAL(lp)           :: k_f_demand
+    REAL(lp)           :: k_cost_symb_bnf
+    REAL(lp)           :: k1_temp_bnf
+    REAL(lp)           :: k2_temp_bnf
+    REAL(lp)           :: k3_temp_bnf
+    REAL(lp)           :: k4_temp_bnf
+    REAL(lp)           :: transform_cost_nh4
+    REAL(lp)           :: transform_cost_no3
+    REAL(lp)           :: transform_cost_org
+    REAL(lp)           :: f_nacq_nh4
+    REAL(lp)           :: f_nacq_no3
+    REAL(lp)           :: eta_nfixation
+    REAL(lp)           :: k0_fn_chl_C3
+    REAL(lp)           :: k0_fn_chl_C4
+    REAL(lp)           :: k1_fn_chl_C3
+    REAL(lp)           :: k1_fn_chl_C4
+    REAL(lp)           :: kfn_chl
+    REAL(lp)           :: min_lai
+    REAL(lp)           :: target_lai_max
+    REAL(lp)           :: max_leaf_shedding_rate
+    REAL(lp)           :: background_mort_rate_tree
+    REAL(lp)           :: background_mort_rate_grass
+    REAL(lp)           :: lambda_mort_light
+    REAL(lp)           :: k_mort_light
+    REAL(lp)           :: lambda_est_temp
+    REAL(lp)           :: k_est_temp
+    REAL(lp)           :: lambda_est_moist
+    REAL(lp)           :: k_est_moist
+    REAL(lp)           :: k2_mort_greff
+    REAL(lp)           :: k3_mort_greff
+    REAL(lp)           :: min_greff
+    REAL(lp)           :: max_crown_area
+    REAL(lp)           :: min_diameter
+    REAL(lp)           :: k_crown_area
+    REAL(lp)           :: k_rp
+    REAL(lp)           :: k_fpc
+    REAL(lp)           :: fpc_max
+    REAL(lp)           :: carbon_per_dryweight_leaf
+    REAL(lp)           :: min_height
+    REAL(lp)           :: sm2lm_grass
+    REAL(lp)           :: lambda_fruit_alloc
+    REAL(lp)           :: k1_fruit_alloc
+    REAL(lp)           :: k3_fruit_alloc
+    REAL(lp)           :: k4_fruit_alloc
+    REAL(lp)           :: k1_root_alloc
+    REAL(lp)           :: leaf2root_min_ratio
+    REAL(lp)           :: leaf2root_max_ratio
+    REAL(lp)           :: delta_n_fraction
+    REAL(lp)           :: delta_n_leaf
+    REAL(lp)           :: f_myc_exudation_max
+    REAL(lp)           :: f_mycorrhization_max
+    REAL(lp)           :: rfr_ratio_toc
+    REAL(lp)           :: k_r2fr_chl
     ! lnd_sb_nml
-    REAL(wp)           :: tau_soluable_litter
-    REAL(wp)           :: tau_metabolic_litter
-    REAL(wp)           :: tau_structural_litter
-    REAL(wp)           :: tau_woody_litter
-    REAL(wp)           :: tau_fast
-    REAL(wp)           :: tau_slow
-    REAL(wp)           :: tau_biomineralisation
-    REAL(wp)           :: temp_ref_tresponse
-    REAL(wp)           :: ea_depolymerisation
-    REAL(wp)           :: ea_mic_uptake
-    REAL(wp)           :: ea_sorption
-    REAL(wp)           :: ea_desorption
-    REAL(wp)           :: ea_hsc
-    REAL(wp)           :: ea_decomposition
-    REAL(wp)           :: ed_decomposition
-    REAL(wp)           :: t_ref_decomposition
-    REAL(wp)           :: k1_afps
-    REAL(wp)           :: k2_afps
-    REAL(wp)           :: kmr_depolymerisation
-    REAL(wp)           :: kmr_mic_uptake
-    REAL(wp)           :: kmr_hsc
-    REAL(wp)           :: kmr_sorption
-    REAL(wp)           :: kmr_decomposition
-    REAL(wp)           :: k_diff_org
-    REAL(wp)           :: rho_bulk_org
-    REAL(wp)           :: carbon_per_dryweight_SOM
-    REAL(wp)           :: k_adsorpt_dom
-    REAL(wp)           :: k_desorpt_dom
-    REAL(wp)           :: k_adsorpt_det
-    REAL(wp)           :: k_desorpt_det
-    REAL(wp)           :: k_adsorpt_nh4
-    REAL(wp)           :: k_desorpt_nh4
-    REAL(wp)           :: k_adsorpt_po4
-    REAL(wp)           :: k_desorpt_po4
-    REAL(wp)           :: k_adsorpt_f_po4
-    REAL(wp)           :: k_desorpt_f_po4
-    REAL(wp)           :: microbial_cn
-    REAL(wp)           :: microbial_np
-    REAL(wp)           :: microbial_nue
-    REAL(wp)           :: microbial_pue
-    REAL(wp)           :: microbial_cue
-    REAL(wp)           :: microbial_cue_max
-    REAL(wp)           :: microbial_cue_min
-    REAL(wp)           :: frac_woody2dec_litter
-    REAL(wp)           :: frac_litter2fast_som
-    REAL(wp)           :: frac_fast2slow_som
-    REAL(wp)           :: frac_slow2fast_som
-    REAL(wp)           :: fc_woody2polymeric
-    REAL(wp)           :: fc_soluable2dom
-    REAL(wp)           :: k_mort_microbial
-    REAL(wp)           :: min_mic_biomass
-    REAL(wp)           :: vmax_mic_uptake
-    REAL(wp)           :: km_mic_uptake
-    REAL(wp)           :: km_depolymerisation
-    REAL(wp)           :: vmax_depolymerisation_residue
-    REAL(wp)           :: vmax_depolymerisation_litter
-    REAL(wp)           :: f_soluable_residue
-    REAL(wp)           :: f_soluable_leaf
-    REAL(wp)           :: f_soluable_fine_root
-    REAL(wp)           :: f_soluable_fruit
-    REAL(wp)           :: f_soluable_seed_bed
-    REAL(wp)           :: fc_soluable_max
-    REAL(wp)           :: k_fc_soluable
-    REAL(wp)           :: k_fn_soluable
-    REAL(wp)           :: k_fp_soluable
-    REAL(wp)           :: lc_leaf_max
-    REAL(wp)           :: lc_leaf2sla
-    REAL(wp)           :: lc_fine_root
-    REAL(wp)           :: lc_coarse_root
-    REAL(wp)           :: lc_woody_litter
-    REAL(wp)           :: lc_fruit
-    REAL(wp)           :: lc_seed_bed
-    REAL(wp)           :: mycorrhiza_cue
-    REAL(wp)           :: mycorrhiza_cn
-    REAL(wp)           :: mycorrhiza_np
-    REAL(wp)           :: f_maxresp_myc
-    REAL(wp)           :: f_surface_myc2fineroot
-    REAL(wp)           :: km1_up_nh4
-    REAL(wp)           :: km2_up_nh4
-    REAL(wp)           :: km1_up_no3
-    REAL(wp)           :: km2_up_no3
-    REAL(wp)           :: km1_up_po4
-    REAL(wp)           :: km2_up_po4
-    REAL(wp)           :: vmax_mic_uptake_nh4
-    REAL(wp)           :: km_mic_uptake_nh4
-    REAL(wp)           :: vmax_mic_uptake_no3
-    REAL(wp)           :: km_mic_uptake_no3
-    REAL(wp)           :: f_mic_carrier_n
-    REAL(wp)           :: vmax_plant_uptake_nh4
-    REAL(wp)           :: km_plant_uptake_nh4
-    REAL(wp)           :: vmax_plant_uptake_no3
-    REAL(wp)           :: km_plant_uptake_no3
-    REAL(wp)           :: f_plant_carrier_n
-    REAL(wp)           :: vmax_mic_uptake_po4
-    REAL(wp)           :: km_mic_uptake_po4
-    REAL(wp)           :: vmax_plant_uptake_po4
-    REAL(wp)           :: km_plant_uptake_po4
-    REAL(wp)           :: k_mic_uptake_nh4
-    REAL(wp)           :: k_plant_uptake_nh4
-    REAL(wp)           :: k_mic_uptake_no3
-    REAL(wp)           :: k_plant_uptake_no3
-    REAL(wp)           :: k_mic_uptake_po4
-    REAL(wp)           :: k_plant_uptake_po4
-    REAL(wp)           :: f_mic_carrier_po4
-    REAL(wp)           :: f_plant_carrier_po4
-    REAL(wp)           :: vmax_nitrification_nh4
-    REAL(wp)           :: km_nitrification_nh4
-    REAL(wp)           :: f_nit_carrier_nh4
-    REAL(wp)           :: vmax_denitrification_no3
-    REAL(wp)           :: km_denit_no3
-    REAL(wp)           :: f_denit_carrier_no3
-    REAL(wp)           :: qmax_po4_mineral
-    REAL(wp)           :: qmax_nh4_clay
-    REAL(wp)           :: km_adsorpt_mineral_po4
-    REAL(wp)           :: km_adsorpt_OM_po4
-    REAL(wp)           :: ea_nitrification
-    REAL(wp)           :: ed_nitrification
-    REAL(wp)           :: t_opt_nitrification
-    REAL(wp)           :: f_nit_noy
-    REAL(wp)           :: f_nit_n2o
-    REAL(wp)           :: ea_denitrification
-    REAL(wp)           :: vmax_nitrification
-    REAL(wp)           :: vmax_denitrification
-    REAL(wp)           :: km_denitrification_c
-    REAL(wp)           :: km_denitrification_no3
-    REAL(wp)           :: f_denit_noy
-    REAL(wp)           :: f_denit_n2o
-    REAL(wp)           :: ea_gasdiffusion
-    REAL(wp)           :: lambda_anvf
-    REAL(wp)           :: k_anvf
-    REAL(wp)           :: floss_nmin
-    REAL(wp)           :: fnit_nmin
-    REAL(wp)           :: fleach_nh4
-    REAL(wp)           :: fleach_po4
-    REAL(wp)           :: km_asymb_bnf
-    REAL(wp)           :: vmax_asymb_bnf
-    REAL(wp)           :: eta_mic_uptake_nh4
-    REAL(wp)           :: eta_mic_uptake_no3
-    REAL(wp)           :: eta_plant_uptake_nh4
-    REAL(wp)           :: eta_plant_uptake_no3
-    REAL(wp)           :: eta_nitrification
-    REAL(wp)           :: eta_nitrate_production
-    REAL(wp)           :: eta_denitrification
-    REAL(wp)           :: eta_ammonification
-    REAL(wp)           :: eta_volatilisation_nh3
-    REAL(wp)           :: k_weath_mineral
-    REAL(wp)           :: eq_sorp_mineral_po4
-    REAL(wp)           :: k_occlude_po4
-    REAL(wp)           :: vmax_biochem_po4
-    REAL(wp)           :: km_mic_biochem_po4
-    REAL(wp)           :: km_dip_biochem_po4
-    REAL(wp)           :: km_rootc_biochem_po4
-    REAL(wp)           :: km_rootc_weath_po4
-    REAL(wp)           :: km_root_enzyme_weath_po4
-    REAL(wp)           :: biomin_threshold_pc_ratio_mic_res
-    REAL(wp)           :: fc_p_res2dom
-    REAL(wp)           :: fc_n_res2dom
-    REAL(wp)           :: f_norg_limit
-    REAL(wp)           :: f_tau_myc
-    REAL(wp)           :: km_priming
-    REAL(wp)           :: km_up_org
-    REAL(wp)           :: myc_root_coverage_max
-    REAL(wp)           :: resp_priming
-    REAL(wp)           :: vmax_uptake_norg
-    REAL(wp)           :: k_fast_som_cn_max
-    REAL(wp)           :: k_fast_som_cn_min
-    REAL(wp)           :: f_fast_som_cn
-    REAL(wp)           :: k_slow_som_cn
-    REAL(wp)           :: k_fast_som_np
-    REAL(wp)           :: k_slow_som_np
-    REAL(wp)           :: f_psensi_soil_p_depth
-    REAL(wp)           :: f_psensi_soil_p_labile
-    REAL(wp)           :: f_psensi_soil_p_slow
-    REAL(wp)           :: f_psensi_soil_p_occluded
-    REAL(wp)           :: f_psensi_soil_p_primary
-    REAL(wp)           :: f_psensi_qmax_org_fine_particle
+    REAL(lp)           :: tau_soluable_litter
+    REAL(lp)           :: tau_metabolic_litter
+    REAL(lp)           :: tau_structural_litter
+    REAL(lp)           :: tau_woody_litter
+    REAL(lp)           :: tau_fast
+    REAL(lp)           :: tau_slow
+    REAL(lp)           :: tau_biomineralisation
+    REAL(lp)           :: temp_ref_tresponse
+    REAL(lp)           :: ea_depolymerisation
+    REAL(lp)           :: ea_mic_uptake
+    REAL(lp)           :: ea_sorption
+    REAL(lp)           :: ea_desorption
+    REAL(lp)           :: ea_hsc
+    REAL(lp)           :: ea_decomposition
+    REAL(lp)           :: ed_decomposition
+    REAL(lp)           :: t_ref_decomposition
+    REAL(lp)           :: k1_afps
+    REAL(lp)           :: k2_afps
+    REAL(lp)           :: kmr_depolymerisation
+    REAL(lp)           :: kmr_mic_uptake
+    REAL(lp)           :: kmr_hsc
+    REAL(lp)           :: kmr_sorption
+    REAL(lp)           :: kmr_decomposition
+    REAL(lp)           :: k_diff_org
+    REAL(lp)           :: rho_bulk_org
+    REAL(lp)           :: carbon_per_dryweight_SOM
+    REAL(lp)           :: k_adsorpt_dom
+    REAL(lp)           :: k_desorpt_dom
+    REAL(lp)           :: k_adsorpt_det
+    REAL(lp)           :: k_desorpt_det
+    REAL(lp)           :: k_adsorpt_nh4
+    REAL(lp)           :: k_desorpt_nh4
+    REAL(lp)           :: k_adsorpt_po4
+    REAL(lp)           :: k_desorpt_po4
+    REAL(lp)           :: k_adsorpt_f_po4
+    REAL(lp)           :: k_desorpt_f_po4
+    REAL(lp)           :: microbial_cn
+    REAL(lp)           :: microbial_np
+    REAL(lp)           :: microbial_nue
+    REAL(lp)           :: microbial_pue
+    REAL(lp)           :: microbial_cue
+    REAL(lp)           :: microbial_cue_max
+    REAL(lp)           :: microbial_cue_min
+    REAL(lp)           :: frac_woody2dec_litter
+    REAL(lp)           :: frac_litter2fast_som
+    REAL(lp)           :: frac_fast2slow_som
+    REAL(lp)           :: frac_slow2fast_som
+    REAL(lp)           :: fc_woody2polymeric
+    REAL(lp)           :: fc_soluable2dom
+    REAL(lp)           :: k_mort_microbial
+    REAL(lp)           :: min_mic_biomass
+    REAL(lp)           :: vmax_mic_uptake
+    REAL(lp)           :: km_mic_uptake
+    REAL(lp)           :: km_depolymerisation
+    REAL(lp)           :: vmax_depolymerisation_residue
+    REAL(lp)           :: vmax_depolymerisation_litter
+    REAL(lp)           :: f_soluable_residue
+    REAL(lp)           :: f_soluable_leaf
+    REAL(lp)           :: f_soluable_fine_root
+    REAL(lp)           :: f_soluable_fruit
+    REAL(lp)           :: f_soluable_seed_bed
+    REAL(lp)           :: fc_soluable_max
+    REAL(lp)           :: k_fc_soluable
+    REAL(lp)           :: k_fn_soluable
+    REAL(lp)           :: k_fp_soluable
+    REAL(lp)           :: lc_leaf_max
+    REAL(lp)           :: lc_leaf2sla
+    REAL(lp)           :: lc_fine_root
+    REAL(lp)           :: lc_coarse_root
+    REAL(lp)           :: lc_woody_litter
+    REAL(lp)           :: lc_fruit
+    REAL(lp)           :: lc_seed_bed
+    REAL(lp)           :: mycorrhiza_cue
+    REAL(lp)           :: mycorrhiza_cn
+    REAL(lp)           :: mycorrhiza_np
+    REAL(lp)           :: f_maxresp_myc
+    REAL(lp)           :: f_surface_myc2fineroot
+    REAL(lp)           :: km1_up_nh4
+    REAL(lp)           :: km2_up_nh4
+    REAL(lp)           :: km1_up_no3
+    REAL(lp)           :: km2_up_no3
+    REAL(lp)           :: km1_up_po4
+    REAL(lp)           :: km2_up_po4
+    REAL(lp)           :: vmax_mic_uptake_nh4
+    REAL(lp)           :: km_mic_uptake_nh4
+    REAL(lp)           :: vmax_mic_uptake_no3
+    REAL(lp)           :: km_mic_uptake_no3
+    REAL(lp)           :: f_mic_carrier_n
+    REAL(lp)           :: vmax_plant_uptake_nh4
+    REAL(lp)           :: km_plant_uptake_nh4
+    REAL(lp)           :: vmax_plant_uptake_no3
+    REAL(lp)           :: km_plant_uptake_no3
+    REAL(lp)           :: f_plant_carrier_n
+    REAL(lp)           :: vmax_mic_uptake_po4
+    REAL(lp)           :: km_mic_uptake_po4
+    REAL(lp)           :: vmax_plant_uptake_po4
+    REAL(lp)           :: km_plant_uptake_po4
+    REAL(lp)           :: k_mic_uptake_nh4
+    REAL(lp)           :: k_plant_uptake_nh4
+    REAL(lp)           :: k_mic_uptake_no3
+    REAL(lp)           :: k_plant_uptake_no3
+    REAL(lp)           :: k_mic_uptake_po4
+    REAL(lp)           :: k_plant_uptake_po4
+    REAL(lp)           :: f_mic_carrier_po4
+    REAL(lp)           :: f_plant_carrier_po4
+    REAL(lp)           :: vmax_nitrification_nh4
+    REAL(lp)           :: km_nitrification_nh4
+    REAL(lp)           :: f_nit_carrier_nh4
+    REAL(lp)           :: vmax_denitrification_no3
+    REAL(lp)           :: km_denit_no3
+    REAL(lp)           :: f_denit_carrier_no3
+    REAL(lp)           :: qmax_po4_mineral
+    REAL(lp)           :: qmax_nh4_clay
+    REAL(lp)           :: km_adsorpt_mineral_po4
+    REAL(lp)           :: km_adsorpt_OM_po4
+    REAL(lp)           :: ea_nitrification
+    REAL(lp)           :: ed_nitrification
+    REAL(lp)           :: t_opt_nitrification
+    REAL(lp)           :: f_nit_noy
+    REAL(lp)           :: f_nit_n2o
+    REAL(lp)           :: ea_denitrification
+    REAL(lp)           :: vmax_nitrification
+    REAL(lp)           :: vmax_denitrification
+    REAL(lp)           :: km_denitrification_c
+    REAL(lp)           :: km_denitrification_no3
+    REAL(lp)           :: f_denit_noy
+    REAL(lp)           :: f_denit_n2o
+    REAL(lp)           :: ea_gasdiffusion
+    REAL(lp)           :: lambda_anvf
+    REAL(lp)           :: k_anvf
+    REAL(lp)           :: floss_nmin
+    REAL(lp)           :: fnit_nmin
+    REAL(lp)           :: fleach_nh4
+    REAL(lp)           :: fleach_po4
+    REAL(lp)           :: km_asymb_bnf
+    REAL(lp)           :: vmax_asymb_bnf
+    REAL(lp)           :: eta_mic_uptake_nh4
+    REAL(lp)           :: eta_mic_uptake_no3
+    REAL(lp)           :: eta_plant_uptake_nh4
+    REAL(lp)           :: eta_plant_uptake_no3
+    REAL(lp)           :: eta_nitrification
+    REAL(lp)           :: eta_nitrate_production
+    REAL(lp)           :: eta_denitrification
+    REAL(lp)           :: eta_ammonification
+    REAL(lp)           :: eta_volatilisation_nh3
+    REAL(lp)           :: k_weath_mineral
+    REAL(lp)           :: eq_sorp_mineral_po4
+    REAL(lp)           :: k_occlude_po4
+    REAL(lp)           :: vmax_biochem_po4
+    REAL(lp)           :: km_mic_biochem_po4
+    REAL(lp)           :: km_dip_biochem_po4
+    REAL(lp)           :: km_rootc_biochem_po4
+    REAL(lp)           :: km_rootc_weath_po4
+    REAL(lp)           :: km_root_enzyme_weath_po4
+    REAL(lp)           :: biomin_threshold_pc_ratio_mic_res
+    REAL(lp)           :: fc_p_res2dom
+    REAL(lp)           :: fc_n_res2dom
+    REAL(lp)           :: f_norg_limit
+    REAL(lp)           :: f_tau_myc
+    REAL(lp)           :: km_priming
+    REAL(lp)           :: km_up_org
+    REAL(lp)           :: myc_root_coverage_max
+    REAL(lp)           :: resp_priming
+    REAL(lp)           :: vmax_uptake_norg
+    REAL(lp)           :: k_fast_som_cn_max
+    REAL(lp)           :: k_fast_som_cn_min
+    REAL(lp)           :: f_fast_som_cn
+    REAL(lp)           :: k_slow_som_cn
+    REAL(lp)           :: k_fast_som_np
+    REAL(lp)           :: k_slow_som_np
+    REAL(lp)           :: f_psensi_soil_p_depth
+    REAL(lp)           :: f_psensi_soil_p_labile
+    REAL(lp)           :: f_psensi_soil_p_slow
+    REAL(lp)           :: f_psensi_soil_p_occluded
+    REAL(lp)           :: f_psensi_soil_p_primary
+    REAL(lp)           :: f_psensi_qmax_org_fine_particle
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':read_parameter_slm_list'
 
@@ -979,44 +905,6 @@ CONTAINS
         mavg_period_tmic          , &
         mavg_period_tgrowth       , &
         mavg_period_tvegdyn
-
-    NAMELIST /lnd_spq_nml/          &
-        soil_heat_cap             , &
-        soil_therm_cond           , &
-        InterceptionEfficiency    , &
-        w_skin_max                , &
-        drain_frac                , &
-        fdrain_srf_runoff         , &
-        height_wind               , &
-        wpot_pwp                  , &
-        wpot_fc                   , &
-        wpot_min                  , &
-        k_pwp_a                   , &
-        k_pwp_c                   , &
-        k_pwp_s                   , &
-        k_pwp_sc                  , &
-        k_pwp_at                  , &
-        k_pwp_bt                  , &
-        k_fc_a                    , &
-        k_fc_c                    , &
-        k_fc_s                    , &
-        k_fc_sc                   , &
-        k_fc_at                   , &
-        k_fc_bt                   , &
-        k_fc_ct                   , &
-        k_sat_a                   , &
-        k_sat_c                   , &
-        k_sat_s                   , &
-        k_sat_sc                  , &
-        k_sat_at                  , &
-        k_sat_bt                  , &
-        k_sat_ct                  , &
-        k_sat_dt                  , &
-        kdiff_sat_max             , &
-        f_psensi_soil_sand        , &
-        f_psensi_soil_silt        , &
-        f_psensi_soil_awc_prescribe, &
-        f_psensi_bulk_density
 
     NAMELIST /lnd_veg_nml/          &
         fresp_growth              , &
@@ -1372,43 +1260,6 @@ CONTAINS
     mavg_period_tmic            = missval
     mavg_period_tgrowth         = missval
     mavg_period_tvegdyn         = missval
-    ! lnd_spq_nml
-    soil_heat_cap               = missval
-    soil_therm_cond             = missval
-    InterceptionEfficiency      = missval
-    w_skin_max                  = missval
-    drain_frac                  = missval
-    fdrain_srf_runoff           = missval
-    height_wind                 = missval
-    wpot_pwp                    = missval
-    wpot_fc                     = missval
-    wpot_min                    = missval
-    k_pwp_a                     = missval
-    k_pwp_c                     = missval
-    k_pwp_s                     = missval
-    k_pwp_sc                    = missval
-    k_pwp_at                    = missval
-    k_pwp_bt                    = missval
-    k_fc_a                      = missval
-    k_fc_c                      = missval
-    k_fc_s                      = missval
-    k_fc_sc                     = missval
-    k_fc_at                     = missval
-    k_fc_bt                     = missval
-    k_fc_ct                     = missval
-    k_sat_a                     = missval
-    k_sat_c                     = missval
-    k_sat_s                     = missval
-    k_sat_sc                    = missval
-    k_sat_at                    = missval
-    k_sat_bt                    = missval
-    k_sat_ct                    = missval
-    k_sat_dt                    = missval
-    kdiff_sat_max               = missval
-    f_psensi_soil_sand          = missval
-    f_psensi_soil_silt          = missval
-    f_psensi_soil_awc_prescribe = missval
-    f_psensi_bulk_density       = missval
     ! lnd_veg_nml
     fresp_growth                = missval
     fmaint_rate_base            = missval
@@ -1706,11 +1557,6 @@ CONTAINS
     nml_unit = position_nml('qs_shared_nml', nml_handler, STATUS=istat)
     IF (istat == POSITIONED) READ(nml_unit, qs_shared_nml)
     CALL close_nml(nml_handler)
-    ! &lnd_spq_nml
-    nml_handler = open_nml(TRIM(this%filename))
-    nml_unit = position_nml('lnd_spq_nml', nml_handler, STATUS=istat)
-    IF (istat == POSITIONED) READ(nml_unit, lnd_spq_nml)
-    CALL close_nml(nml_handler)
     ! &lnd_veg_nml
     nml_handler = open_nml(TRIM(this%filename))
     nml_unit = position_nml('lnd_veg_nml', nml_handler, STATUS=istat)
@@ -1793,43 +1639,6 @@ CONTAINS
     this%mavg_period_tmic            = mavg_period_tmic
     this%mavg_period_tgrowth         = mavg_period_tgrowth
     this%mavg_period_tvegdyn         = mavg_period_tvegdyn
-    ! lnd_spq_nml
-    this%soil_heat_cap               = soil_heat_cap
-    this%soil_therm_cond             = soil_therm_cond
-    this%InterceptionEfficiency      = InterceptionEfficiency
-    this%w_skin_max                  = w_skin_max
-    this%drain_frac                  = drain_frac
-    this%fdrain_srf_runoff           = fdrain_srf_runoff
-    this%height_wind                 = height_wind
-    this%wpot_pwp                    = wpot_pwp
-    this%wpot_fc                     = wpot_fc
-    this%wpot_min                    = wpot_min
-    this%k_pwp_a                     = k_pwp_a
-    this%k_pwp_c                     = k_pwp_c
-    this%k_pwp_s                     = k_pwp_s
-    this%k_pwp_sc                    = k_pwp_sc
-    this%k_pwp_at                    = k_pwp_at
-    this%k_pwp_bt                    = k_pwp_bt
-    this%k_fc_a                      = k_fc_a
-    this%k_fc_c                      = k_fc_c
-    this%k_fc_s                      = k_fc_s
-    this%k_fc_sc                     = k_fc_sc
-    this%k_fc_at                     = k_fc_at
-    this%k_fc_bt                     = k_fc_bt
-    this%k_fc_ct                     = k_fc_ct
-    this%k_sat_a                     = k_sat_a
-    this%k_sat_c                     = k_sat_c
-    this%k_sat_s                     = k_sat_s
-    this%k_sat_sc                    = k_sat_sc
-    this%k_sat_at                    = k_sat_at
-    this%k_sat_bt                    = k_sat_bt
-    this%k_sat_ct                    = k_sat_ct
-    this%k_sat_dt                    = k_sat_dt
-    this%kdiff_sat_max               = kdiff_sat_max
-    this%f_psensi_soil_sand          = f_psensi_soil_sand
-    this%f_psensi_soil_silt          = f_psensi_soil_silt
-    this%f_psensi_soil_awc_prescribe = f_psensi_soil_awc_prescribe
-    this%f_psensi_bulk_density       = f_psensi_bulk_density
     ! lnd_veg_nml
     this%fresp_growth                = fresp_growth
     this%fmaint_rate_base            = fmaint_rate_base
@@ -2122,14 +1931,12 @@ CONTAINS
     USE mo_rad_parameters
     USE mo_jsb_physical_constants,          ONLY: molar_mass_C, molar_mass_N, molar_mass_P, Dwv, Dco2, Tzero
     USE mo_lnd_time_averages                ! includes the mavg_period_* parameters
-    USE mo_spq_constants
     USE mo_sb_constants
     USE mo_veg_constants
     USE mo_jsb_model_class,       ONLY: t_jsb_model
-    USE mo_jsb_process_class,     ONLY: SPQ_, SB_
+    USE mo_jsb_process_class,     ONLY: SB_
 
     ! Use of process configurations >> needed for modifications of namelist options (which are stored in the process config)
-    dsl4jsb_Use_config(SPQ_)
     dsl4jsb_Use_config(SB_)
 
     IMPLICIT NONE
@@ -2139,12 +1946,10 @@ CONTAINS
 
     CHARACTER(32)               :: fname                      ! filename
     LOGICAL                     :: proportional_parameter_changes
-    dsl4jsb_Def_config(SPQ_)
     dsl4jsb_Def_config(SB_)
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':set_parameter_slm_values_with_list_values'
 
     proportional_parameter_changes = model%config%set_parameter_values_proportional
-    dsl4jsb_Get_config(SPQ_)
     dsl4jsb_Get_config(SB_)
 
 
@@ -2177,7 +1982,7 @@ CONTAINS
     !!
 
     ! lnd_q_assimi_nml
-    CALL Set_quincy_parameter_value(this%jmax2n / 4.0_wp, &
+    CALL Set_quincy_parameter_value(this%jmax2n / 4.0_lp, &
                                     this%jmax2n, &
                                     "jmax2n", proportional_parameter_changes, &
                                     jmax2n)
@@ -2192,12 +1997,12 @@ CONTAINS
                                     "pepc2n", proportional_parameter_changes, &
                                     pepc2n)
 
-    CALL Set_quincy_parameter_value(this%chl2n / 39.8_wp, &
+    CALL Set_quincy_parameter_value(this%chl2n / 39.8_lp, &
                                     this%chl2n, &
                                     "chl2n", proportional_parameter_changes, &
                                     chl2n)
 
-    CALL Set_quincy_parameter_value(this%k1_fn_struc * molar_mass_N / 1000000._wp, &
+    CALL Set_quincy_parameter_value(this%k1_fn_struc * molar_mass_N / 1000000._lp, &
                                     this%k1_fn_struc, &
                                     "k1_fn_struc", proportional_parameter_changes, &
                                     k1_fn_struc)
@@ -2311,7 +2116,7 @@ CONTAINS
                                     Dwv2co2_air)
 
     ! current assumption: parameters from mo_jsb_physical_constants are not modified (this%Dwv & this%Dco2)
-    CALL Set_quincy_parameter_value(( Dwv / Dco2  ) ** (2._wp/3._wp), & ! default: Dwv2co2_turb = ( Dwv / Dco2  ) ** (2._wp/3._wp) | Dwv2co2_turb may be changed only via proportional changes
+    CALL Set_quincy_parameter_value(( Dwv / Dco2  ) ** (2._lp/3._lp), & ! default: Dwv2co2_turb = ( Dwv / Dco2  ) ** (2._lp/3._lp) | Dwv2co2_turb may be changed only via proportional changes
                                     this%Dwv2co2_turb, &
                                     "Dwv2co2_turb", proportional_parameter_changes, &
                                     Dwv2co2_turb)
@@ -2332,21 +2137,21 @@ CONTAINS
                                     discr_ps_c_C13)
 
     ! is always recalculated in case any of its dependencies has changed
-    discr_ps_a_C14 = 1.97_wp * discr_ps_a_C13   ! mo_q_assimi_parameters
+    discr_ps_a_C14 = 1.97_lp * discr_ps_a_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_a_C14 * discr_ps_a_C13, &
                                     this%discr_ps_a_C14, &
                                     "discr_ps_a_C14", proportional_parameter_changes, &
                                     discr_ps_a_C14)
 
     ! is always recalculated in case any of its dependencies has changed
-    discr_ps_b_C14 = 1.89_wp * discr_ps_b_C13   ! mo_q_assimi_parameters
+    discr_ps_b_C14 = 1.89_lp * discr_ps_b_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_b_C14 * discr_ps_b_C13, &
                                     this%discr_ps_b_C14, &
                                     "discr_ps_b_C14", proportional_parameter_changes, &
                                     discr_ps_b_C14)
 
     ! is always recalculated in case any of its dependencies has changed
-    discr_ps_c_C14 = 1.89_wp * discr_ps_c_C13   ! mo_q_assimi_parameters
+    discr_ps_c_C14 = 1.89_lp * discr_ps_c_C13   ! mo_q_assimi_parameters
     CALL Set_quincy_parameter_value(this%discr_ps_c_C14 * discr_ps_c_C13, &
                                     this%discr_ps_c_C14, &
                                     "discr_ps_c_C14", proportional_parameter_changes, &
@@ -2490,7 +2295,7 @@ CONTAINS
                                     "mavg_period_talloc", proportional_parameter_changes, &
                                     mavg_period_talloc)
 
-    CALL Set_quincy_parameter_value(this%mavg_period_talloc_dynamic * 365.0_wp, &  ! default value: 30.0_wp * 365.0_wp (i.e., 30 years)
+    CALL Set_quincy_parameter_value(this%mavg_period_talloc_dynamic * 365.0_lp, &  ! default value: 30.0_lp * 365.0_lp (i.e., 30 years)
                                     this%mavg_period_talloc_dynamic, &
                                     "mavg_period_talloc_dynamic", proportional_parameter_changes, &
                                     mavg_period_talloc_dynamic)
@@ -2515,183 +2320,6 @@ CONTAINS
                                     "mavg_period_tvegdyn", proportional_parameter_changes, &
                                     mavg_period_tvegdyn)
 
-    ! lnd_spq_nml
-    CALL Set_quincy_parameter_value(this%soil_heat_cap, &
-                                    this%soil_heat_cap, &
-                                    "soil_heat_cap", proportional_parameter_changes, &
-                                    soil_heat_cap)
-
-    CALL Set_quincy_parameter_value(this%soil_therm_cond, &
-                                    this%soil_therm_cond, &
-                                    "soil_therm_cond", proportional_parameter_changes, &
-                                    soil_therm_cond)
-
-    CALL Set_quincy_parameter_value(this%InterceptionEfficiency, &
-                                    this%InterceptionEfficiency, &
-                                    "InterceptionEfficiency", proportional_parameter_changes, &
-                                    InterceptionEfficiency)
-
-    CALL Set_quincy_parameter_value(this%w_skin_max, &
-                                    this%w_skin_max, &
-                                    "w_skin_max", proportional_parameter_changes, &
-                                    w_skin_max)
-
-    CALL Set_quincy_parameter_value(this%drain_frac, &
-                                    this%drain_frac, &
-                                    "drain_frac", proportional_parameter_changes, &
-                                    drain_frac)
-
-    CALL Set_quincy_parameter_value(this%fdrain_srf_runoff, &
-                                    this%fdrain_srf_runoff, &
-                                    "fdrain_srf_runoff", proportional_parameter_changes, &
-                                    fdrain_srf_runoff)
-
-    CALL Set_quincy_parameter_value(this%height_wind, &
-                                    this%height_wind, &
-                                    "height_wind", proportional_parameter_changes, &
-                                    height_wind)
-
-    CALL Set_quincy_parameter_value(this%wpot_pwp, &
-                                    this%wpot_pwp, &
-                                    "wpot_pwp", proportional_parameter_changes, &
-                                    wpot_pwp)
-
-    CALL Set_quincy_parameter_value(this%wpot_fc, &
-                                    this%wpot_fc, &
-                                    "wpot_fc", proportional_parameter_changes, &
-                                    wpot_fc)
-
-    CALL Set_quincy_parameter_value(this%wpot_min, &
-                                    this%wpot_min, &
-                                    "wpot_min", proportional_parameter_changes, &
-                                    wpot_min)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_a, &
-                                    this%k_pwp_a, &
-                                    "k_pwp_a", proportional_parameter_changes, &
-                                    k_pwp_a)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_c, &
-                                    this%k_pwp_c, &
-                                    "k_pwp_c", proportional_parameter_changes, &
-                                    k_pwp_c)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_s, &
-                                    this%k_pwp_s, &
-                                    "k_pwp_s", proportional_parameter_changes, &
-                                    k_pwp_s)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_sc, &
-                                    this%k_pwp_sc, &
-                                    "k_pwp_sc", proportional_parameter_changes, &
-                                    k_pwp_sc)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_at, &
-                                    this%k_pwp_at, &
-                                    "k_pwp_at", proportional_parameter_changes, &
-                                    k_pwp_at)
-
-    CALL Set_quincy_parameter_value(this%k_pwp_bt, &
-                                    this%k_pwp_bt, &
-                                    "k_pwp_bt", proportional_parameter_changes, &
-                                    k_pwp_bt)
-
-    CALL Set_quincy_parameter_value(this%k_fc_a, &
-                                    this%k_fc_a, &
-                                    "k_fc_a", proportional_parameter_changes, &
-                                    k_fc_a)
-
-    CALL Set_quincy_parameter_value(this%k_fc_c, &
-                                    this%k_fc_c, &
-                                    "k_fc_c", proportional_parameter_changes, &
-                                    k_fc_c)
-
-    CALL Set_quincy_parameter_value(this%k_fc_s, &
-                                    this%k_fc_s, &
-                                    "k_fc_s", proportional_parameter_changes, &
-                                    k_fc_s)
-
-    CALL Set_quincy_parameter_value(this%k_fc_sc, &
-                                    this%k_fc_sc, &
-                                    "k_fc_sc", proportional_parameter_changes, &
-                                    k_fc_sc)
-
-    CALL Set_quincy_parameter_value(this%k_fc_at, &
-                                    this%k_fc_at, &
-                                    "k_fc_at", proportional_parameter_changes, &
-                                    k_fc_at)
-
-    CALL Set_quincy_parameter_value(this%k_fc_bt, &
-                                    this%k_fc_bt, &
-                                    "k_fc_bt", proportional_parameter_changes, &
-                                    k_fc_bt)
-
-    CALL Set_quincy_parameter_value(this%k_fc_ct, &
-                                    this%k_fc_ct, &
-                                    "k_fc_ct", proportional_parameter_changes, &
-                                    k_fc_ct)
-
-    CALL Set_quincy_parameter_value(this%k_sat_a, &
-                                    this%k_sat_a, &
-                                    "k_sat_a", proportional_parameter_changes, &
-                                    k_sat_a)
-
-    CALL Set_quincy_parameter_value(this%k_sat_c, &
-                                    this%k_sat_c, &
-                                    "k_sat_c", proportional_parameter_changes, &
-                                    k_sat_c)
-
-    CALL Set_quincy_parameter_value(this%k_sat_s, &
-                                    this%k_sat_s, &
-                                    "k_sat_s", proportional_parameter_changes, &
-                                    k_sat_s)
-
-    CALL Set_quincy_parameter_value(this%k_sat_sc, &
-                                    this%k_sat_sc, &
-                                    "k_sat_sc", proportional_parameter_changes, &
-                                    k_sat_sc)
-
-    CALL Set_quincy_parameter_value(this%k_sat_at, &
-                                    this%k_sat_at, &
-                                    "k_sat_at", proportional_parameter_changes, &
-                                    k_sat_at)
-
-    CALL Set_quincy_parameter_value(this%k_sat_bt, &
-                                    this%k_sat_bt, &
-                                    "k_sat_bt", proportional_parameter_changes, &
-                                    k_sat_bt)
-
-    CALL Set_quincy_parameter_value(this%k_sat_ct, &
-                                    this%k_sat_ct, &
-                                    "k_sat_ct", proportional_parameter_changes, &
-                                    k_sat_ct)
-
-    CALL Set_quincy_parameter_value(this%k_sat_dt, &
-                                    this%k_sat_dt, &
-                                    "k_sat_dt", proportional_parameter_changes, &
-                                    k_sat_dt)
-
-    CALL Set_quincy_parameter_value(this%kdiff_sat_max  / 1000.0_wp / 3600._wp, &
-                                    this%kdiff_sat_max, &
-                                    "kdiff_sat_max", proportional_parameter_changes, &
-                                    kdiff_sat_max)
-
-    CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_sand, &
-                                          "soil_sand", &
-                                          dsl4jsb_Config(SPQ_)%soil_sand)
-
-    CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_silt, &
-                                          "soil_silt", &
-                                          dsl4jsb_Config(SPQ_)%soil_silt)
-
-    CALL Modify_quincy_namelist_parameter(this%f_psensi_soil_awc_prescribe, &
-                                          "soil_awc_prescribe", &
-                                          dsl4jsb_Config(SPQ_)%soil_awc_prescribe)
-
-    CALL Modify_quincy_namelist_parameter(this%f_psensi_bulk_density, &
-                                          "bulk_density", &
-                                          dsl4jsb_Config(SPQ_)%bulk_density)
-
     ! lnd_veg_nml
     CALL Set_quincy_parameter_value(this%fresp_growth, &
                                     this%fresp_growth, &
@@ -2704,7 +2332,7 @@ CONTAINS
                                     fmaint_rate_base)
 
     ! is always recalculated in case any of its dependencies has changed
-    fmaint_rate_wood = 0.25_wp * fmaint_rate_base   ! copied from mo_veg_constants
+    fmaint_rate_wood = 0.25_lp * fmaint_rate_base   ! copied from mo_veg_constants
     CALL Set_quincy_parameter_value(this%fmaint_rate_wood * fmaint_rate_base, &
                                     this%fmaint_rate_wood, &
                                     "fmaint_rate_wood", proportional_parameter_changes, &
@@ -2745,7 +2373,7 @@ CONTAINS
                                     "k0_fn_pepc_C4", proportional_parameter_changes, &
                                     k0_fn_pepc_C4)
 
-    CALL Set_quincy_parameter_value(this%jmax2vcmax_C3 / 4.0_wp, &
+    CALL Set_quincy_parameter_value(this%jmax2vcmax_C3 / 4.0_lp, &
                                     this%jmax2vcmax_C3, &
                                     "jmax2vcmax_C3", proportional_parameter_changes, &
                                     jmax2vcmax_C3)
@@ -3174,7 +2802,7 @@ CONTAINS
                                     "rfr_ratio_toc", proportional_parameter_changes, &
                                     rfr_ratio_toc)
 
-    CALL Set_quincy_parameter_value(this%k_r2fr_chl - 0.012_wp, &
+    CALL Set_quincy_parameter_value(this%k_r2fr_chl - 0.012_lp, &
                                     this%k_r2fr_chl, &
                                     "k_r2fr_chl", proportional_parameter_changes, &
                                     k_r2fr_chl)
@@ -3260,7 +2888,7 @@ CONTAINS
                                     "t_ref_decomposition", proportional_parameter_changes, &
                                     t_ref_decomposition)
 
-    CALL Set_quincy_parameter_value(this%k1_afps / 3.0_wp, &
+    CALL Set_quincy_parameter_value(this%k1_afps / 3.0_lp, &
                                     this%k1_afps, &
                                     "k1_afps", proportional_parameter_changes, &
                                     k1_afps)
@@ -3310,22 +2938,22 @@ CONTAINS
                                     "carbon_per_dryweight_SOM", proportional_parameter_changes, &
                                     carbon_per_dryweight_SOM)
 
-    CALL Set_quincy_parameter_value(this%k_adsorpt_dom / one_year / one_day * molar_mass_C / 1000._wp, &
+    CALL Set_quincy_parameter_value(this%k_adsorpt_dom / one_year / one_day * molar_mass_C / 1000._lp, &
                                     this%k_adsorpt_dom, &
                                     "k_adsorpt_dom", proportional_parameter_changes, &
                                     k_adsorpt_dom)
 
-    CALL Set_quincy_parameter_value(this%k_desorpt_dom / one_year / one_day / 1000._wp, &
+    CALL Set_quincy_parameter_value(this%k_desorpt_dom / one_year / one_day / 1000._lp, &
                                     this%k_desorpt_dom, &
                                     "k_desorpt_dom", proportional_parameter_changes, &
                                     k_desorpt_dom)
 
-    CALL Set_quincy_parameter_value(this%k_adsorpt_det / one_year / one_day * molar_mass_C / 1000._wp, &
+    CALL Set_quincy_parameter_value(this%k_adsorpt_det / one_year / one_day * molar_mass_C / 1000._lp, &
                                     this%k_adsorpt_det, &
                                     "k_adsorpt_det", proportional_parameter_changes, &
                                     k_adsorpt_det)
 
-    CALL Set_quincy_parameter_value(this%k_desorpt_det / one_year / one_day / 1000._wp, &
+    CALL Set_quincy_parameter_value(this%k_desorpt_det / one_year / one_day / 1000._lp, &
                                     this%k_desorpt_det, &
                                     "k_desorpt_det", proportional_parameter_changes, &
                                     k_desorpt_det)
@@ -3335,27 +2963,27 @@ CONTAINS
                                     "k_adsorpt_nh4", proportional_parameter_changes, &
                                     k_adsorpt_nh4)
 
-    CALL Set_quincy_parameter_value(this%k_desorpt_nh4 / 30.0_wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_desorpt_nh4 / 30.0_lp / one_day, &
                                     this%k_desorpt_nh4, &
                                     "k_desorpt_nh4", proportional_parameter_changes, &
                                     k_desorpt_nh4)
 
-    CALL Set_quincy_parameter_value(this%k_adsorpt_po4 * 8.0_wp / 9.0_wp / 30.0_wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_adsorpt_po4 * 8.0_lp / 9.0_lp / 30.0_lp / one_day, &
                                     this%k_adsorpt_po4, &
                                     "k_adsorpt_po4", proportional_parameter_changes, &
                                     k_adsorpt_po4)
 
-    CALL Set_quincy_parameter_value(this%k_desorpt_po4 / 30.0_wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_desorpt_po4 / 30.0_lp / one_day, &
                                     this%k_desorpt_po4, &
                                     "k_desorpt_po4", proportional_parameter_changes, &
                                     k_desorpt_po4)
 
-    CALL Set_quincy_parameter_value(this%k_adsorpt_f_po4 / 3600._wp, &
+    CALL Set_quincy_parameter_value(this%k_adsorpt_f_po4 / 3600._lp, &
                                     this%k_adsorpt_f_po4, &
                                     "k_adsorpt_f_po4", proportional_parameter_changes, &
                                     k_adsorpt_f_po4)
 
-    CALL Set_quincy_parameter_value(this%k_desorpt_f_po4 / 3600._wp / 10._wp, &
+    CALL Set_quincy_parameter_value(this%k_desorpt_f_po4 / 3600._lp / 10._lp, &
                                     this%k_desorpt_f_po4, &
                                     "k_desorpt_f_po4", proportional_parameter_changes, &
                                     k_desorpt_f_po4)
@@ -3425,7 +3053,7 @@ CONTAINS
                                     "fc_soluable2dom", proportional_parameter_changes, &
                                     fc_soluable2dom)
 
-    CALL Set_quincy_parameter_value(this%k_mort_microbial * 1.0e-8_wp, &
+    CALL Set_quincy_parameter_value(this%k_mort_microbial * 1.0e-8_lp, &
                                     this%k_mort_microbial, &
                                     "k_mort_microbial", proportional_parameter_changes, &
                                     k_mort_microbial)
@@ -3435,17 +3063,17 @@ CONTAINS
                                     "min_mic_biomass", proportional_parameter_changes, &
                                     min_mic_biomass)
 
-    CALL Set_quincy_parameter_value(this%vmax_mic_uptake / one_year / one_day * 1000000.0_wp * 10._wp, &
+    CALL Set_quincy_parameter_value(this%vmax_mic_uptake / one_year / one_day * 1000000.0_lp * 10._lp, &
                                     this%vmax_mic_uptake, &
                                     "vmax_mic_uptake", proportional_parameter_changes, &
                                     vmax_mic_uptake)
 
-    CALL Set_quincy_parameter_value(this%km_mic_uptake / molar_mass_C * 1000.0_wp, &
+    CALL Set_quincy_parameter_value(this%km_mic_uptake / molar_mass_C * 1000.0_lp, &
                                     this%km_mic_uptake, &
                                     "km_mic_uptake", proportional_parameter_changes, &
                                     km_mic_uptake)
 
-    CALL Set_quincy_parameter_value(this%km_depolymerisation / 2._wp / molar_mass_C * 1000._wp, &
+    CALL Set_quincy_parameter_value(this%km_depolymerisation / 2._lp / molar_mass_C * 1000._lp, &
                                     this%km_depolymerisation, &
                                     "km_depolymerisation", proportional_parameter_changes, &
                                     km_depolymerisation)
@@ -3585,17 +3213,17 @@ CONTAINS
                                     "km2_up_no3", proportional_parameter_changes, &
                                     km2_up_no3)
 
-    CALL Set_quincy_parameter_value(this%km1_up_po4 / 0.0003_wp, &
+    CALL Set_quincy_parameter_value(this%km1_up_po4 / 0.0003_lp, &
                                     this%km1_up_po4, &
                                     "km1_up_po4", proportional_parameter_changes, &
                                     km1_up_po4)
 
-    CALL Set_quincy_parameter_value(this%km2_up_po4 / 1000000.0_wp, &
+    CALL Set_quincy_parameter_value(this%km2_up_po4 / 1000000.0_lp, &
                                     this%km2_up_po4, &
                                     "km2_up_po4", proportional_parameter_changes, &
                                     km2_up_po4)
 
-    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_nh4 / 3600.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_nh4 / 3600.0_lp * molar_mass_C, &
                                     this%vmax_mic_uptake_nh4, &
                                     "vmax_mic_uptake_nh4", proportional_parameter_changes, &
                                     vmax_mic_uptake_nh4)
@@ -3605,7 +3233,7 @@ CONTAINS
                                     "km_mic_uptake_nh4", proportional_parameter_changes, &
                                     km_mic_uptake_nh4)
 
-    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_no3 / 3600.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_no3 / 3600.0_lp * molar_mass_C, &
                                     this%vmax_mic_uptake_no3, &
                                     "vmax_mic_uptake_no3", proportional_parameter_changes, &
                                     vmax_mic_uptake_no3)
@@ -3615,12 +3243,12 @@ CONTAINS
                                     "km_mic_uptake_no3", proportional_parameter_changes, &
                                     km_mic_uptake_no3)
 
-    CALL Set_quincy_parameter_value(this%f_mic_carrier_n / 1000.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_mic_carrier_n / 1000.0_lp, &
                                     this%f_mic_carrier_n, &
                                     "f_mic_carrier_n", proportional_parameter_changes, &
                                     f_mic_carrier_n)
 
-    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_nh4 / 3600.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_nh4 / 3600.0_lp * molar_mass_C, &
                                     this%vmax_plant_uptake_nh4, &
                                     "vmax_plant_uptake_nh4", proportional_parameter_changes, &
                                     vmax_plant_uptake_nh4)
@@ -3630,7 +3258,7 @@ CONTAINS
                                     "km_plant_uptake_nh4", proportional_parameter_changes, &
                                     km_plant_uptake_nh4)
 
-    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_no3 / 3600.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_no3 / 3600.0_lp * molar_mass_C, &
                                     this%vmax_plant_uptake_no3, &
                                     "vmax_plant_uptake_no3", proportional_parameter_changes, &
                                     vmax_plant_uptake_no3)
@@ -3640,12 +3268,12 @@ CONTAINS
                                     "km_plant_uptake_no3", proportional_parameter_changes, &
                                     km_plant_uptake_no3)
 
-    CALL Set_quincy_parameter_value(this%f_plant_carrier_n / 10000.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_plant_carrier_n / 10000.0_lp, &
                                     this%f_plant_carrier_n, &
                                     "f_plant_carrier_n", proportional_parameter_changes, &
                                     f_plant_carrier_n)
 
-    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_po4 / 3600.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_mic_uptake_po4 / 3600.0_lp * molar_mass_C, &
                                     this%vmax_mic_uptake_po4, &
                                     "vmax_mic_uptake_po4", proportional_parameter_changes, &
                                     vmax_mic_uptake_po4)
@@ -3655,7 +3283,7 @@ CONTAINS
                                     "km_mic_uptake_po4", proportional_parameter_changes, &
                                     km_mic_uptake_po4)
 
-    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_po4 / 60.0_wp * molar_mass_C, &
+    CALL Set_quincy_parameter_value(this%vmax_plant_uptake_po4 / 60.0_lp * molar_mass_C, &
                                     this%vmax_plant_uptake_po4, &
                                     "vmax_plant_uptake_po4", proportional_parameter_changes, &
                                     vmax_plant_uptake_po4)
@@ -3665,22 +3293,22 @@ CONTAINS
                                     "km_plant_uptake_po4", proportional_parameter_changes, &
                                     km_plant_uptake_po4)
 
-    CALL Set_quincy_parameter_value(this%k_mic_uptake_nh4 * 24._wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_mic_uptake_nh4 * 24._lp / one_day, &
                                     this%k_mic_uptake_nh4, &
                                     "k_mic_uptake_nh4", proportional_parameter_changes, &
                                     k_mic_uptake_nh4)
 
-    CALL Set_quincy_parameter_value(this%k_plant_uptake_nh4 * 24._wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_plant_uptake_nh4 * 24._lp / one_day, &
                                     this%k_plant_uptake_nh4, &
                                     "k_plant_uptake_nh4", proportional_parameter_changes, &
                                     k_plant_uptake_nh4)
 
-    CALL Set_quincy_parameter_value(this%k_mic_uptake_no3 * 24._wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_mic_uptake_no3 * 24._lp / one_day, &
                                     this%k_mic_uptake_no3, &
                                     "k_mic_uptake_no3", proportional_parameter_changes, &
                                     k_mic_uptake_no3)
 
-    CALL Set_quincy_parameter_value(this%k_plant_uptake_no3 * 24._wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_plant_uptake_no3 * 24._lp / one_day, &
                                     this%k_plant_uptake_no3, &
                                     "k_plant_uptake_no3", proportional_parameter_changes, &
                                     k_plant_uptake_no3)
@@ -3695,12 +3323,12 @@ CONTAINS
                                     "k_plant_uptake_po4", proportional_parameter_changes, &
                                     k_plant_uptake_po4)
 
-    CALL Set_quincy_parameter_value(this%f_mic_carrier_po4 / 100.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_mic_carrier_po4 / 100.0_lp, &
                                     this%f_mic_carrier_po4, &
                                     "f_mic_carrier_po4", proportional_parameter_changes, &
                                     f_mic_carrier_po4)
 
-    CALL Set_quincy_parameter_value(this%f_plant_carrier_po4 / 10000.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_plant_carrier_po4 / 10000.0_lp, &
                                     this%f_plant_carrier_po4, &
                                     "f_plant_carrier_po4", proportional_parameter_changes, &
                                     f_plant_carrier_po4)
@@ -3725,12 +3353,12 @@ CONTAINS
                                     "km_denit_no3", proportional_parameter_changes, &
                                     km_denit_no3)
 
-    CALL Set_quincy_parameter_value(this%f_nit_carrier_nh4 / 10000.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_nit_carrier_nh4 / 10000.0_lp, &
                                     this%f_nit_carrier_nh4, &
                                     "f_nit_carrier_nh4", proportional_parameter_changes, &
                                     f_nit_carrier_nh4)
 
-    CALL Set_quincy_parameter_value(this%f_denit_carrier_no3 / 10000.0_wp, &
+    CALL Set_quincy_parameter_value(this%f_denit_carrier_no3 / 10000.0_lp, &
                                     this%f_denit_carrier_no3, &
                                     "f_denit_carrier_no3", proportional_parameter_changes, &
                                     f_denit_carrier_no3)
@@ -3745,12 +3373,12 @@ CONTAINS
                                     "qmax_nh4_clay", proportional_parameter_changes, &
                                     qmax_nh4_clay)
 
-    CALL Set_quincy_parameter_value(this%km_adsorpt_mineral_po4 / 1000._wp / molar_mass_P, &
+    CALL Set_quincy_parameter_value(this%km_adsorpt_mineral_po4 / 1000._lp / molar_mass_P, &
                                     this%km_adsorpt_mineral_po4, &
                                     "km_adsorpt_mineral_po4", proportional_parameter_changes, &
                                     km_adsorpt_mineral_po4)
 
-    CALL Set_quincy_parameter_value(this%km_adsorpt_OM_po4 / 1000._wp / molar_mass_P, &
+    CALL Set_quincy_parameter_value(this%km_adsorpt_OM_po4 / 1000._lp / molar_mass_P, &
                                     this%km_adsorpt_OM_po4, &
                                     "km_adsorpt_OM_po4", proportional_parameter_changes, &
                                     km_adsorpt_OM_po4)
@@ -3785,12 +3413,12 @@ CONTAINS
                                     "ea_denitrification", proportional_parameter_changes, &
                                     ea_denitrification)
 
-    CALL Set_quincy_parameter_value(this%vmax_nitrification / one_day * 1.0e6_wp, &
+    CALL Set_quincy_parameter_value(this%vmax_nitrification / one_day * 1.0e6_lp, &
                                     this%vmax_nitrification, &
                                     "vmax_nitrification", proportional_parameter_changes, &
                                     vmax_nitrification)
 
-    CALL Set_quincy_parameter_value(this%vmax_denitrification / one_day * 1.0e6_wp, &
+    CALL Set_quincy_parameter_value(this%vmax_denitrification / one_day * 1.0e6_lp, &
                                     this%vmax_denitrification, &
                                     "vmax_denitrification", proportional_parameter_changes, &
                                     vmax_denitrification)
@@ -3800,7 +3428,7 @@ CONTAINS
                                     "km_denitrification_c", proportional_parameter_changes, &
                                     km_denitrification_c)
 
-    CALL Set_quincy_parameter_value(this%km_denitrification_no3 * 1000.0_wp / molar_mass_N, &
+    CALL Set_quincy_parameter_value(this%km_denitrification_no3 * 1000.0_lp / molar_mass_N, &
                                     this%km_denitrification_no3, &
                                     "km_denitrification_no3", proportional_parameter_changes, &
                                     km_denitrification_no3)
@@ -3905,7 +3533,7 @@ CONTAINS
                                     "eta_volatilisation_nh3", proportional_parameter_changes, &
                                     eta_volatilisation_nh3)
 
-    CALL Set_quincy_parameter_value(this%k_weath_mineral / molar_mass_P / 1254.0_wp / one_year / one_day, &
+    CALL Set_quincy_parameter_value(this%k_weath_mineral / molar_mass_P / 1254.0_lp / one_year / one_day, &
                                     this%k_weath_mineral, &
                                     "k_weath_mineral", proportional_parameter_changes, &
                                     k_weath_mineral)
@@ -3915,12 +3543,12 @@ CONTAINS
                                     "eq_sorp_mineral_po4", proportional_parameter_changes, &
                                     eq_sorp_mineral_po4)
 
-    CALL Set_quincy_parameter_value(this%k_occlude_po4 / 1000000._wp / 30._wp / one_day, &
+    CALL Set_quincy_parameter_value(this%k_occlude_po4 / 1000000._lp / 30._lp / one_day, &
                                     this%k_occlude_po4, &
                                     "k_occlude_po4", proportional_parameter_changes, &
                                     k_occlude_po4)
 
-    CALL Set_quincy_parameter_value(this%vmax_biochem_po4 / 50.0_wp / one_day, &
+    CALL Set_quincy_parameter_value(this%vmax_biochem_po4 / 50.0_lp / one_day, &
                                     this%vmax_biochem_po4, &
                                     "vmax_biochem_po4", proportional_parameter_changes, &
                                     vmax_biochem_po4)
@@ -3950,7 +3578,7 @@ CONTAINS
                                     "km_root_enzyme_weath_po4", proportional_parameter_changes, &
                                     km_root_enzyme_weath_po4)
 
-    CALL Set_quincy_parameter_value(this%biomin_threshold_pc_ratio_mic_res / 5000.0_wp, &
+    CALL Set_quincy_parameter_value(this%biomin_threshold_pc_ratio_mic_res / 5000.0_lp, &
                                     this%biomin_threshold_pc_ratio_mic_res, &
                                     "biomin_threshold_pc_ratio_mic_res", proportional_parameter_changes, &
                                     biomin_threshold_pc_ratio_mic_res)
@@ -4077,469 +3705,469 @@ CONTAINS
     ! ---------------------------
     ! 0.2 Local
     ! PFT 1
-    REAL(wp)            :: sla_p1
-    REAL(wp)            :: sigma_vis_p1
-    REAL(wp)            :: sigma_nir_p1
-    REAL(wp)            :: omega_clumping_p1
-    REAL(wp)            :: crown_shape_factor_p1
-    REAL(wp)            :: cn_leaf_p1
-    REAL(wp)            :: cn_leaf_min_p1
-    REAL(wp)            :: cn_leaf_max_p1
-    REAL(wp)            :: np_leaf_p1
-    REAL(wp)            :: np_leaf_min_p1
-    REAL(wp)            :: np_leaf_max_p1
-    REAL(wp)            :: k0_fn_struc_p1
-    REAL(wp)            :: fn_oth_min_p1
-    REAL(wp)            :: t_jmax_opt_p1
-    REAL(wp)            :: t_jmax_omega_p1
-    REAL(wp)            :: g0_p1
-    REAL(wp)            :: g1_medlyn_p1
-    REAL(wp)            :: g1_bberry_p1
-    REAL(wp)            :: gmin_p1
-    REAL(wp)            :: tau_leaf_p1
-    REAL(wp)            :: tau_fine_root_p1
-    REAL(wp)            :: tau_coarse_root_p1
-    REAL(wp)            :: tau_branch_p1
-    REAL(wp)            :: tau_sap_wood_p1
-    REAL(wp)            :: tau_fruit_p1
-    REAL(wp)            :: tau_seed_litter_p1
-    REAL(wp)            :: tau_seed_est_p1
-    REAL(wp)            :: tau_mycorrhiza_p1
-    REAL(wp)            :: vmax_uptake_n_p1
-    REAL(wp)            :: vmax_uptake_p_p1
-    REAL(wp)            :: bnf_base_p1
-    REAL(wp)            :: vmax_symb_bnf_p1
-    REAL(wp)            :: km_symb_bnf_p1
-    REAL(wp)            :: lambda_est_light_p1
-    REAL(wp)            :: k_est_light_p1
-    REAL(wp)            :: seed_size_p1
-    REAL(wp)            :: k1_mort_greff_p1
-    REAL(wp)            :: beta_soil_flush_p1
-    REAL(wp)            :: beta_soil_senescence_p1
-    REAL(wp)            :: gdd_req_max_p1
-    REAL(wp)            :: k_gdd_dormance_p1
-    REAL(wp)            :: t_air_senescence_p1
-    REAL(wp)            :: min_leaf_age_p1
-    REAL(wp)            :: frac_sapwood_branch_p1
-    REAL(wp)            :: wood_density_p1
-    REAL(wp)            :: k_latosa_p1
-    REAL(wp)            :: k_crtos_p1
-    REAL(wp)            :: k_rtos_p1
-    REAL(wp)            :: k2_fruit_alloc_p1
-    REAL(wp)            :: allom_k1_p1
-    REAL(wp)            :: allom_k2_p1
-    REAL(wp)            :: phi_leaf_min_p1
-    REAL(wp)            :: k_root_p1
-    REAL(wp)            :: k_sapwood_p1
-    REAL(wp)            :: c0_allom_p1
-    REAL(wp)            :: fstore_target_p1
-    REAL(wp)            :: k_root_dist_p1
+    REAL(lp)            :: sla_p1
+    REAL(lp)            :: sigma_vis_p1
+    REAL(lp)            :: sigma_nir_p1
+    REAL(lp)            :: omega_clumping_p1
+    REAL(lp)            :: crown_shape_factor_p1
+    REAL(lp)            :: cn_leaf_p1
+    REAL(lp)            :: cn_leaf_min_p1
+    REAL(lp)            :: cn_leaf_max_p1
+    REAL(lp)            :: np_leaf_p1
+    REAL(lp)            :: np_leaf_min_p1
+    REAL(lp)            :: np_leaf_max_p1
+    REAL(lp)            :: k0_fn_struc_p1
+    REAL(lp)            :: fn_oth_min_p1
+    REAL(lp)            :: t_jmax_opt_p1
+    REAL(lp)            :: t_jmax_omega_p1
+    REAL(lp)            :: g0_p1
+    REAL(lp)            :: g1_medlyn_p1
+    REAL(lp)            :: g1_bberry_p1
+    REAL(lp)            :: gmin_p1
+    REAL(lp)            :: tau_leaf_p1
+    REAL(lp)            :: tau_fine_root_p1
+    REAL(lp)            :: tau_coarse_root_p1
+    REAL(lp)            :: tau_branch_p1
+    REAL(lp)            :: tau_sap_wood_p1
+    REAL(lp)            :: tau_fruit_p1
+    REAL(lp)            :: tau_seed_litter_p1
+    REAL(lp)            :: tau_seed_est_p1
+    REAL(lp)            :: tau_mycorrhiza_p1
+    REAL(lp)            :: vmax_uptake_n_p1
+    REAL(lp)            :: vmax_uptake_p_p1
+    REAL(lp)            :: bnf_base_p1
+    REAL(lp)            :: vmax_symb_bnf_p1
+    REAL(lp)            :: km_symb_bnf_p1
+    REAL(lp)            :: lambda_est_light_p1
+    REAL(lp)            :: k_est_light_p1
+    REAL(lp)            :: seed_size_p1
+    REAL(lp)            :: k1_mort_greff_p1
+    REAL(lp)            :: beta_soil_flush_p1
+    REAL(lp)            :: beta_soil_senescence_p1
+    REAL(lp)            :: gdd_req_max_p1
+    REAL(lp)            :: k_gdd_dormance_p1
+    REAL(lp)            :: t_air_senescence_p1
+    REAL(lp)            :: min_leaf_age_p1
+    REAL(lp)            :: frac_sapwood_branch_p1
+    REAL(lp)            :: wood_density_p1
+    REAL(lp)            :: k_latosa_p1
+    REAL(lp)            :: k_crtos_p1
+    REAL(lp)            :: k_rtos_p1
+    REAL(lp)            :: k2_fruit_alloc_p1
+    REAL(lp)            :: allom_k1_p1
+    REAL(lp)            :: allom_k2_p1
+    REAL(lp)            :: phi_leaf_min_p1
+    REAL(lp)            :: k_root_p1
+    REAL(lp)            :: k_sapwood_p1
+    REAL(lp)            :: c0_allom_p1
+    REAL(lp)            :: fstore_target_p1
+    REAL(lp)            :: k_root_dist_p1
     ! PFT 2
-    REAL(wp)            :: sla_p2
-    REAL(wp)            :: sigma_vis_p2
-    REAL(wp)            :: sigma_nir_p2
-    REAL(wp)            :: omega_clumping_p2
-    REAL(wp)            :: crown_shape_factor_p2
-    REAL(wp)            :: cn_leaf_p2
-    REAL(wp)            :: cn_leaf_min_p2
-    REAL(wp)            :: cn_leaf_max_p2
-    REAL(wp)            :: np_leaf_p2
-    REAL(wp)            :: np_leaf_min_p2
-    REAL(wp)            :: np_leaf_max_p2
-    REAL(wp)            :: k0_fn_struc_p2
-    REAL(wp)            :: fn_oth_min_p2
-    REAL(wp)            :: t_jmax_opt_p2
-    REAL(wp)            :: t_jmax_omega_p2
-    REAL(wp)            :: g0_p2
-    REAL(wp)            :: g1_medlyn_p2
-    REAL(wp)            :: g1_bberry_p2
-    REAL(wp)            :: gmin_p2
-    REAL(wp)            :: tau_leaf_p2
-    REAL(wp)            :: tau_fine_root_p2
-    REAL(wp)            :: tau_coarse_root_p2
-    REAL(wp)            :: tau_branch_p2
-    REAL(wp)            :: tau_sap_wood_p2
-    REAL(wp)            :: tau_fruit_p2
-    REAL(wp)            :: tau_seed_litter_p2
-    REAL(wp)            :: tau_seed_est_p2
-    REAL(wp)            :: tau_mycorrhiza_p2
-    REAL(wp)            :: vmax_uptake_n_p2
-    REAL(wp)            :: vmax_uptake_p_p2
-    REAL(wp)            :: bnf_base_p2
-    REAL(wp)            :: vmax_symb_bnf_p2
-    REAL(wp)            :: km_symb_bnf_p2
-    REAL(wp)            :: lambda_est_light_p2
-    REAL(wp)            :: k_est_light_p2
-    REAL(wp)            :: seed_size_p2
-    REAL(wp)            :: k1_mort_greff_p2
-    REAL(wp)            :: beta_soil_flush_p2
-    REAL(wp)            :: beta_soil_senescence_p2
-    REAL(wp)            :: gdd_req_max_p2
-    REAL(wp)            :: k_gdd_dormance_p2
-    REAL(wp)            :: t_air_senescence_p2
-    REAL(wp)            :: min_leaf_age_p2
-    REAL(wp)            :: frac_sapwood_branch_p2
-    REAL(wp)            :: wood_density_p2
-    REAL(wp)            :: k_latosa_p2
-    REAL(wp)            :: k_crtos_p2
-    REAL(wp)            :: k_rtos_p2
-    REAL(wp)            :: k2_fruit_alloc_p2
-    REAL(wp)            :: allom_k1_p2
-    REAL(wp)            :: allom_k2_p2
-    REAL(wp)            :: phi_leaf_min_p2
-    REAL(wp)            :: k_root_p2
-    REAL(wp)            :: k_sapwood_p2
-    REAL(wp)            :: c0_allom_p2
-    REAL(wp)            :: fstore_target_p2
-    REAL(wp)            :: k_root_dist_p2
+    REAL(lp)            :: sla_p2
+    REAL(lp)            :: sigma_vis_p2
+    REAL(lp)            :: sigma_nir_p2
+    REAL(lp)            :: omega_clumping_p2
+    REAL(lp)            :: crown_shape_factor_p2
+    REAL(lp)            :: cn_leaf_p2
+    REAL(lp)            :: cn_leaf_min_p2
+    REAL(lp)            :: cn_leaf_max_p2
+    REAL(lp)            :: np_leaf_p2
+    REAL(lp)            :: np_leaf_min_p2
+    REAL(lp)            :: np_leaf_max_p2
+    REAL(lp)            :: k0_fn_struc_p2
+    REAL(lp)            :: fn_oth_min_p2
+    REAL(lp)            :: t_jmax_opt_p2
+    REAL(lp)            :: t_jmax_omega_p2
+    REAL(lp)            :: g0_p2
+    REAL(lp)            :: g1_medlyn_p2
+    REAL(lp)            :: g1_bberry_p2
+    REAL(lp)            :: gmin_p2
+    REAL(lp)            :: tau_leaf_p2
+    REAL(lp)            :: tau_fine_root_p2
+    REAL(lp)            :: tau_coarse_root_p2
+    REAL(lp)            :: tau_branch_p2
+    REAL(lp)            :: tau_sap_wood_p2
+    REAL(lp)            :: tau_fruit_p2
+    REAL(lp)            :: tau_seed_litter_p2
+    REAL(lp)            :: tau_seed_est_p2
+    REAL(lp)            :: tau_mycorrhiza_p2
+    REAL(lp)            :: vmax_uptake_n_p2
+    REAL(lp)            :: vmax_uptake_p_p2
+    REAL(lp)            :: bnf_base_p2
+    REAL(lp)            :: vmax_symb_bnf_p2
+    REAL(lp)            :: km_symb_bnf_p2
+    REAL(lp)            :: lambda_est_light_p2
+    REAL(lp)            :: k_est_light_p2
+    REAL(lp)            :: seed_size_p2
+    REAL(lp)            :: k1_mort_greff_p2
+    REAL(lp)            :: beta_soil_flush_p2
+    REAL(lp)            :: beta_soil_senescence_p2
+    REAL(lp)            :: gdd_req_max_p2
+    REAL(lp)            :: k_gdd_dormance_p2
+    REAL(lp)            :: t_air_senescence_p2
+    REAL(lp)            :: min_leaf_age_p2
+    REAL(lp)            :: frac_sapwood_branch_p2
+    REAL(lp)            :: wood_density_p2
+    REAL(lp)            :: k_latosa_p2
+    REAL(lp)            :: k_crtos_p2
+    REAL(lp)            :: k_rtos_p2
+    REAL(lp)            :: k2_fruit_alloc_p2
+    REAL(lp)            :: allom_k1_p2
+    REAL(lp)            :: allom_k2_p2
+    REAL(lp)            :: phi_leaf_min_p2
+    REAL(lp)            :: k_root_p2
+    REAL(lp)            :: k_sapwood_p2
+    REAL(lp)            :: c0_allom_p2
+    REAL(lp)            :: fstore_target_p2
+    REAL(lp)            :: k_root_dist_p2
     ! PFT 3
-    REAL(wp)            :: sla_p3
-    REAL(wp)            :: sigma_vis_p3
-    REAL(wp)            :: sigma_nir_p3
-    REAL(wp)            :: omega_clumping_p3
-    REAL(wp)            :: crown_shape_factor_p3
-    REAL(wp)            :: cn_leaf_p3
-    REAL(wp)            :: cn_leaf_min_p3
-    REAL(wp)            :: cn_leaf_max_p3
-    REAL(wp)            :: np_leaf_p3
-    REAL(wp)            :: np_leaf_min_p3
-    REAL(wp)            :: np_leaf_max_p3
-    REAL(wp)            :: k0_fn_struc_p3
-    REAL(wp)            :: fn_oth_min_p3
-    REAL(wp)            :: t_jmax_opt_p3
-    REAL(wp)            :: t_jmax_omega_p3
-    REAL(wp)            :: g0_p3
-    REAL(wp)            :: g1_medlyn_p3
-    REAL(wp)            :: g1_bberry_p3
-    REAL(wp)            :: gmin_p3
-    REAL(wp)            :: tau_leaf_p3
-    REAL(wp)            :: tau_fine_root_p3
-    REAL(wp)            :: tau_coarse_root_p3
-    REAL(wp)            :: tau_branch_p3
-    REAL(wp)            :: tau_sap_wood_p3
-    REAL(wp)            :: tau_fruit_p3
-    REAL(wp)            :: tau_seed_litter_p3
-    REAL(wp)            :: tau_seed_est_p3
-    REAL(wp)            :: tau_mycorrhiza_p3
-    REAL(wp)            :: vmax_uptake_n_p3
-    REAL(wp)            :: vmax_uptake_p_p3
-    REAL(wp)            :: bnf_base_p3
-    REAL(wp)            :: vmax_symb_bnf_p3
-    REAL(wp)            :: km_symb_bnf_p3
-    REAL(wp)            :: lambda_est_light_p3
-    REAL(wp)            :: k_est_light_p3
-    REAL(wp)            :: seed_size_p3
-    REAL(wp)            :: k1_mort_greff_p3
-    REAL(wp)            :: beta_soil_flush_p3
-    REAL(wp)            :: beta_soil_senescence_p3
-    REAL(wp)            :: gdd_req_max_p3
-    REAL(wp)            :: k_gdd_dormance_p3
-    REAL(wp)            :: t_air_senescence_p3
-    REAL(wp)            :: min_leaf_age_p3
-    REAL(wp)            :: frac_sapwood_branch_p3
-    REAL(wp)            :: wood_density_p3
-    REAL(wp)            :: k_latosa_p3
-    REAL(wp)            :: k_crtos_p3
-    REAL(wp)            :: k_rtos_p3
-    REAL(wp)            :: k2_fruit_alloc_p3
-    REAL(wp)            :: allom_k1_p3
-    REAL(wp)            :: allom_k2_p3
-    REAL(wp)            :: phi_leaf_min_p3
-    REAL(wp)            :: k_root_p3
-    REAL(wp)            :: k_sapwood_p3
-    REAL(wp)            :: c0_allom_p3
-    REAL(wp)            :: fstore_target_p3
-    REAL(wp)            :: k_root_dist_p3
+    REAL(lp)            :: sla_p3
+    REAL(lp)            :: sigma_vis_p3
+    REAL(lp)            :: sigma_nir_p3
+    REAL(lp)            :: omega_clumping_p3
+    REAL(lp)            :: crown_shape_factor_p3
+    REAL(lp)            :: cn_leaf_p3
+    REAL(lp)            :: cn_leaf_min_p3
+    REAL(lp)            :: cn_leaf_max_p3
+    REAL(lp)            :: np_leaf_p3
+    REAL(lp)            :: np_leaf_min_p3
+    REAL(lp)            :: np_leaf_max_p3
+    REAL(lp)            :: k0_fn_struc_p3
+    REAL(lp)            :: fn_oth_min_p3
+    REAL(lp)            :: t_jmax_opt_p3
+    REAL(lp)            :: t_jmax_omega_p3
+    REAL(lp)            :: g0_p3
+    REAL(lp)            :: g1_medlyn_p3
+    REAL(lp)            :: g1_bberry_p3
+    REAL(lp)            :: gmin_p3
+    REAL(lp)            :: tau_leaf_p3
+    REAL(lp)            :: tau_fine_root_p3
+    REAL(lp)            :: tau_coarse_root_p3
+    REAL(lp)            :: tau_branch_p3
+    REAL(lp)            :: tau_sap_wood_p3
+    REAL(lp)            :: tau_fruit_p3
+    REAL(lp)            :: tau_seed_litter_p3
+    REAL(lp)            :: tau_seed_est_p3
+    REAL(lp)            :: tau_mycorrhiza_p3
+    REAL(lp)            :: vmax_uptake_n_p3
+    REAL(lp)            :: vmax_uptake_p_p3
+    REAL(lp)            :: bnf_base_p3
+    REAL(lp)            :: vmax_symb_bnf_p3
+    REAL(lp)            :: km_symb_bnf_p3
+    REAL(lp)            :: lambda_est_light_p3
+    REAL(lp)            :: k_est_light_p3
+    REAL(lp)            :: seed_size_p3
+    REAL(lp)            :: k1_mort_greff_p3
+    REAL(lp)            :: beta_soil_flush_p3
+    REAL(lp)            :: beta_soil_senescence_p3
+    REAL(lp)            :: gdd_req_max_p3
+    REAL(lp)            :: k_gdd_dormance_p3
+    REAL(lp)            :: t_air_senescence_p3
+    REAL(lp)            :: min_leaf_age_p3
+    REAL(lp)            :: frac_sapwood_branch_p3
+    REAL(lp)            :: wood_density_p3
+    REAL(lp)            :: k_latosa_p3
+    REAL(lp)            :: k_crtos_p3
+    REAL(lp)            :: k_rtos_p3
+    REAL(lp)            :: k2_fruit_alloc_p3
+    REAL(lp)            :: allom_k1_p3
+    REAL(lp)            :: allom_k2_p3
+    REAL(lp)            :: phi_leaf_min_p3
+    REAL(lp)            :: k_root_p3
+    REAL(lp)            :: k_sapwood_p3
+    REAL(lp)            :: c0_allom_p3
+    REAL(lp)            :: fstore_target_p3
+    REAL(lp)            :: k_root_dist_p3
     ! PFT 4
-    REAL(wp)            :: sla_p4
-    REAL(wp)            :: sigma_vis_p4
-    REAL(wp)            :: sigma_nir_p4
-    REAL(wp)            :: omega_clumping_p4
-    REAL(wp)            :: crown_shape_factor_p4
-    REAL(wp)            :: cn_leaf_p4
-    REAL(wp)            :: cn_leaf_min_p4
-    REAL(wp)            :: cn_leaf_max_p4
-    REAL(wp)            :: np_leaf_p4
-    REAL(wp)            :: np_leaf_min_p4
-    REAL(wp)            :: np_leaf_max_p4
-    REAL(wp)            :: k0_fn_struc_p4
-    REAL(wp)            :: fn_oth_min_p4
-    REAL(wp)            :: t_jmax_opt_p4
-    REAL(wp)            :: t_jmax_omega_p4
-    REAL(wp)            :: g0_p4
-    REAL(wp)            :: g1_medlyn_p4
-    REAL(wp)            :: g1_bberry_p4
-    REAL(wp)            :: gmin_p4
-    REAL(wp)            :: tau_leaf_p4
-    REAL(wp)            :: tau_fine_root_p4
-    REAL(wp)            :: tau_coarse_root_p4
-    REAL(wp)            :: tau_branch_p4
-    REAL(wp)            :: tau_sap_wood_p4
-    REAL(wp)            :: tau_fruit_p4
-    REAL(wp)            :: tau_seed_litter_p4
-    REAL(wp)            :: tau_seed_est_p4
-    REAL(wp)            :: tau_mycorrhiza_p4
-    REAL(wp)            :: vmax_uptake_n_p4
-    REAL(wp)            :: vmax_uptake_p_p4
-    REAL(wp)            :: bnf_base_p4
-    REAL(wp)            :: vmax_symb_bnf_p4
-    REAL(wp)            :: km_symb_bnf_p4
-    REAL(wp)            :: lambda_est_light_p4
-    REAL(wp)            :: k_est_light_p4
-    REAL(wp)            :: seed_size_p4
-    REAL(wp)            :: k1_mort_greff_p4
-    REAL(wp)            :: beta_soil_flush_p4
-    REAL(wp)            :: beta_soil_senescence_p4
-    REAL(wp)            :: gdd_req_max_p4
-    REAL(wp)            :: k_gdd_dormance_p4
-    REAL(wp)            :: t_air_senescence_p4
-    REAL(wp)            :: min_leaf_age_p4
-    REAL(wp)            :: frac_sapwood_branch_p4
-    REAL(wp)            :: wood_density_p4
-    REAL(wp)            :: k_latosa_p4
-    REAL(wp)            :: k_crtos_p4
-    REAL(wp)            :: k_rtos_p4
-    REAL(wp)            :: k2_fruit_alloc_p4
-    REAL(wp)            :: allom_k1_p4
-    REAL(wp)            :: allom_k2_p4
-    REAL(wp)            :: phi_leaf_min_p4
-    REAL(wp)            :: k_root_p4
-    REAL(wp)            :: k_sapwood_p4
-    REAL(wp)            :: c0_allom_p4
-    REAL(wp)            :: fstore_target_p4
-    REAL(wp)            :: k_root_dist_p4
+    REAL(lp)            :: sla_p4
+    REAL(lp)            :: sigma_vis_p4
+    REAL(lp)            :: sigma_nir_p4
+    REAL(lp)            :: omega_clumping_p4
+    REAL(lp)            :: crown_shape_factor_p4
+    REAL(lp)            :: cn_leaf_p4
+    REAL(lp)            :: cn_leaf_min_p4
+    REAL(lp)            :: cn_leaf_max_p4
+    REAL(lp)            :: np_leaf_p4
+    REAL(lp)            :: np_leaf_min_p4
+    REAL(lp)            :: np_leaf_max_p4
+    REAL(lp)            :: k0_fn_struc_p4
+    REAL(lp)            :: fn_oth_min_p4
+    REAL(lp)            :: t_jmax_opt_p4
+    REAL(lp)            :: t_jmax_omega_p4
+    REAL(lp)            :: g0_p4
+    REAL(lp)            :: g1_medlyn_p4
+    REAL(lp)            :: g1_bberry_p4
+    REAL(lp)            :: gmin_p4
+    REAL(lp)            :: tau_leaf_p4
+    REAL(lp)            :: tau_fine_root_p4
+    REAL(lp)            :: tau_coarse_root_p4
+    REAL(lp)            :: tau_branch_p4
+    REAL(lp)            :: tau_sap_wood_p4
+    REAL(lp)            :: tau_fruit_p4
+    REAL(lp)            :: tau_seed_litter_p4
+    REAL(lp)            :: tau_seed_est_p4
+    REAL(lp)            :: tau_mycorrhiza_p4
+    REAL(lp)            :: vmax_uptake_n_p4
+    REAL(lp)            :: vmax_uptake_p_p4
+    REAL(lp)            :: bnf_base_p4
+    REAL(lp)            :: vmax_symb_bnf_p4
+    REAL(lp)            :: km_symb_bnf_p4
+    REAL(lp)            :: lambda_est_light_p4
+    REAL(lp)            :: k_est_light_p4
+    REAL(lp)            :: seed_size_p4
+    REAL(lp)            :: k1_mort_greff_p4
+    REAL(lp)            :: beta_soil_flush_p4
+    REAL(lp)            :: beta_soil_senescence_p4
+    REAL(lp)            :: gdd_req_max_p4
+    REAL(lp)            :: k_gdd_dormance_p4
+    REAL(lp)            :: t_air_senescence_p4
+    REAL(lp)            :: min_leaf_age_p4
+    REAL(lp)            :: frac_sapwood_branch_p4
+    REAL(lp)            :: wood_density_p4
+    REAL(lp)            :: k_latosa_p4
+    REAL(lp)            :: k_crtos_p4
+    REAL(lp)            :: k_rtos_p4
+    REAL(lp)            :: k2_fruit_alloc_p4
+    REAL(lp)            :: allom_k1_p4
+    REAL(lp)            :: allom_k2_p4
+    REAL(lp)            :: phi_leaf_min_p4
+    REAL(lp)            :: k_root_p4
+    REAL(lp)            :: k_sapwood_p4
+    REAL(lp)            :: c0_allom_p4
+    REAL(lp)            :: fstore_target_p4
+    REAL(lp)            :: k_root_dist_p4
     ! PFT 5
-    REAL(wp)            :: sla_p5
-    REAL(wp)            :: sigma_vis_p5
-    REAL(wp)            :: sigma_nir_p5
-    REAL(wp)            :: omega_clumping_p5
-    REAL(wp)            :: crown_shape_factor_p5
-    REAL(wp)            :: cn_leaf_p5
-    REAL(wp)            :: cn_leaf_min_p5
-    REAL(wp)            :: cn_leaf_max_p5
-    REAL(wp)            :: np_leaf_p5
-    REAL(wp)            :: np_leaf_min_p5
-    REAL(wp)            :: np_leaf_max_p5
-    REAL(wp)            :: k0_fn_struc_p5
-    REAL(wp)            :: fn_oth_min_p5
-    REAL(wp)            :: t_jmax_opt_p5
-    REAL(wp)            :: t_jmax_omega_p5
-    REAL(wp)            :: g0_p5
-    REAL(wp)            :: g1_medlyn_p5
-    REAL(wp)            :: g1_bberry_p5
-    REAL(wp)            :: gmin_p5
-    REAL(wp)            :: tau_leaf_p5
-    REAL(wp)            :: tau_fine_root_p5
-    REAL(wp)            :: tau_coarse_root_p5
-    REAL(wp)            :: tau_branch_p5
-    REAL(wp)            :: tau_sap_wood_p5
-    REAL(wp)            :: tau_fruit_p5
-    REAL(wp)            :: tau_seed_litter_p5
-    REAL(wp)            :: tau_seed_est_p5
-    REAL(wp)            :: tau_mycorrhiza_p5
-    REAL(wp)            :: vmax_uptake_n_p5
-    REAL(wp)            :: vmax_uptake_p_p5
-    REAL(wp)            :: bnf_base_p5
-    REAL(wp)            :: vmax_symb_bnf_p5
-    REAL(wp)            :: km_symb_bnf_p5
-    REAL(wp)            :: lambda_est_light_p5
-    REAL(wp)            :: k_est_light_p5
-    REAL(wp)            :: seed_size_p5
-    REAL(wp)            :: k1_mort_greff_p5
-    REAL(wp)            :: beta_soil_flush_p5
-    REAL(wp)            :: beta_soil_senescence_p5
-    REAL(wp)            :: gdd_req_max_p5
-    REAL(wp)            :: k_gdd_dormance_p5
-    REAL(wp)            :: t_air_senescence_p5
-    REAL(wp)            :: min_leaf_age_p5
-    REAL(wp)            :: frac_sapwood_branch_p5
-    REAL(wp)            :: wood_density_p5
-    REAL(wp)            :: k_latosa_p5
-    REAL(wp)            :: k_crtos_p5
-    REAL(wp)            :: k_rtos_p5
-    REAL(wp)            :: k2_fruit_alloc_p5
-    REAL(wp)            :: allom_k1_p5
-    REAL(wp)            :: allom_k2_p5
-    REAL(wp)            :: phi_leaf_min_p5
-    REAL(wp)            :: k_root_p5
-    REAL(wp)            :: k_sapwood_p5
-    REAL(wp)            :: c0_allom_p5
-    REAL(wp)            :: fstore_target_p5
-    REAL(wp)            :: k_root_dist_p5
+    REAL(lp)            :: sla_p5
+    REAL(lp)            :: sigma_vis_p5
+    REAL(lp)            :: sigma_nir_p5
+    REAL(lp)            :: omega_clumping_p5
+    REAL(lp)            :: crown_shape_factor_p5
+    REAL(lp)            :: cn_leaf_p5
+    REAL(lp)            :: cn_leaf_min_p5
+    REAL(lp)            :: cn_leaf_max_p5
+    REAL(lp)            :: np_leaf_p5
+    REAL(lp)            :: np_leaf_min_p5
+    REAL(lp)            :: np_leaf_max_p5
+    REAL(lp)            :: k0_fn_struc_p5
+    REAL(lp)            :: fn_oth_min_p5
+    REAL(lp)            :: t_jmax_opt_p5
+    REAL(lp)            :: t_jmax_omega_p5
+    REAL(lp)            :: g0_p5
+    REAL(lp)            :: g1_medlyn_p5
+    REAL(lp)            :: g1_bberry_p5
+    REAL(lp)            :: gmin_p5
+    REAL(lp)            :: tau_leaf_p5
+    REAL(lp)            :: tau_fine_root_p5
+    REAL(lp)            :: tau_coarse_root_p5
+    REAL(lp)            :: tau_branch_p5
+    REAL(lp)            :: tau_sap_wood_p5
+    REAL(lp)            :: tau_fruit_p5
+    REAL(lp)            :: tau_seed_litter_p5
+    REAL(lp)            :: tau_seed_est_p5
+    REAL(lp)            :: tau_mycorrhiza_p5
+    REAL(lp)            :: vmax_uptake_n_p5
+    REAL(lp)            :: vmax_uptake_p_p5
+    REAL(lp)            :: bnf_base_p5
+    REAL(lp)            :: vmax_symb_bnf_p5
+    REAL(lp)            :: km_symb_bnf_p5
+    REAL(lp)            :: lambda_est_light_p5
+    REAL(lp)            :: k_est_light_p5
+    REAL(lp)            :: seed_size_p5
+    REAL(lp)            :: k1_mort_greff_p5
+    REAL(lp)            :: beta_soil_flush_p5
+    REAL(lp)            :: beta_soil_senescence_p5
+    REAL(lp)            :: gdd_req_max_p5
+    REAL(lp)            :: k_gdd_dormance_p5
+    REAL(lp)            :: t_air_senescence_p5
+    REAL(lp)            :: min_leaf_age_p5
+    REAL(lp)            :: frac_sapwood_branch_p5
+    REAL(lp)            :: wood_density_p5
+    REAL(lp)            :: k_latosa_p5
+    REAL(lp)            :: k_crtos_p5
+    REAL(lp)            :: k_rtos_p5
+    REAL(lp)            :: k2_fruit_alloc_p5
+    REAL(lp)            :: allom_k1_p5
+    REAL(lp)            :: allom_k2_p5
+    REAL(lp)            :: phi_leaf_min_p5
+    REAL(lp)            :: k_root_p5
+    REAL(lp)            :: k_sapwood_p5
+    REAL(lp)            :: c0_allom_p5
+    REAL(lp)            :: fstore_target_p5
+    REAL(lp)            :: k_root_dist_p5
     ! PFT 6
-    REAL(wp)            :: sla_p6
-    REAL(wp)            :: sigma_vis_p6
-    REAL(wp)            :: sigma_nir_p6
-    REAL(wp)            :: omega_clumping_p6
-    REAL(wp)            :: crown_shape_factor_p6
-    REAL(wp)            :: cn_leaf_p6
-    REAL(wp)            :: cn_leaf_min_p6
-    REAL(wp)            :: cn_leaf_max_p6
-    REAL(wp)            :: np_leaf_p6
-    REAL(wp)            :: np_leaf_min_p6
-    REAL(wp)            :: np_leaf_max_p6
-    REAL(wp)            :: k0_fn_struc_p6
-    REAL(wp)            :: fn_oth_min_p6
-    REAL(wp)            :: t_jmax_opt_p6
-    REAL(wp)            :: t_jmax_omega_p6
-    REAL(wp)            :: g0_p6
-    REAL(wp)            :: g1_medlyn_p6
-    REAL(wp)            :: g1_bberry_p6
-    REAL(wp)            :: gmin_p6
-    REAL(wp)            :: tau_leaf_p6
-    REAL(wp)            :: tau_fine_root_p6
-    REAL(wp)            :: tau_coarse_root_p6
-    REAL(wp)            :: tau_branch_p6
-    REAL(wp)            :: tau_sap_wood_p6
-    REAL(wp)            :: tau_fruit_p6
-    REAL(wp)            :: tau_seed_litter_p6
-    REAL(wp)            :: tau_seed_est_p6
-    REAL(wp)            :: tau_mycorrhiza_p6
-    REAL(wp)            :: vmax_uptake_n_p6
-    REAL(wp)            :: vmax_uptake_p_p6
-    REAL(wp)            :: bnf_base_p6
-    REAL(wp)            :: vmax_symb_bnf_p6
-    REAL(wp)            :: km_symb_bnf_p6
-    REAL(wp)            :: lambda_est_light_p6
-    REAL(wp)            :: k_est_light_p6
-    REAL(wp)            :: seed_size_p6
-    REAL(wp)            :: k1_mort_greff_p6
-    REAL(wp)            :: beta_soil_flush_p6
-    REAL(wp)            :: beta_soil_senescence_p6
-    REAL(wp)            :: gdd_req_max_p6
-    REAL(wp)            :: k_gdd_dormance_p6
-    REAL(wp)            :: t_air_senescence_p6
-    REAL(wp)            :: min_leaf_age_p6
-    REAL(wp)            :: frac_sapwood_branch_p6
-    REAL(wp)            :: wood_density_p6
-    REAL(wp)            :: k_latosa_p6
-    REAL(wp)            :: k_crtos_p6
-    REAL(wp)            :: k_rtos_p6
-    REAL(wp)            :: k2_fruit_alloc_p6
-    REAL(wp)            :: allom_k1_p6
-    REAL(wp)            :: allom_k2_p6
-    REAL(wp)            :: phi_leaf_min_p6
-    REAL(wp)            :: k_root_p6
-    REAL(wp)            :: k_sapwood_p6
-    REAL(wp)            :: c0_allom_p6
-    REAL(wp)            :: fstore_target_p6
-    REAL(wp)            :: k_root_dist_p6
+    REAL(lp)            :: sla_p6
+    REAL(lp)            :: sigma_vis_p6
+    REAL(lp)            :: sigma_nir_p6
+    REAL(lp)            :: omega_clumping_p6
+    REAL(lp)            :: crown_shape_factor_p6
+    REAL(lp)            :: cn_leaf_p6
+    REAL(lp)            :: cn_leaf_min_p6
+    REAL(lp)            :: cn_leaf_max_p6
+    REAL(lp)            :: np_leaf_p6
+    REAL(lp)            :: np_leaf_min_p6
+    REAL(lp)            :: np_leaf_max_p6
+    REAL(lp)            :: k0_fn_struc_p6
+    REAL(lp)            :: fn_oth_min_p6
+    REAL(lp)            :: t_jmax_opt_p6
+    REAL(lp)            :: t_jmax_omega_p6
+    REAL(lp)            :: g0_p6
+    REAL(lp)            :: g1_medlyn_p6
+    REAL(lp)            :: g1_bberry_p6
+    REAL(lp)            :: gmin_p6
+    REAL(lp)            :: tau_leaf_p6
+    REAL(lp)            :: tau_fine_root_p6
+    REAL(lp)            :: tau_coarse_root_p6
+    REAL(lp)            :: tau_branch_p6
+    REAL(lp)            :: tau_sap_wood_p6
+    REAL(lp)            :: tau_fruit_p6
+    REAL(lp)            :: tau_seed_litter_p6
+    REAL(lp)            :: tau_seed_est_p6
+    REAL(lp)            :: tau_mycorrhiza_p6
+    REAL(lp)            :: vmax_uptake_n_p6
+    REAL(lp)            :: vmax_uptake_p_p6
+    REAL(lp)            :: bnf_base_p6
+    REAL(lp)            :: vmax_symb_bnf_p6
+    REAL(lp)            :: km_symb_bnf_p6
+    REAL(lp)            :: lambda_est_light_p6
+    REAL(lp)            :: k_est_light_p6
+    REAL(lp)            :: seed_size_p6
+    REAL(lp)            :: k1_mort_greff_p6
+    REAL(lp)            :: beta_soil_flush_p6
+    REAL(lp)            :: beta_soil_senescence_p6
+    REAL(lp)            :: gdd_req_max_p6
+    REAL(lp)            :: k_gdd_dormance_p6
+    REAL(lp)            :: t_air_senescence_p6
+    REAL(lp)            :: min_leaf_age_p6
+    REAL(lp)            :: frac_sapwood_branch_p6
+    REAL(lp)            :: wood_density_p6
+    REAL(lp)            :: k_latosa_p6
+    REAL(lp)            :: k_crtos_p6
+    REAL(lp)            :: k_rtos_p6
+    REAL(lp)            :: k2_fruit_alloc_p6
+    REAL(lp)            :: allom_k1_p6
+    REAL(lp)            :: allom_k2_p6
+    REAL(lp)            :: phi_leaf_min_p6
+    REAL(lp)            :: k_root_p6
+    REAL(lp)            :: k_sapwood_p6
+    REAL(lp)            :: c0_allom_p6
+    REAL(lp)            :: fstore_target_p6
+    REAL(lp)            :: k_root_dist_p6
     ! PFT 7
-    REAL(wp)            :: sla_p7
-    REAL(wp)            :: sigma_vis_p7
-    REAL(wp)            :: sigma_nir_p7
-    REAL(wp)            :: omega_clumping_p7
-    REAL(wp)            :: crown_shape_factor_p7
-    REAL(wp)            :: cn_leaf_p7
-    REAL(wp)            :: cn_leaf_min_p7
-    REAL(wp)            :: cn_leaf_max_p7
-    REAL(wp)            :: np_leaf_p7
-    REAL(wp)            :: np_leaf_min_p7
-    REAL(wp)            :: np_leaf_max_p7
-    REAL(wp)            :: k0_fn_struc_p7
-    REAL(wp)            :: fn_oth_min_p7
-    REAL(wp)            :: t_jmax_opt_p7
-    REAL(wp)            :: t_jmax_omega_p7
-    REAL(wp)            :: g0_p7
-    REAL(wp)            :: g1_medlyn_p7
-    REAL(wp)            :: g1_bberry_p7
-    REAL(wp)            :: gmin_p7
-    REAL(wp)            :: tau_leaf_p7
-    REAL(wp)            :: tau_fine_root_p7
-    REAL(wp)            :: tau_coarse_root_p7
-    REAL(wp)            :: tau_branch_p7
-    REAL(wp)            :: tau_sap_wood_p7
-    REAL(wp)            :: tau_fruit_p7
-    REAL(wp)            :: tau_seed_litter_p7
-    REAL(wp)            :: tau_seed_est_p7
-    REAL(wp)            :: tau_mycorrhiza_p7
-    REAL(wp)            :: vmax_uptake_n_p7
-    REAL(wp)            :: vmax_uptake_p_p7
-    REAL(wp)            :: bnf_base_p7
-    REAL(wp)            :: vmax_symb_bnf_p7
-    REAL(wp)            :: km_symb_bnf_p7
-    REAL(wp)            :: lambda_est_light_p7
-    REAL(wp)            :: k_est_light_p7
-    REAL(wp)            :: seed_size_p7
-    REAL(wp)            :: k1_mort_greff_p7
-    REAL(wp)            :: beta_soil_flush_p7
-    REAL(wp)            :: beta_soil_senescence_p7
-    REAL(wp)            :: gdd_req_max_p7
-    REAL(wp)            :: k_gdd_dormance_p7
-    REAL(wp)            :: t_air_senescence_p7
-    REAL(wp)            :: min_leaf_age_p7
-    REAL(wp)            :: frac_sapwood_branch_p7
-    REAL(wp)            :: wood_density_p7
-    REAL(wp)            :: k_latosa_p7
-    REAL(wp)            :: k_crtos_p7
-    REAL(wp)            :: k_rtos_p7
-    REAL(wp)            :: k2_fruit_alloc_p7
-    REAL(wp)            :: allom_k1_p7
-    REAL(wp)            :: allom_k2_p7
-    REAL(wp)            :: phi_leaf_min_p7
-    REAL(wp)            :: k_root_p7
-    REAL(wp)            :: k_sapwood_p7
-    REAL(wp)            :: c0_allom_p7
-    REAL(wp)            :: fstore_target_p7
-    REAL(wp)            :: k_root_dist_p7
+    REAL(lp)            :: sla_p7
+    REAL(lp)            :: sigma_vis_p7
+    REAL(lp)            :: sigma_nir_p7
+    REAL(lp)            :: omega_clumping_p7
+    REAL(lp)            :: crown_shape_factor_p7
+    REAL(lp)            :: cn_leaf_p7
+    REAL(lp)            :: cn_leaf_min_p7
+    REAL(lp)            :: cn_leaf_max_p7
+    REAL(lp)            :: np_leaf_p7
+    REAL(lp)            :: np_leaf_min_p7
+    REAL(lp)            :: np_leaf_max_p7
+    REAL(lp)            :: k0_fn_struc_p7
+    REAL(lp)            :: fn_oth_min_p7
+    REAL(lp)            :: t_jmax_opt_p7
+    REAL(lp)            :: t_jmax_omega_p7
+    REAL(lp)            :: g0_p7
+    REAL(lp)            :: g1_medlyn_p7
+    REAL(lp)            :: g1_bberry_p7
+    REAL(lp)            :: gmin_p7
+    REAL(lp)            :: tau_leaf_p7
+    REAL(lp)            :: tau_fine_root_p7
+    REAL(lp)            :: tau_coarse_root_p7
+    REAL(lp)            :: tau_branch_p7
+    REAL(lp)            :: tau_sap_wood_p7
+    REAL(lp)            :: tau_fruit_p7
+    REAL(lp)            :: tau_seed_litter_p7
+    REAL(lp)            :: tau_seed_est_p7
+    REAL(lp)            :: tau_mycorrhiza_p7
+    REAL(lp)            :: vmax_uptake_n_p7
+    REAL(lp)            :: vmax_uptake_p_p7
+    REAL(lp)            :: bnf_base_p7
+    REAL(lp)            :: vmax_symb_bnf_p7
+    REAL(lp)            :: km_symb_bnf_p7
+    REAL(lp)            :: lambda_est_light_p7
+    REAL(lp)            :: k_est_light_p7
+    REAL(lp)            :: seed_size_p7
+    REAL(lp)            :: k1_mort_greff_p7
+    REAL(lp)            :: beta_soil_flush_p7
+    REAL(lp)            :: beta_soil_senescence_p7
+    REAL(lp)            :: gdd_req_max_p7
+    REAL(lp)            :: k_gdd_dormance_p7
+    REAL(lp)            :: t_air_senescence_p7
+    REAL(lp)            :: min_leaf_age_p7
+    REAL(lp)            :: frac_sapwood_branch_p7
+    REAL(lp)            :: wood_density_p7
+    REAL(lp)            :: k_latosa_p7
+    REAL(lp)            :: k_crtos_p7
+    REAL(lp)            :: k_rtos_p7
+    REAL(lp)            :: k2_fruit_alloc_p7
+    REAL(lp)            :: allom_k1_p7
+    REAL(lp)            :: allom_k2_p7
+    REAL(lp)            :: phi_leaf_min_p7
+    REAL(lp)            :: k_root_p7
+    REAL(lp)            :: k_sapwood_p7
+    REAL(lp)            :: c0_allom_p7
+    REAL(lp)            :: fstore_target_p7
+    REAL(lp)            :: k_root_dist_p7
     ! PFT 8
-    REAL(wp)            :: sla_p8
-    REAL(wp)            :: sigma_vis_p8
-    REAL(wp)            :: sigma_nir_p8
-    REAL(wp)            :: omega_clumping_p8
-    REAL(wp)            :: crown_shape_factor_p8
-    REAL(wp)            :: cn_leaf_p8
-    REAL(wp)            :: cn_leaf_min_p8
-    REAL(wp)            :: cn_leaf_max_p8
-    REAL(wp)            :: np_leaf_p8
-    REAL(wp)            :: np_leaf_min_p8
-    REAL(wp)            :: np_leaf_max_p8
-    REAL(wp)            :: k0_fn_struc_p8
-    REAL(wp)            :: fn_oth_min_p8
-    REAL(wp)            :: t_jmax_opt_p8
-    REAL(wp)            :: t_jmax_omega_p8
-    REAL(wp)            :: g0_p8
-    REAL(wp)            :: g1_medlyn_p8
-    REAL(wp)            :: g1_bberry_p8
-    REAL(wp)            :: gmin_p8
-    REAL(wp)            :: tau_leaf_p8
-    REAL(wp)            :: tau_fine_root_p8
-    REAL(wp)            :: tau_coarse_root_p8
-    REAL(wp)            :: tau_branch_p8
-    REAL(wp)            :: tau_sap_wood_p8
-    REAL(wp)            :: tau_fruit_p8
-    REAL(wp)            :: tau_seed_litter_p8
-    REAL(wp)            :: tau_seed_est_p8
-    REAL(wp)            :: tau_mycorrhiza_p8
-    REAL(wp)            :: vmax_uptake_n_p8
-    REAL(wp)            :: vmax_uptake_p_p8
-    REAL(wp)            :: bnf_base_p8
-    REAL(wp)            :: vmax_symb_bnf_p8
-    REAL(wp)            :: km_symb_bnf_p8
-    REAL(wp)            :: lambda_est_light_p8
-    REAL(wp)            :: k_est_light_p8
-    REAL(wp)            :: seed_size_p8
-    REAL(wp)            :: k1_mort_greff_p8
-    REAL(wp)            :: beta_soil_flush_p8
-    REAL(wp)            :: beta_soil_senescence_p8
-    REAL(wp)            :: gdd_req_max_p8
-    REAL(wp)            :: k_gdd_dormance_p8
-    REAL(wp)            :: t_air_senescence_p8
-    REAL(wp)            :: min_leaf_age_p8
-    REAL(wp)            :: frac_sapwood_branch_p8
-    REAL(wp)            :: wood_density_p8
-    REAL(wp)            :: k_latosa_p8
-    REAL(wp)            :: k_crtos_p8
-    REAL(wp)            :: k_rtos_p8
-    REAL(wp)            :: k2_fruit_alloc_p8
-    REAL(wp)            :: allom_k1_p8
-    REAL(wp)            :: allom_k2_p8
-    REAL(wp)            :: phi_leaf_min_p8
-    REAL(wp)            :: k_root_p8
-    REAL(wp)            :: k_sapwood_p8
-    REAL(wp)            :: c0_allom_p8
-    REAL(wp)            :: fstore_target_p8
-    REAL(wp)            :: k_root_dist_p8
+    REAL(lp)            :: sla_p8
+    REAL(lp)            :: sigma_vis_p8
+    REAL(lp)            :: sigma_nir_p8
+    REAL(lp)            :: omega_clumping_p8
+    REAL(lp)            :: crown_shape_factor_p8
+    REAL(lp)            :: cn_leaf_p8
+    REAL(lp)            :: cn_leaf_min_p8
+    REAL(lp)            :: cn_leaf_max_p8
+    REAL(lp)            :: np_leaf_p8
+    REAL(lp)            :: np_leaf_min_p8
+    REAL(lp)            :: np_leaf_max_p8
+    REAL(lp)            :: k0_fn_struc_p8
+    REAL(lp)            :: fn_oth_min_p8
+    REAL(lp)            :: t_jmax_opt_p8
+    REAL(lp)            :: t_jmax_omega_p8
+    REAL(lp)            :: g0_p8
+    REAL(lp)            :: g1_medlyn_p8
+    REAL(lp)            :: g1_bberry_p8
+    REAL(lp)            :: gmin_p8
+    REAL(lp)            :: tau_leaf_p8
+    REAL(lp)            :: tau_fine_root_p8
+    REAL(lp)            :: tau_coarse_root_p8
+    REAL(lp)            :: tau_branch_p8
+    REAL(lp)            :: tau_sap_wood_p8
+    REAL(lp)            :: tau_fruit_p8
+    REAL(lp)            :: tau_seed_litter_p8
+    REAL(lp)            :: tau_seed_est_p8
+    REAL(lp)            :: tau_mycorrhiza_p8
+    REAL(lp)            :: vmax_uptake_n_p8
+    REAL(lp)            :: vmax_uptake_p_p8
+    REAL(lp)            :: bnf_base_p8
+    REAL(lp)            :: vmax_symb_bnf_p8
+    REAL(lp)            :: km_symb_bnf_p8
+    REAL(lp)            :: lambda_est_light_p8
+    REAL(lp)            :: k_est_light_p8
+    REAL(lp)            :: seed_size_p8
+    REAL(lp)            :: k1_mort_greff_p8
+    REAL(lp)            :: beta_soil_flush_p8
+    REAL(lp)            :: beta_soil_senescence_p8
+    REAL(lp)            :: gdd_req_max_p8
+    REAL(lp)            :: k_gdd_dormance_p8
+    REAL(lp)            :: t_air_senescence_p8
+    REAL(lp)            :: min_leaf_age_p8
+    REAL(lp)            :: frac_sapwood_branch_p8
+    REAL(lp)            :: wood_density_p8
+    REAL(lp)            :: k_latosa_p8
+    REAL(lp)            :: k_crtos_p8
+    REAL(lp)            :: k_rtos_p8
+    REAL(lp)            :: k2_fruit_alloc_p8
+    REAL(lp)            :: allom_k1_p8
+    REAL(lp)            :: allom_k2_p8
+    REAL(lp)            :: phi_leaf_min_p8
+    REAL(lp)            :: k_root_p8
+    REAL(lp)            :: k_sapwood_p8
+    REAL(lp)            :: c0_allom_p8
+    REAL(lp)            :: fstore_target_p8
+    REAL(lp)            :: k_root_dist_p8
 
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':read_parameter_lctlib_list'
@@ -6093,11 +5721,11 @@ CONTAINS
     ! 0.1 InOut
     TYPE(t_lctlib_element),               INTENT(inout) :: lctlib
     TYPE(t_parameters_lctlib_from_file),  INTENT(in)    :: param_pft_from_file
-    REAL(wp),                             INTENT(in)    :: pft4_sla
+    REAL(lp),                             INTENT(in)    :: pft4_sla
     LOGICAL,                              INTENT(in)    :: proportional_parameter_changes
     ! ---------------------------
     ! 0.2 Local
-    REAL(wp)                    :: pft4_sla_hlp
+    REAL(lp)                    :: pft4_sla_hlp
     CHARACTER(33)               :: fname                      ! filename
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':change_lctlib_param_values_pft_x'
 
@@ -6117,7 +5745,7 @@ CONTAINS
 
     !> 2.0 replace lctlib parameter-value for the particular PFT if a new value is provided
     !!
-    CALL Set_quincy_parameter_value(1._wp / carbon_per_dryweight_leaf / 1000.0_wp * molar_mass_C * param_pft_from_file%sla, &
+    CALL Set_quincy_parameter_value(1._lp / carbon_per_dryweight_leaf / 1000.0_lp * molar_mass_C * param_pft_from_file%sla, &
                                     param_pft_from_file%sla, &
                                     "lctlib_sla", proportional_parameter_changes, &
                                     lctlib%sla)
@@ -6144,40 +5772,40 @@ CONTAINS
                                     "lctlib_crown_shape_factor", proportional_parameter_changes, &
                                     lctlib%crown_shape_factor)
 
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / &
                                       param_pft_from_file%cn_leaf, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%cn_leaf, &
                                     "lctlib_cn_leaf", proportional_parameter_changes, &
                                     lctlib%cn_leaf)
 
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / &
                                       param_pft_from_file%cn_leaf_min, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%cn_leaf_min, &
                                     "lctlib_cn_leaf_min", proportional_parameter_changes, &
                                     lctlib%cn_leaf_min)
 
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_N / molar_mass_C / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_N / molar_mass_C / &
                                       param_pft_from_file%cn_leaf_max, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%cn_leaf_max, &
                                     "lctlib_cn_leaf_max", proportional_parameter_changes, &
                                     lctlib%cn_leaf_max)
 
     ! not resolving the dependency to cn_leaf (as re-calc is not so easy, in case proportional changes are made, as the original input lctlib parameter is not available here)
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
                                       param_pft_from_file%np_leaf, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%np_leaf, &
                                     "lctlib_np_leaf", proportional_parameter_changes, &
                                     lctlib%np_leaf)
 
     ! not resolving the dependency to cn_leaf (as re-calc is not so easy, in case proportional changes are made, as the original input lctlib parameter is not available here)
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
                                       param_pft_from_file%np_leaf_min, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%np_leaf_min, &
                                     "lctlib_np_leaf_min", proportional_parameter_changes, &
                                     lctlib%np_leaf_min)
 
     ! not resolving the dependency to cn_leaf (as re-calc is not so easy, in case proportional changes are made, as the original input lctlib parameter is not available here)
-    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._wp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
+    CALL Set_quincy_parameter_value(carbon_per_dryweight_leaf * 1000._lp * molar_mass_P / molar_mass_C / lctlib%cn_leaf / &
                                       param_pft_from_file%np_leaf_max, &   ! line break - this part belongs to prev. line!
                                     param_pft_from_file%np_leaf_max, &
                                     "lctlib_np_leaf_max", proportional_parameter_changes, &
@@ -6189,11 +5817,11 @@ CONTAINS
                                     lctlib%k0_fn_struc)
 
     ! is always recalculated in case any of its dependencies has changed
-    lctlib%fn_oth_min = lctlib%k0_fn_struc - 5.0_wp / molar_mass_N &
-      &                 * 0.5_wp * 1.e3_wp * 71.4_wp * molar_mass_N / 1.e6_wp
+    lctlib%fn_oth_min = lctlib%k0_fn_struc - 5.0_lp / molar_mass_N &
+      &                 * 0.5_lp * 1.e3_lp * 71.4_lp * molar_mass_N / 1.e6_lp
     ! no additional parameter changes to fn_oth_min
-    ! CALL Set_quincy_parameter_value(param_pft_from_file%k0_fn_struc - 5.0_wp / molar_mass_N * 0.5_wp * 1.e3_wp * 71.4_wp * &
-    !                                   molar_mass_N / 1.e6_wp, &   ! line break - this part belongs to prev. line!
+    ! CALL Set_quincy_parameter_value(param_pft_from_file%k0_fn_struc - 5.0_lp / molar_mass_N * 0.5_lp * 1.e3_lp * 71.4_lp * &
+    !                                   molar_mass_N / 1.e6_lp, &   ! line break - this part belongs to prev. line!
     !                                 param_pft_from_file%fn_oth_min, &
     !                                 "lctlib_fn_oth_min", proportional_parameter_changes, &
     !                                 lctlib%fn_oth_min)
@@ -6228,7 +5856,7 @@ CONTAINS
                                     "lctlib_gmin", proportional_parameter_changes, &
                                     lctlib%gmin)
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%tau_leaf / 12.0_wp, &
+    CALL Set_quincy_parameter_value(param_pft_from_file%tau_leaf / 12.0_lp, &
                                     param_pft_from_file%tau_leaf, &
                                     "lctlib_tau_leaf", proportional_parameter_changes, &
                                     lctlib%tau_leaf)
@@ -6283,13 +5911,13 @@ CONTAINS
                                     "lctlib_vmax_uptake_p", proportional_parameter_changes, &
                                     lctlib%vmax_uptake_p)
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%bnf_base / molar_mass_N / one_day / one_year * 1.e6_wp, &
+    CALL Set_quincy_parameter_value(param_pft_from_file%bnf_base / molar_mass_N / one_day / one_year * 1.e6_lp, &
                                     param_pft_from_file%bnf_base, &
                                     "lctlib_bnf_base", proportional_parameter_changes, &
                                     lctlib%bnf_base)
 
     CALL Set_quincy_parameter_value(param_pft_from_file%vmax_symb_bnf / (molar_mass_N / molar_mass_C) &
-                                    / one_day / one_year * 1.e6_wp, &
+                                    / one_day / one_year * 1.e6_lp, &
                                     param_pft_from_file%vmax_symb_bnf, &
                                     "lctlib_vmax_symb_bnf", proportional_parameter_changes, &
                                     lctlib%vmax_symb_bnf)
@@ -6324,14 +5952,14 @@ CONTAINS
                                     "lctlib_beta_soil_flush", proportional_parameter_changes, &
                                     lctlib%beta_soil_flush)
     ! beta_soil_flush may not be > 1
-    IF (lctlib%beta_soil_flush > 1.0_wp) lctlib%beta_soil_flush = 1.0_wp
+    IF (lctlib%beta_soil_flush > 1.0_lp) lctlib%beta_soil_flush = 1.0_lp
 
     CALL Set_quincy_parameter_value(param_pft_from_file%beta_soil_senescence, &
                                     param_pft_from_file%beta_soil_senescence, &
                                     "lctlib_beta_soil_senescence", proportional_parameter_changes, &
                                     lctlib%beta_soil_senescence)
     ! beta_soil_senescence may not be > 1
-    IF (lctlib%beta_soil_senescence > 1.0_wp) lctlib%beta_soil_senescence = 1.0_wp
+    IF (lctlib%beta_soil_senescence > 1.0_lp) lctlib%beta_soil_senescence = 1.0_lp
 
     CALL Set_quincy_parameter_value(param_pft_from_file%gdd_req_max, &
                                     param_pft_from_file%gdd_req_max, &
@@ -6358,9 +5986,9 @@ CONTAINS
                                     "lctlib_frac_sapwood_branch", proportional_parameter_changes, &
                                     lctlib%frac_sapwood_branch)
     ! frac_sapwood_branch may not be > 1
-    IF (lctlib%frac_sapwood_branch > 1.0_wp) lctlib%frac_sapwood_branch = 1.0_wp
+    IF (lctlib%frac_sapwood_branch > 1.0_lp) lctlib%frac_sapwood_branch = 1.0_lp
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%wood_density * 1.e6_wp / molar_mass_C, &
+    CALL Set_quincy_parameter_value(param_pft_from_file%wood_density * 1.e6_lp / molar_mass_C, &
                                     param_pft_from_file%wood_density, &
                                     "lctlib_wood_density", proportional_parameter_changes, &
                                     lctlib%wood_density)
@@ -6377,9 +6005,9 @@ CONTAINS
 
     ! is always recalculated in case any of its dependencies has changed
     IF(lctlib%growthform == itree) THEN
-      lctlib%k_rtos = 1.75_wp * (pft4_sla_hlp * lctlib%wood_density) / lctlib%k_latosa
+      lctlib%k_rtos = 1.75_lp * (pft4_sla_hlp * lctlib%wood_density) / lctlib%k_latosa
     ELSE
-      lctlib%k_rtos = 0.5_wp / sm2lm_grass
+      lctlib%k_rtos = 0.5_lp / sm2lm_grass
     ENDIF
     ! no additional parameter changes to k_rtos
     ! CALL Set_quincy_parameter_value(k_rtos_hlp, &
@@ -6407,12 +6035,12 @@ CONTAINS
                                     "lctlib_phi_leaf_min", proportional_parameter_changes, &
                                     lctlib%phi_leaf_min)
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%k_root * molar_mass_C * 1.0e-10_wp, &
+    CALL Set_quincy_parameter_value(param_pft_from_file%k_root * molar_mass_C * 1.0e-10_lp, &
                                     param_pft_from_file%k_root, &
                                     "lctlib_k_root", proportional_parameter_changes, &
                                     lctlib%k_root)
 
-    CALL Set_quincy_parameter_value(param_pft_from_file%k_sapwood * 1.0e-3_wp, &
+    CALL Set_quincy_parameter_value(param_pft_from_file%k_sapwood * 1.0e-3_lp, &
                                     param_pft_from_file%k_sapwood, &
                                     "lctlib_k_sapwood", proportional_parameter_changes, &
                                     lctlib%k_sapwood)
@@ -6423,7 +6051,7 @@ CONTAINS
                              lctlib%wood_density) * &
                         lctlib%tau_fine_root / lctlib%tau_sap_wood
     ELSE
-      lctlib%c0_allom = 0.0_wp
+      lctlib%c0_allom = 0.0_lp
     ENDIF
     ! no additional parameter changes to c0_allom
     ! CALL Set_quincy_parameter_value(c0_allom_hlp, &
@@ -6456,23 +6084,23 @@ CONTAINS
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE Set_quincy_parameter_value(nml_abs_val, nml_prop_chng, param_name, proportional, def_val)
 
-    USE mo_kind,                ONLY: wp
+    USE mo_kind,                ONLY: lp
     USE mo_jsb_math_constants,  ONLY: eps8
-    USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_wp
+    USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_lp
 
     IMPLICIT NONE
     ! ---------------------------
     ! 0.1 InOut
-    REAL(wp),         INTENT(in)    :: nml_abs_val        !< new value from namelist, potentially re-calculated with other parameters consistently with mo_PROC_constants
-    REAL(wp),         INTENT(in)    :: nml_prop_chng      !< new value from namelist, not changed, used here for proportional change of def_val x from namelist [0 < x < 2]
+    REAL(lp),         INTENT(in)    :: nml_abs_val        !< new value from namelist, potentially re-calculated with other parameters consistently with mo_PROC_constants
+    REAL(lp),         INTENT(in)    :: nml_prop_chng      !< new value from namelist, not changed, used here for proportional change of def_val x from namelist [0 < x < 2]
     CHARACTER(LEN=*), INTENT(in)    :: param_name         !< name of the parameter for writing the new value to file
     LOGICAL,          INTENT(in)    :: proportional       !< logical: calulate new value using proportional change
-    REAL(wp),         INTENT(inout) :: def_val            !< default parameter value as hardcoded in the mo_PROC_constants
+    REAL(lp),         INTENT(inout) :: def_val            !< default parameter value as hardcoded in the mo_PROC_constants
 
     ! ---------------------------
     ! 0.2 Local
-    REAL(wp)             :: param_value_diff    ! for negative def_val the absolute change-value is calculated
-    REAL(wp)             :: def_val_save        ! safe the original value for file output
+    REAL(lp)             :: param_value_diff    ! for negative def_val the absolute change-value is calculated
+    REAL(lp)             :: def_val_save        ! safe the original value for file output
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Set_quincy_parameter_value'
 
 
@@ -6494,8 +6122,8 @@ CONTAINS
             def_val = 273.15 + (def_val - 273.15) * nml_prop_chng
           CASE DEFAULT
             ! differ between negative and positive parameter values (because, e.g., 0.9 * -3.0 = -2.7 but should be -3.3)
-            IF (def_val < 0.0_wp) THEN
-              param_value_diff = def_val * ABS(1.0_wp - nml_prop_chng)
+            IF (def_val < 0.0_lp) THEN
+              param_value_diff = def_val * ABS(1.0_lp - nml_prop_chng)
               IF (nml_prop_chng < 1.0) THEN
                 def_val = def_val - param_value_diff
               ELSE
@@ -6512,7 +6140,7 @@ CONTAINS
 
     !> 2.0 write default and new value to file
     !!
-    WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(def_val_save, wp), REAL(def_val, wp)
+    WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(def_val_save, lp), REAL(def_val, lp)
 
   END SUBROUTINE Set_quincy_parameter_value
 
@@ -6523,17 +6151,17 @@ CONTAINS
   !-----------------------------------------------------------------------------------------------------
   SUBROUTINE Modify_quincy_namelist_parameter(nml_param_factor, param_name, nml_param)
 
-    USE mo_kind,                ONLY: wp
+    USE mo_kind,                ONLY: lp
     USE mo_jsb_math_constants,  ONLY: eps8, eps4
-    USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_wp
+    USE mo_jsb_io,              ONLY: missval  ! = -9.E+15_lp
 
     IMPLICIT NONE
 
-    REAL(wp),         INTENT(in)    :: nml_param_factor   !< factor (range [eps4, 10000]) to multiply with the namelist parameter
+    REAL(lp),         INTENT(in)    :: nml_param_factor   !< factor (range [eps4, 10000]) to multiply with the namelist parameter
     CHARACTER(LEN=*), INTENT(in)    :: param_name         !< name of the namelist parameter for writing the new value to file
-    REAL(wp),         INTENT(inout) :: nml_param          !< original value of the namelist parameter as provided by the namelist 'qs.namelist'
+    REAL(lp),         INTENT(inout) :: nml_param          !< original value of the namelist parameter as provided by the namelist 'qs.namelist'
 
-    REAL(wp)                    :: nml_param_save         ! save the original value for output
+    REAL(lp)                    :: nml_param_save         ! save the original value for output
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':Modify_quincy_namelist_parameter'
 
     !> 0.9 safe the original value for file output
@@ -6545,7 +6173,7 @@ CONTAINS
     ! if this namelist parameter should be changed (then the factor may differs from missval)
     IF (ABS(nml_param_factor - missval) > eps8) THEN
       !> 1.1 test if factor is within range
-      IF (nml_param_factor < eps4 .OR. nml_param_factor > 10000.0_wp) THEN
+      IF (nml_param_factor < eps4 .OR. nml_param_factor > 10000.0_lp) THEN
          WRITE(message_text, *) 'Factor is out of range [eps4, 10000] for multiplying the namelist parameter', param_name
          CALL finish(routine, message_text)
       ENDIF
@@ -6555,7 +6183,7 @@ CONTAINS
 
     !> 2.0 write default and new value to file
     !!
-    WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(nml_param_save, wp), REAL(nml_param, wp)
+    WRITE(lun_param_out,'(A,2F24.12)') TRIM(param_name), REAL(nml_param_save, lp), REAL(nml_param, lp)
 
   END SUBROUTINE Modify_quincy_namelist_parameter
 

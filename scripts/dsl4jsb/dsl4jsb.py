@@ -94,10 +94,10 @@ macros = {
         r'model%lctlib(tile%lcts(1)%lib_id)%\1'],
     'real2d_onchunk': [re.compile(
         r'dsl4jsb_Real2D_onChunk', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:)'],
+        r'REAL(lp), POINTER, DIMENSION(:)'],
     'real3d_onchunk': [re.compile(
         r'dsl4jsb_Real3D_onChunk', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:)'],
     'get_var2d_onchunk': [re.compile(
         r'dsl4jsb_Get_var2D_onChunk *\((.*?)_ *, *(.*?) *\)', re.IGNORECASE),
         r'\2 => \1__mem%\2%ptr(ics:ice,iblk)'],
@@ -121,10 +121,10 @@ macros = {
         r'\1__mem%\2'],
     'real2d_ondomain': [re.compile(
         r'dsl4jsb_Real2D_onDomain', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:)'],
     'real3d_ondomain': [re.compile(
         r'dsl4jsb_Real3D_onDomain', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:,:)'],
     'get_var2d_ondomain': [re.compile(
         r'dsl4jsb_Get_var2D_onDomain *\((.*?)_ *, *(.*?) *\)', re.IGNORECASE),
         r'\2 => \1__mem%\2%ptr(:,:)'],
@@ -169,16 +169,16 @@ macros = {
         r'\1__mem%\1_bgcm_main%\2%\3'],
     'def_mt1l2d': [re.compile(
         r'dsl4jsb_Def_mt1L2D', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:)'],
     'def_mt1l3d': [re.compile(
         r'dsl4jsb_Def_mt1L3D', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:,:)'],
     'def_mt2l2d': [re.compile(
         r'dsl4jsb_Def_mt2L2D', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:,:)'],
     'def_mt2l3d': [re.compile(
         r'dsl4jsb_Def_mt2L3D', re.IGNORECASE),
-        r'REAL(wp), POINTER, DIMENSION(:,:,:,:)'],
+        r'REAL(lp), POINTER, DIMENSION(:,:,:,:)'],
     'get_mt1l2d': [re.compile(
         r'dsl4jsb_Get_mt1L2D *\((.*?) *, *(.*?) *\)', re.IGNORECASE),
         r'\2 => bgcm_store%Get_matrix_from_store_1l_2d(\1, ics, ice, iblk, tile%name)'],

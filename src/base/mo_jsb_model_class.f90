@@ -18,7 +18,7 @@ MODULE mo_jsb_model_class
 #ifndef __NO_JSBACH__
 
   USE mo_exception,           ONLY: message_text, message, finish
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_io_units,            ONLY: filename_max
 !  USE mo_jsb_parallel,        ONLY: Get_omp_no_of_threads, Get_omp_thread
   USE mo_hsm_class,           ONLY: t_Hsm, t_State, t_Message, t_Action

@@ -11,6 +11,8 @@
 !> SPDX-License-Identifier: BSD-3-Clause
 !> ---------------------------------------
 !>
+!>#### Management of vertical axis in ICON-Land
+!>
 MODULE mo_jsb_vertical_axes
 #ifndef __NO_JSBACH__
 
@@ -25,6 +27,7 @@ MODULE mo_jsb_vertical_axes
 !  PUBLIC :: setup_zaxes_jsbach, set_vertical_grids_jsbach, jsbach_vgrids
   PUBLIC :: jsbach_vgrids
 
+  ! register of all vertical grids (global var)
   TYPE(t_jsb_vgrid_ptr), ALLOCATABLE, SAVE :: jsbach_vgrids(:)
 
   CHARACTER(len=*), PARAMETER :: modname = 'mo_jsb_vertical_axes'

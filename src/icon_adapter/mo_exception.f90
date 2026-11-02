@@ -38,9 +38,9 @@ MODULE mo_exception
   !
   !       abort: routine to end the code in case finish is called
 
-  ! USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: wp => real64, &
+  ! USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: lp => real64, &
   !   &                                      i8 => int64
-  USE mo_kind, ONLY: wp
+  USE mo_kind, ONLY: lp
   USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY: i8 => int64
   USE mo_io_units, ONLY: filename_max
   USE mo_util_backtrace, ONLY: ftn_util_backtrace
@@ -451,7 +451,7 @@ CONTAINS
   SUBROUTINE print_rvalue(mstring, rvalue, routine)
 
     CHARACTER(len=*), INTENT(IN)   :: mstring
-    REAL(wp), INTENT(IN)           :: rvalue
+    REAL(lp), INTENT(IN)           :: rvalue
     CHARACTER(len=*), TARGET, OPTIONAL, INTENT(IN) :: routine
     CHARACTER(len=:), POINTER :: rtn
     CHARACTER(len=1), TARGET :: dummy

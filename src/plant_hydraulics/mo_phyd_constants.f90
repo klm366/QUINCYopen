@@ -18,13 +18,13 @@
 MODULE mo_phyd_constants
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,              ONLY: wp
+  USE mo_kind,              ONLY: lp
 
   IMPLICIT NONE
   PUBLIC
 
   ! parameters for changes in canopy N fractions
-  REAL(wp), SAVE ::    &
+  REAL(lp), SAVE ::    &
   kg_h2o_to_mol,       &     !< Kilgoram water mol equivalent
   mpa_to_pa,           &     !< MPa to Pa conversion factor
   pa_to_mpa                  !< Pa to MPA conversion factor    
@@ -42,9 +42,9 @@ CONTAINS
 
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':init_pyhdro_constants'
 
-    kg_h2o_to_mol     = 1000.0_wp / 18.0_wp         ! Universal chemical constant
-    mpa_to_pa         = 1000000.0_wp                ! Mathematical constant
-    pa_to_mpa         = 1.0_wp / mpa_to_pa          ! Mathematical constant
+    kg_h2o_to_mol     = 1000.0_lp / 18.0_lp         ! Universal chemical constant
+    mpa_to_pa         = 1000000.0_lp                ! Mathematical constant
+    pa_to_mpa         = 1.0_lp / mpa_to_pa          ! Mathematical constant
 
   END SUBROUTINE init_phyd_constants
 

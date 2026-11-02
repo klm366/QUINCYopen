@@ -11,7 +11,7 @@
 
 MODULE mo_time_config
 
-  USE mo_kind,                  ONLY: wp
+  USE mo_kind,                  ONLY: lp
   ! USE mo_exception,             ONLY: message, message_text, finish
   ! USE mtime,                    ONLY: datetime, timedelta, newDatetime, newTimedelta, &
   !   &                                 deallocateDatetime, deallocateTimedelta,        &
@@ -55,11 +55,11 @@ MODULE mo_time_config
   ! INTEGER                             :: icalendar
   ! CHARACTER(len=32)                   :: ini_datetime_string
   ! CHARACTER(len=32)                   :: end_datetime_string
-  ! REAL(wp)                            :: dt_restart          !< Length of restart cycle in seconds
+  ! REAL(lp)                            :: dt_restart          !< Length of restart cycle in seconds
   ! LOGICAL                             :: is_relative_time
 
   ! TYPE t_timeshift
-  !   REAL(wp)                 :: dt_shift    = 0._wp   ! in s
+  !   REAL(lp)                 :: dt_shift    = 0._lp   ! in s
   !   TYPE(timedelta), POINTER :: mtime_shift => NULL()
   ! END TYPE t_timeshift
 
@@ -70,7 +70,7 @@ MODULE mo_time_config
 
     ! from namelist 
 
-    REAL(wp)         :: dt_restart         !< Length of restart cycle in seconds
+    REAL(lp)         :: dt_restart         !< Length of restart cycle in seconds
     INTEGER          :: calendar           !< calendar type
 
     ! not directly from namelist  
@@ -149,7 +149,7 @@ MODULE mo_time_config
   !>
   TYPE :: t_datetime
     ! quincy
-    REAL(wp) time_day  !< displays the 'real time' in days; time_day == 1.0 after one day has passed in QS
+    REAL(lp) time_day  !< displays the 'real time' in days; time_day == 1.0 after one day has passed in QS
     INTEGER  time_year !< displays the 'real time' in years; the 1st year of a simulation == 1 (not zero)
     ! icon - date
     INTEGER  year
@@ -249,12 +249,12 @@ CONTAINS
   ! !>
   ! !! Return the model time step for a given nesting level in seconds
   ! !!
-  ! REAL(wp) FUNCTION time_config__get_model_timestep_sec(me, nest_level) RESULT(dtime_sec)
+  ! REAL(lp) FUNCTION time_config__get_model_timestep_sec(me, nest_level) RESULT(dtime_sec)
   !   CLASS(t_time_config) :: me
   !   INTEGER, INTENT(IN)  :: nest_level    !< nesting level for which the time step is returned
 
-  !   dtime_sec = REAL(getTotalMilliSecondsTimedelta(me%tc_dt_model, me%tc_startdate), wp) &
-  !     &         / (REAL(2**nest_level,wp) * 1000._wp)
+  !   dtime_sec = REAL(getTotalMilliSecondsTimedelta(me%tc_dt_model, me%tc_startdate), lp) &
+  !     &         / (REAL(2**nest_level,lp) * 1000._lp)
 
   ! END FUNCTION time_config__get_model_timestep_sec
 
@@ -266,9 +266,9 @@ CONTAINS
   !   CLASS(t_time_config)     :: me
   !   INTEGER, INTENT(IN)      :: nest_level   !< nesting level for which the time step is returned
   !   !
-  !   REAL(wp)                 :: fac
+  !   REAL(lp)                 :: fac
 
-  !   fac = 1._wp/REAL(2**nest_level,wp)
+  !   fac = 1._lp/REAL(2**nest_level,lp)
   !   ! timestep in timedelta ISO format
   !   dtime_td = me%tc_dt_model * fac
 
@@ -384,12 +384,12 @@ CONTAINS
   ! ! set time increment, by which tc_current_date is shifted
   ! ! backwards in time at model start.
   ! SUBROUTINE set_tc_timeshift(dt_shift)
-  !   REAL(wp), INTENT(in) :: dt_shift   ! in s
+  !   REAL(lp), INTENT(in) :: dt_shift   ! in s
   !   ! local
   !   CHARACTER(LEN=MAX_TIMEDELTA_STR_LEN) :: dt_shift_string
 
   !   ! make sure that dt_shift is negative or 0.
-  !   IF ( dt_shift > 0._wp ) THEN
+  !   IF ( dt_shift > 0._lp ) THEN
   !     WRITE(message_text,'(a,f8.2,a)') 'dt_shift=', dt_shift, &
   !       ' not allowed. Must be NEGATIVE or 0.'
   !     CALL finish('', message_text)

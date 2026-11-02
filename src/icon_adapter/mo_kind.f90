@@ -45,6 +45,11 @@ MODULE mo_kind
   !
   INTEGER, PARAMETER :: qp = SELECTED_REAL_KIND(32)
   INTEGER, PARAMETER :: wp = dp                        !< selected working precision
+
+#ifndef __NO_JSBACH__
+  INTEGER, PARAMETER :: lp = wp                        !< selected ICON-Land precision
+#endif
+
   !
 #ifdef __MIXED_PRECISION
   INTEGER, PARAMETER :: vp = sp
@@ -75,6 +80,11 @@ MODULE mo_kind
   INTEGER, PARAMETER :: wi = i4                       !< selected working precission
   !
   PUBLIC :: sp, dp, wp, vp, i1, i2, i4, i8
+
+#ifndef __NO_JSBACH__
+  PUBLIC :: lp
+#endif
+
   !
   !--------------------------------------------------------------------
 

@@ -13,12 +13,12 @@
 
 MODULE mo_aes_thermo
 
-USE mo_kind,               ONLY: wp     , &
+USE mo_kind,               ONLY: lp     , &
                                  i4
 
 USE mo_physical_constants, ONLY: rv     , & !> gas constant for water vapour
                                  rd     , & !! rd
-                                 vtmpc1 , & !! rv/rd-1._wp
+                                 vtmpc1 , & !! rv/rd-1._lp
                                  cvd    , & !! isometric specific heat of dry air
                                  cvv    , & !! isometric specific heat of water vapor
                                  cpd    , & !! isobaric specific heat of dry air
@@ -51,16 +51,16 @@ USE mo_physical_constants, ONLY: rv     , & !> gas constant for water vapour
   PUBLIC  :: lvc                   ! invariant part of vaporization enthalpy
   PUBLIC  :: lsc                   ! invariant part of sublimation enthalpy
 
-  REAL (KIND=wp), PARAMETER ::     &
-       ci  = 2108.0_wp,            & !! specific heat of ice
+  REAL (KIND=lp), PARAMETER ::     &
+       ci  = 2108.0_lp,            & !! specific heat of ice
        lvc = alv-(cpv-clw)*tmelt,  & !! invariant part of vaporization enthalpy
        lsc = als-(cpv-ci )*tmelt,  & !! invariant part of sublimation enthalpy
-       c1es  = 610.78_wp,          & !! constants for saturation vapor pressure
+       c1es  = 610.78_lp,          & !! constants for saturation vapor pressure
        c2es  = c1es*rd/rv,         & !!
-       c3les = 17.269_wp,          & !!
-       c3ies = 21.875_wp,          & !!
-       c4les = 35.86_wp,           & !!
-       c4ies = 7.66_wp,            & !!
+       c3les = 17.269_lp,          & !!
+       c3ies = 21.875_lp,          & !!
+       c4les = 35.86_lp,           & !!
+       c4ies = 7.66_lp,            & !!
        c5les = c3les*(tmelt-c4les),& !!
        c5ies = c3ies*(tmelt-c4ies)
 
@@ -89,12 +89,12 @@ SUBROUTINE saturation_adjustment ( ilo,  iup,  klo,  kup, &
   INTEGER (KIND=i4), INTENT (IN) ::  &
        ilo, iup, klo, kup         !  start- and end-indices for the computations
 
-  REAL    (KIND=wp),    INTENT (INOUT), DIMENSION(:,:) ::  &
+  REAL    (KIND=lp),    INTENT (INOUT), DIMENSION(:,:) ::  &
        te      , & ! temperature on input/ouput
        qve     , & ! specific humidity on input/output
        qce         ! specific cloud water content on input/output
 
-  REAL    (KIND=wp),    INTENT (IN   ), DIMENSION(:,:) ::  &
+  REAL    (KIND=lp),    INTENT (IN   ), DIMENSION(:,:) ::  &
        qre     , & ! specific rain water
        qti     , & ! specific mass of all ice species (total-ice)
        rho         ! density containing dry air and water constituents
@@ -102,7 +102,7 @@ SUBROUTINE saturation_adjustment ( ilo,  iup,  klo,  kup, &
   INTEGER (KIND=i4) ::  &
        i, k, iter     ! loop indices
 
-  REAL    (KIND=wp   ) ::  &
+  REAL    (KIND=lp   ) ::  &
        Tx,  & ! Test temperature variable
        qx,  & ! Test saturation vapor mixing ratio (at Tx)
        qcx, & ! Test cloud water, can be negative
@@ -123,7 +123,7 @@ SUBROUTINE saturation_adjustment ( ilo,  iup,  klo,  kup, &
   DO k = klo, kup
     DO i = ilo , iup
       qt      = qve(i,k) + qce(i,k) + qre(i,k) + qti(i,k)
-      cvc     = cvd*(1.0_wp-qt) + clw*qre(i,k) + ci*qti(i,k)
+      cvc     = cvd*(1.0_lp-qt) + clw*qre(i,k) + ci*qti(i,k)
 
       cv      = cvc + cvv*qve(i,k) + clw*qce(i,k)
       ue      = cv*te(i,k) - qce(i,k)*lvc
@@ -135,7 +135,7 @@ SUBROUTINE saturation_adjustment ( ilo,  iup,  klo,  kup, &
       !
       IF (qve(i,k)+qce(i,k) <= qx ) THEN
         qve(i,k)  = qve(i,k)+qce(i,k)
-        qce(i,k)  = 0.0_wp
+        qce(i,k)  = 0.0_lp
       ELSE
         Tx = te(i,k)
         !$ACC LOOP SEQ
@@ -149,7 +149,7 @@ SUBROUTINE saturation_adjustment ( ilo,  iup,  klo,  kup, &
            Tx   = Tx - (ux-ue) / dux
         END DO
         qx       = qsat_rho(Tx, rho(i,k))
-        qce(i,k) = MAX( qve(i,k) + qce(i,k) - qx, 0.0_wp)
+        qce(i,k) = MAX( qve(i,k) + qce(i,k) - qx, 0.0_lp)
         qve(i,k) = qx
       ENDIF
       te (i,k) = Tx
@@ -184,21 +184,21 @@ END SUBROUTINE saturation_adjustment
 
 PURE FUNCTION internal_energy(TK,qv,qliq,qice,rho,dz)
 
-  REAL (KIND=wp)              :: internal_energy
-  REAL (KIND=wp), INTENT(IN)  :: TK   !! temperature (kelvin)
-  REAL (KIND=wp), INTENT(IN)  :: qv   !! water vapor specific humidity
-  REAL (KIND=wp), INTENT(IN)  :: qliq !! specific mass of liquid phases
-  REAL (KIND=wp), INTENT(IN)  :: qice !! specific mass of solid phases
-  REAL (KIND=wp), INTENT(IN)  :: rho  !! density
-  REAL (KIND=wp), INTENT(IN)  :: dz   !! extent of grid cel
+  REAL (KIND=lp)              :: internal_energy
+  REAL (KIND=lp), INTENT(IN)  :: TK   !! temperature (kelvin)
+  REAL (KIND=lp), INTENT(IN)  :: qv   !! water vapor specific humidity
+  REAL (KIND=lp), INTENT(IN)  :: qliq !! specific mass of liquid phases
+  REAL (KIND=lp), INTENT(IN)  :: qice !! specific mass of solid phases
+  REAL (KIND=lp), INTENT(IN)  :: rho  !! density
+  REAL (KIND=lp), INTENT(IN)  :: dz   !! extent of grid cel
 
-  REAL (KIND=wp) :: qtot !! total water specific mass
-  REAL (KIND=wp) :: cv   !! moist isometric specific heat
+  REAL (KIND=lp) :: qtot !! total water specific mass
+  REAL (KIND=lp) :: cv   !! moist isometric specific heat
 
   !$ACC ROUTINE SEQ
 
   qtot = qliq + qice + qv
-  cv   = cvd*(1.0_wp - qtot) + cvv*qv + clw*qliq + ci*qice
+  cv   = cvd*(1.0_lp - qtot) + cvv*qv + clw*qliq + ci*qice
 
   internal_energy  = rho*dz*(cv*TK - qliq*lvc - qice*lsc)
 
@@ -208,21 +208,21 @@ END FUNCTION internal_energy
 
 PURE FUNCTION T_from_internal_energy(U,qv,qliq,qice,rho,dz)
 
-  REAL (KIND=wp)              :: T_from_internal_energy
-  REAL (KIND=wp), INTENT(IN)  :: U    !! internal energy (extensive)
-  REAL (KIND=wp), INTENT(IN)  :: qv   !! water vapor specific humidity
-  REAL (KIND=wp), INTENT(IN)  :: qliq !! specific mass of liquid phases
-  REAL (KIND=wp), INTENT(IN)  :: qice !! specific mass of solid phases
-  REAL (KIND=wp), INTENT(IN)  :: rho  !! density
-  REAL (KIND=wp), INTENT(IN)  :: dz   !! extent of grid cell
+  REAL (KIND=lp)              :: T_from_internal_energy
+  REAL (KIND=lp), INTENT(IN)  :: U    !! internal energy (extensive)
+  REAL (KIND=lp), INTENT(IN)  :: qv   !! water vapor specific humidity
+  REAL (KIND=lp), INTENT(IN)  :: qliq !! specific mass of liquid phases
+  REAL (KIND=lp), INTENT(IN)  :: qice !! specific mass of solid phases
+  REAL (KIND=lp), INTENT(IN)  :: rho  !! density
+  REAL (KIND=lp), INTENT(IN)  :: dz   !! extent of grid cell
 
-  REAL (KIND=wp) :: qtot !! total water specific mass
-  REAL (KIND=wp) :: cv   !! moist isometric specific heat
+  REAL (KIND=lp) :: qtot !! total water specific mass
+  REAL (KIND=lp) :: cv   !! moist isometric specific heat
 
   !$ACC ROUTINE SEQ
 
   qtot = qliq + qice + qv
-  cv   = (cvd*(1.0_wp - qtot) + cvv*qv + clw*qliq + ci*qice)*rho*dz
+  cv   = (cvd*(1.0_lp - qtot) + cvv*qv + clw*qliq + ci*qice)*rho*dz
 
   T_from_internal_energy  = (U + rho*dz*(qliq*lvc + qice*lsc))/cv
 
@@ -232,8 +232,8 @@ END FUNCTION T_from_internal_energy
 
 PURE FUNCTION potential_temperature(TK, pres)
 
-  REAL(wp) :: potential_temperature
-  REAL(wp), INTENT(in) :: &
+  REAL(lp) :: potential_temperature
+  REAL(lp), INTENT(in) :: &
     & TK, &
     & pres
 
@@ -247,13 +247,13 @@ END FUNCTION potential_temperature
 
 PURE FUNCTION dewpoint_temperature(TK, qv, pres)
 
-  REAL(wp) :: dewpoint_temperature
-  REAL(wp), INTENT(in) :: &
+  REAL(lp) :: dewpoint_temperature
+  REAL(lp), INTENT(in) :: &
     & TK, & !! temperature
     & qv, & !! specific humidity
     & pres  !! pressure
 
-  REAL(wp) :: zfrac, zcvm3, zcvm4
+  REAL(lp) :: zfrac, zcvm3, zcvm4
 
   !$ACC ROUTINE SEQ
 
@@ -265,8 +265,8 @@ PURE FUNCTION dewpoint_temperature(TK, qv, pres)
     zcvm4 = c4ies
   ENDIF
 
-  zfrac = LOG(pres * qv / (c2es * (1._wp + vtmpc1 * qv))) / zcvm3
-  dewpoint_temperature = MIN(TK, (tmelt - zfrac * zcvm4) / (1._wp - zfrac))
+  zfrac = LOG(pres * qv / (c2es * (1._lp + vtmpc1 * qv))) / zcvm3
+  dewpoint_temperature = MIN(TK, (tmelt - zfrac * zcvm4) / (1._lp - zfrac))
 
 END FUNCTION dewpoint_temperature
 
@@ -274,12 +274,12 @@ END FUNCTION dewpoint_temperature
 
 PURE FUNCTION specific_humidity(pvapor,ptotal)
 
-  REAL (KIND=wp)              :: specific_humidity
-  REAL (KIND=wp), INTENT(IN)  :: ptotal  !! total pressure
-  REAL (KIND=wp), INTENT(IN)  :: pvapor  !! vapor pressure
+  REAL (KIND=lp)              :: specific_humidity
+  REAL (KIND=lp), INTENT(IN)  :: ptotal  !! total pressure
+  REAL (KIND=lp), INTENT(IN)  :: pvapor  !! vapor pressure
 
-  REAL (KIND=wp), PARAMETER   :: rdv     = rd/rv
-  REAL (KIND=wp), PARAMETER   :: o_m_rdv = 1.0_wp - rdv
+  REAL (KIND=lp), PARAMETER   :: rdv     = rd/rv
+  REAL (KIND=lp), PARAMETER   :: o_m_rdv = 1.0_lp - rdv
 
   !$ACC ROUTINE SEQ
 
@@ -291,8 +291,8 @@ END FUNCTION specific_humidity
 
 PURE FUNCTION sat_pres_water(TK)
 
-  REAL (KIND=wp)              :: sat_pres_water
-  REAL (KIND=wp), INTENT(IN)  :: TK
+  REAL (KIND=lp)              :: sat_pres_water
+  REAL (KIND=lp), INTENT(IN)  :: TK
 
   !$ACC ROUTINE SEQ
   sat_pres_water = c1es*EXP( c3les*(TK-tmelt)/(TK-c4les) )
@@ -303,8 +303,8 @@ END FUNCTION sat_pres_water
 
 PURE FUNCTION sat_pres_ice(TK)
 
-  REAL (KIND=wp)              :: sat_pres_ice
-  REAL (KIND=wp), INTENT(IN)  :: TK
+  REAL (KIND=lp)              :: sat_pres_ice
+  REAL (KIND=lp), INTENT(IN)  :: TK
 
   !$ACC ROUTINE SEQ
   sat_pres_ice  = c1es*EXP( c3ies*(TK-tmelt)/(TK-c4ies) )
@@ -315,8 +315,8 @@ END FUNCTION sat_pres_ice
 
 PURE FUNCTION qsat_rho(TK, rho)
 
-  REAL (KIND=wp)             :: qsat_rho
-  REAL (KIND=wp), INTENT(IN) :: TK, rho
+  REAL (KIND=lp)             :: qsat_rho
+  REAL (KIND=lp), INTENT(IN) :: TK, rho
 
   !$ACC ROUTINE SEQ
   qsat_rho   = sat_pres_water(TK) / (rho * rv * TK)
@@ -327,8 +327,8 @@ END FUNCTION qsat_rho
 
 PURE FUNCTION qsat_ice_rho(TK, rho)
 
-  REAL (KIND=wp)             :: qsat_ice_rho
-  REAL (KIND=wp), INTENT(IN) :: TK, rho
+  REAL (KIND=lp)             :: qsat_ice_rho
+  REAL (KIND=lp), INTENT(IN) :: TK, rho
 
   !$ACC ROUTINE SEQ
   qsat_ice_rho   = sat_pres_ice(TK) / (rho * rv * TK)
@@ -339,11 +339,11 @@ END FUNCTION qsat_ice_rho
 
 PURE FUNCTION dqsatdT_rho(qs, TK)
 
-  REAL (KIND=wp)            :: dqsatdT_rho
-  REAL (KIND=wp), INTENT(IN):: qs, TK
+  REAL (KIND=lp)            :: dqsatdT_rho
+  REAL (KIND=lp), INTENT(IN):: qs, TK
 
   !$ACC ROUTINE SEQ
-  dqsatdT_rho = qs * (c5les/(TK-c4les)**2_i4 - 1.0_wp / TK)
+  dqsatdT_rho = qs * (c5les/(TK-c4les)**2_i4 - 1.0_lp / TK)
 
 END FUNCTION dqsatdT_rho
 
@@ -351,11 +351,11 @@ END FUNCTION dqsatdT_rho
 
 PURE FUNCTION dqsatdT (qs, TK)
 
-  REAL (KIND=wp)            :: dqsatdT
-  REAL (KIND=wp), INTENT(IN):: qs, TK
+  REAL (KIND=lp)            :: dqsatdT
+  REAL (KIND=lp), INTENT(IN):: qs, TK
 
   !$ACC ROUTINE SEQ
-  dqsatdT =     c5les * ( 1.0_wp + vtmpc1*qs ) * qs / (TK-c4les)**2.0_wp
+  dqsatdT =     c5les * ( 1.0_lp + vtmpc1*qs ) * qs / (TK-c4les)**2.0_lp
 
 END FUNCTION dqsatdT
 
@@ -363,11 +363,11 @@ END FUNCTION dqsatdT
 
 PURE FUNCTION dqsatdT_ice (qs, TK)
 
-  REAL (KIND=wp)            :: dqsatdT_ice
-  REAL (KIND=wp), INTENT(IN):: qs, TK
+  REAL (KIND=lp)            :: dqsatdT_ice
+  REAL (KIND=lp), INTENT(IN):: qs, TK
 
   !$ACC ROUTINE SEQ
-  dqsatdT_ice = c5ies * ( 1.0_wp + vtmpc1*qs ) * qs / (TK-c4ies)**2.0_wp
+  dqsatdT_ice = c5ies * ( 1.0_lp + vtmpc1*qs ) * qs / (TK-c4ies)**2.0_lp
 
 END FUNCTION dqsatdT_ice
 
@@ -375,8 +375,8 @@ END FUNCTION dqsatdT_ice
 
 PURE FUNCTION vaporization_energy(TK)
 
-  REAL(KIND=wp)             :: vaporization_energy
-  REAL(KIND=wp), INTENT(IN) :: TK
+  REAL(KIND=lp)             :: vaporization_energy
+  REAL(KIND=lp), INTENT(IN) :: TK
 
   !$ACC ROUTINE SEQ
   vaporization_energy = lvc + (cvv - clw)*TK
@@ -387,8 +387,8 @@ END FUNCTION vaporization_energy
 
 PURE FUNCTION sublimation_energy(TK)
 
-  REAL(KIND=wp)             :: sublimation_energy
-  REAL(KIND=wp), INTENT(IN) :: TK
+  REAL(KIND=lp)             :: sublimation_energy
+  REAL(KIND=lp), INTENT(IN) :: TK
 
   !$ACC ROUTINE SEQ
   sublimation_energy = als + (cpv - ci)*(TK-tmelt) -rv*TK

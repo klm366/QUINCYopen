@@ -65,7 +65,6 @@ VPATH = src_dsl4jsb/quincy_standalone \
 	 src_dsl4jsb/soil_snow_energy \
 	 src_dsl4jsb/srf_energy_bal \
 	 src_dsl4jsb/q_sylviculture \
-	 src_dsl4jsb/q_soil_phys \
 	 src_dsl4jsb/q_soil_biogeochemistry \
 	 src_dsl4jsb/q_phenology \
 	 src_dsl4jsb/q_vegetation \
@@ -87,7 +86,6 @@ MODS += $(shell find src_dsl4jsb/hydrology/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/soil_snow_energy/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/srf_energy_bal/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_sylviculture/ -name '*.f90' -print)
-MODS += $(shell find src_dsl4jsb/q_soil_phys/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_soil_biogeochemistry/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_phenology/ -name '*.f90' -print)
 MODS += $(shell find src_dsl4jsb/q_vegetation/ -name '*.f90' -print)
@@ -148,7 +146,6 @@ include ../src/hydrology/Make.inc.deps
 include ../src/soil_snow_energy/Make.inc.deps
 include ../src/srf_energy_bal/Make.inc.deps
 include ../src/q_sylviculture/Make.inc.deps
-include ../src/q_soil_phys/Make.inc.deps
 include ../src/q_soil_biogeochemistry/Make.inc.deps
 include ../src/q_phenology/Make.inc.deps
 include ../src/q_vegetation/Make.inc.deps

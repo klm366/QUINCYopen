@@ -14,7 +14,7 @@
 MODULE mo_jsb_time
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_exception,           ONLY: message, message_text, finish
   USE mo_jsb_math_constants,  ONLY: one_day
   USE mo_jsb_time_iface,      ONLY: is_time_experiment_start, is_time_ltrig_rad_m1, &
@@ -55,7 +55,7 @@ CONTAINS
     USE mo_jsb_time_iface, ONLY: get_time_previous
 
     TYPE(t_datetime), POINTER, INTENT(in) :: current
-    REAL(wp),                  INTENT(in) :: dt
+    REAL(lp),                  INTENT(in) :: dt
 
     TYPE(t_datetime), POINTER :: previous
 
@@ -82,7 +82,7 @@ CONTAINS
     USE mo_jsb_time_iface, ONLY: get_time_previous
 
     TYPE(t_datetime), POINTER, INTENT(in) :: current
-    REAL(wp),                  INTENT(in) :: dt
+    REAL(lp),                  INTENT(in) :: dt
 
     TYPE(t_datetime), POINTER :: previous
 
@@ -136,13 +136,13 @@ CONTAINS
   !> returns number of time steps per day
   INTEGER FUNCTION timesteps_per_day(dt)
 
-    REAL(wp), INTENT(in) :: dt
+    REAL(lp), INTENT(in) :: dt
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':timesteps_per_day'
 
     timesteps_per_day = NINT(one_day / dt)
 
-    IF (ABS(timesteps_per_day * dt - one_day) > EPSILON(1._wp)) &
+    IF (ABS(timesteps_per_day * dt - one_day) > EPSILON(1._lp)) &
       & CALL finish(routine, 'Time step must fit into day length')
 
   END FUNCTION timesteps_per_day
@@ -150,12 +150,12 @@ CONTAINS
   ! ======================================================================================================= !
   !>
   !> returns time step in days, i.e., as fraction of day
-  REAL(wp) FUNCTION timestep_in_days(dt, model_id) ! EXPRESS the time step in days (as fraction of day)
+  REAL(lp) FUNCTION timestep_in_days(dt, model_id) ! EXPRESS the time step in days (as fraction of day)
 
-    REAL(wp), OPTIONAL, INTENT(in) :: dt
+    REAL(lp), OPTIONAL, INTENT(in) :: dt
     INTEGER,  OPTIONAL, INTENT(in) :: model_id
 
-    REAL(wp) :: dt_loc
+    REAL(lp) :: dt_loc
 
     CHARACTER(len=*), PARAMETER :: routine = modname//':timestep_in_days'
 
@@ -167,7 +167,7 @@ CONTAINS
       CALL finish(routine, 'Must provide either dt oder model_id')
     END IF
 
-    timestep_in_days = dt_loc / 86400._wp
+    timestep_in_days = dt_loc / 86400._lp
 
   END FUNCTION timestep_in_days
 

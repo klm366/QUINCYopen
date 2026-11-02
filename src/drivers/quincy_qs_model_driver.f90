@@ -80,11 +80,11 @@ PROGRAM quincy_qs_model_driver
   LOGICAL       :: l_output, &                        ! output is enabled (flux accumulation is done and l_output_interval_match is checked for being TRUE)
                    l_output_as_ascii_text, &          ! if output to txt or (if false) to nc4
                    l_output_interval_match            ! the specific output interval is a match with current time, hence output is written
-  REAL(wp)      :: output_interval_pool_act, &        ! the actual interval number used at the current timestep
+  REAL(lp)      :: output_interval_pool_act, &        ! the actual interval number used at the current timestep
                    output_interval_pool, &            ! output interval of pools as a number (the same is used for flux output), converted from character
                    output_interval_pool_spinup        ! output interval of pools as a number valid for spinup period
-  REAL(wp)      :: transient_spinup_timesteps         ! timesteps of spinup (transient forcing) as positive number, needed for output control
-  REAL(wp)      :: elapsed_seconds                    ! seconds elapsed since start of this simulation (separate for spin-up, transient run, timestep output)
+  REAL(lp)      :: transient_spinup_timesteps         ! timesteps of spinup (transient forcing) as positive number, needed for output control
+  REAL(lp)      :: elapsed_seconds                    ! seconds elapsed since start of this simulation (separate for spin-up, transient run, timestep output)
 
   CHARACTER(len=20) :: start_date_char
     !< start date of the simulation - used for the time unit in the netcdf4 files -- yyyy-mm-dd hh:mm
@@ -120,7 +120,7 @@ PROGRAM quincy_qs_model_driver
   dsl4jsb_Real2D_onChunk :: noy_n15_deposition
   dsl4jsb_Real2D_onChunk :: p_deposition
 
-  REAL(wp), ALLOCATABLE, DIMENSION(:) :: time_day_seconds
+  REAL(lp), ALLOCATABLE, DIMENSION(:) :: time_day_seconds
   CHARACTER(len=*), PARAMETER :: modname = 'quincy_qs_model_driver'
 
   !! 1.0 -----------------------------------------------------------------------------------------------
@@ -262,20 +262,20 @@ PROGRAM quincy_qs_model_driver
   !! settings for the static/transient forcing_mode
   !! 
   ! get output interval of pools as a number of days
-  output_interval_pool_act    = 0.0_wp
+  output_interval_pool_act    = 0.0_lp
   output_interval_pool        = calc_output_time_interval_pool(model%config%output_interval_pool, &
     &                           model%config%dtime)
   output_interval_pool_spinup = calc_output_time_interval_pool(model%config%output_interval_pool_spinup, &
     &                           model%config%dtime)
   ! init with default values
   model%config%l_transient_forcing_mode          = .FALSE.
-  model%config%l_transient_spinup                = .FALSE.
-  model%config%l_transient_spinup_rewind_forcing = .FALSE.
+  model%config%l_spinup                = .FALSE.
+  model%config%l_spinup_rewind_forcing = .FALSE.
   model%config%l_static_forcing_mode             = .FALSE.
   itimestep                         = 0             ! default start of time loop
   first_timestep                    = itimestep + 1 ! the first timestep in the below time loop is "itimestep + 1"
   transient_spinup_itimestep_period = 0  
-  transient_spinup_timesteps        = 0             ! is used only during l_transient_spinup
+  transient_spinup_timesteps        = 0             ! is used only during l_spinup
   ! set simulation values
   IF ( TRIM(forcing_options%forcing_mode) == "static" ) THEN
     model%config%l_static_forcing_mode     = .TRUE.
@@ -283,13 +283,13 @@ PROGRAM quincy_qs_model_driver
   ELSEIF ( TRIM(forcing_options%forcing_mode) == "transient" ) THEN
     ! set logicals to TRUE
     model%config%l_transient_forcing_mode  = .TRUE.
-    model%config%l_transient_spinup        = .TRUE.  ! transient forcing_mode starts with spinup; is set to FALSE during runtime when spinup is done
+    model%config%l_spinup        = .TRUE.  ! transient forcing_mode starts with spinup; is set to FALSE during runtime when spinup is done
     ! output interval for spinup
     output_interval_pool_act          = output_interval_pool_spinup
     ! number of spinup timesteps
     itimestep                         = itimestep - forcing_options%transient_spinup_timesteps_all
     first_timestep                    = itimestep + 1             ! the first timestep in the below time loop is "itimestep + 1"
-    transient_spinup_timesteps        = itimestep * (-1.0_wp)
+    transient_spinup_timesteps        = itimestep * (-1.0_lp)
     ! init spinup period counter
     transient_spinup_itimestep_period = 0
   ENDIF
@@ -351,7 +351,7 @@ PROGRAM quincy_qs_model_driver
           CALL prepare_nc4_output_writing(tile, iblk, n_output_years, model%config%dtime, output_interval_pool_act, &
             &                             TRIM(model%config%output_interval_flux), 'static_', start_date_char)
         ENDIF
-      ELSEIF (model%config%l_transient_forcing_mode .AND. output_interval_pool_act > 0.0_wp) THEN
+      ELSEIF (model%config%l_transient_forcing_mode .AND. output_interval_pool_act > 0.0_lp) THEN
         IF (l_output_as_ascii_text) THEN
           CALL open_pool_output_files(TRIM(model%config%output_interval_pool_spinup), 'spinup_')
           CALL open_flux_output_files(tile, model%options, TRIM(model%config%output_interval_flux_spinup), 'spinup_')
@@ -391,7 +391,7 @@ PROGRAM quincy_qs_model_driver
   PRINT*," "
   PRINT*," Start QUINCY model Simulation"
   PRINT*," timeloop from timestep", itimestep + 1, "to", ntimestep
-  elapsed_seconds = 0._wp
+  elapsed_seconds = 0._lp
   DO
     ! exits the DO loop after completing the timestep with "itimestep == ntimestep"
     IF (itimestep == ntimestep) EXIT
@@ -422,7 +422,8 @@ PROGRAM quincy_qs_model_driver
     elapsed_seconds = elapsed_seconds + model%config%dtime  ! add "timestep length in seconds"
     ! day and year of the simulation
     time_day  = time_day  + timestep_prop_day               ! time in days
-    IF (time_day > one_year) THEN
+    ! half a timestep tolerance against round-off: first timestep of a year has time_day (~ timestep_prop_day)
+    IF (time_day > one_year + 0.5_lp * timestep_prop_day) THEN
       time_day  = time_day - one_year   ! largest value of time ~ 365; see mo_jsb_math_constants
       time_year = time_year + 1   
 
@@ -431,7 +432,7 @@ PROGRAM quincy_qs_model_driver
       END IF
     END IF
     ! calculate the seconds passed on this day (subtract whole days and convert day to seconds)
-    time_day_seconds(:) = (time_day - REAL(INT(time_day),wp)) * seconds_per_day
+    time_day_seconds(:) = (time_day - REAL(INT(time_day),lp)) * seconds_per_day
 
     ! update model options
     model%options%current_datetime%time_day = time_day
@@ -445,26 +446,26 @@ PROGRAM quincy_qs_model_driver
     !! 
     !! 
     IF (model%config%l_transient_forcing_mode) THEN
-      model%config%l_transient_spinup_rewind_forcing = .FALSE.
+      model%config%l_spinup_rewind_forcing = .FALSE.
       ! control spinup
-      IF (model%config%l_transient_spinup) THEN
+      IF (model%config%l_spinup) THEN
         transient_spinup_itimestep_period = transient_spinup_itimestep_period + 1
         ! if one spinup period (i.e. repetitive part of the spinup) has finished
         IF (transient_spinup_itimestep_period .GT. forcing_options%transient_spinup_timesteps_repeat) THEN
           transient_spinup_itimestep_period              = 1
-          model%config%l_transient_spinup_rewind_forcing = .TRUE.
+          model%config%l_spinup_rewind_forcing = .TRUE.
         END IF
         ! if spinup is completed and the simulation should start
         IF (itimestep .EQ. 1) THEN
-          model%config%l_transient_spinup_rewind_forcing = .TRUE.
-          model%config%l_transient_spinup                = .FALSE.           ! do not enter the "control spinup" IF statement anymore
+          model%config%l_spinup_rewind_forcing = .TRUE.
+          model%config%l_spinup                = .FALSE.           ! do not enter the "control spinup" IF statement anymore
           time_day                                       = timestep_prop_day ! equals 1.0 at the last simulated timestep of the day
           time_year                                      = 1                 ! the 1st year of a simulation == 1 (not zero)
           ! update model options
           model%options%current_datetime%time_day = time_day
           model%options%current_datetime%time_year = time_year
           ! close spinup output files if output was created (i.e. spinup output interval is not 'none')
-          IF (output_interval_pool_act > 0.0_wp) THEN
+          IF (output_interval_pool_act > 0.0_lp) THEN
             IF (l_output_as_ascii_text) THEN
               CALL close_output_files
             ELSE
@@ -524,7 +525,7 @@ PROGRAM quincy_qs_model_driver
         time_day_seconds, &
         model%config%dtime, &
         !! forcing (read from file and passed to a2l memory via the land_model_interface)
-        !! in update_forcing() defined as: REAL(wp), OPTIONAL, INTENT(out) :: VAR(:)  ! assumed shape
+        !! in update_forcing() defined as: REAL(lp), OPTIONAL, INTENT(out) :: VAR(:)  ! assumed shape
         t_air                   = t_air(:)              , &
         q_air                   = q_air(:)              , &
         rain                    = rain(:)               , &
@@ -609,7 +610,7 @@ PROGRAM quincy_qs_model_driver
         IF (itimestep == 1) THEN
           PRINT *," Spinup completed. Starting transient simulation with timestep 1 and forcing [YEAR DOY HOUR]:"
           PRINT *,forcing_options%forcing_year, forcing_options%forcing_doy, forcing_options%forcing_hour
-          elapsed_seconds = 0._wp
+          elapsed_seconds = 0._lp
 
           IF(forcing_options%forcing_year /= forcing_options%transient_simulation_start_year) THEN
             WRITE(message_text,*) 'First year read from the forcing file ('//TRIM(int2string(forcing_options%forcing_year)) &
@@ -636,7 +637,7 @@ PROGRAM quincy_qs_model_driver
     !!  (hence, this functionality is disabled in the prepare_sim_quincy.sh see section that evaluates the option: fluxnetTypeTransientTimestepOutput)
     !! 
     ! if timestep output for the last full forcing period (of transient simulation) is enabled for a fluxnet-type site-set
-    IF (model%config%fluxnet_type_transient_timestep_output .AND. .NOT. model%config%l_transient_spinup) THEN
+    IF (model%config%fluxnet_type_transient_timestep_output .AND. .NOT. model%config%l_spinup) THEN
       ! if first timestep of "start year of static forcing" of this site
       ! split into the two test "year" & "doy & hour" to check the latter only for one year (reduce CPU time)
       IF (forcing_options%forcing_year == model%config%fluxnet_static_forc_start_yr) THEN
@@ -649,7 +650,7 @@ PROGRAM quincy_qs_model_driver
           ELSE
             CALL close_nc4_output_files(model%id)
           ENDIF
-          elapsed_seconds                     = 0._wp
+          elapsed_seconds                     = 0._lp
           model%config%output_interval_pool   = 'timestep' 
           model%config%output_interval_flux   = 'timestep' 
           output_interval_pool                = calc_output_time_interval_pool(model%config%output_interval_pool, &
@@ -710,9 +711,9 @@ PROGRAM quincy_qs_model_driver
     !! transient
     ELSEIF (model%config%l_transient_forcing_mode) THEN
       ! spinup
-      IF (model%config%l_transient_spinup) THEN
+      IF (model%config%l_spinup) THEN
         ! if output may be generated during spinup (i.e. output interval is not 'none')
-        IF (output_interval_pool_act > 0.0_wp) THEN
+        IF (output_interval_pool_act > 0.0_lp) THEN
           l_output = .TRUE.
         ENDIF
       ! actual simulation after spinup
@@ -720,7 +721,7 @@ PROGRAM quincy_qs_model_driver
         ! differ between a simple transient simulation and one with timestep output for the last full forcing period of the transient simulation
         IF (model%config%fluxnet_type_transient_timestep_output) THEN
           ! if active and not finished yet (finished == after the last full forcing period no further output is created)
-          IF (flux_trans_timestep_out_state < 3.0_wp) THEN
+          IF (flux_trans_timestep_out_state < 3.0_lp) THEN
             l_output = .TRUE.
           ENDIF
         ! a simple transient simulation, create output only for a given start/end output period
@@ -737,11 +738,11 @@ PROGRAM quincy_qs_model_driver
     l_output_interval_match = .FALSE.      ! is generally set to FALSE tested below if TRUE at this timestep
     IF (l_output) THEN
       ! if interval is smaller than 'daily' then set to TRUE always, because then it can only be timestep
-      IF (output_interval_pool_act < 1.0_wp) THEN
+      IF (output_interval_pool_act < 1.0_lp) THEN
         l_output_interval_match = .TRUE.
       ! transient spinup
       ! during spinup the timesteps are a negative number, which is compensated by adding the spinup length to time_day
-      ELSEIF (model%config%l_transient_spinup) THEN
+      ELSEIF (model%config%l_spinup) THEN
         IF (MODULO(time_day + transient_spinup_timesteps, output_interval_pool_act) < eps4 .OR. &
           ABS(output_interval_pool_act - MODULO(time_day + transient_spinup_timesteps, output_interval_pool_act)) < eps4) THEN
           l_output_interval_match = .TRUE.
@@ -756,7 +757,7 @@ PROGRAM quincy_qs_model_driver
     ENDIF
 
     ! Determine the size of the nc buffer for the current netcdf output files
-    IF (output_interval_pool_act > 0.0_wp) THEN
+    IF (output_interval_pool_act > 0.0_lp) THEN
       ! the buffer size depends on the number of entries written into one file
       buffer_nc_size = NINT(one_year/output_interval_pool_act)
     ELSE

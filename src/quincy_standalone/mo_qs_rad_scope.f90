@@ -13,7 +13,7 @@
 !>
 MODULE mo_qs_rad_scope
 
-  USE mo_kind,                  ONLY: wp
+  USE mo_kind,                  ONLY: lp
 
   IMPLICIT NONE
 
@@ -44,8 +44,8 @@ CONTAINS
     INTEGER                                , INTENT(in)     :: nc             !< number of points in the chunk
     INTEGER                                , INTENT(in)     :: ncanopy        !< number of canopy layers
     INTEGER                                , INTENT(in)     :: nspec          !< number of spectral bands
-    REAL(wp), DIMENSION(nc)        , INTENT(in)     :: t_air                  !< air temperature
-    REAL(wp), DIMENSION(nc,nspec)  , INTENT(inout)  :: canopy_reflectance_sp  !< top of canopy reflectance factor
+    REAL(lp), DIMENSION(nc)        , INTENT(in)     :: t_air                  !< air temperature
+    REAL(lp), DIMENSION(nc,nspec)  , INTENT(inout)  :: canopy_reflectance_sp  !< top of canopy reflectance factor
     ! ---------------------------
     ! 0.2 Local
     ! ...

@@ -25,6 +25,7 @@ mo_hydro_config_class.o: \
   mo_jsb_io.o \
   mo_jsb_io_netcdf.o \
   mo_hydro_constants.o \
+  mo_sse_config_class.o \
   mo_qs_icon_adapter.o
 
 mo_hydro_constants.o: \

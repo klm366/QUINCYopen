@@ -61,7 +61,7 @@ mo_jsb_memory_class.o: \
   mo_jsb_config_class.o \
   mo_jsb_grid_class.o \
   mo_jsb_impl_constants.o \
-  mo_jsb_pool_class.o \
+  mo_lnd_bgcm_class.o \
   mo_util.o \
   mo_jsb_var_class.o \
   mo_jsb_io.o
@@ -117,9 +117,6 @@ mo_jsb_process_factory.o: \
   mo_veg_memory_class.o \
   mo_veg_config_class.o \
   mo_q_veg_interface.o \
-  mo_spq_memory_class.o \
-  mo_spq_config_class.o \
-  mo_q_spq_interface.o \
   mo_sb_memory_class.o \
   mo_sb_config_class.o \
   mo_q_sb_interface.o \
@@ -149,7 +146,6 @@ mo_jsb_model_init.o: \
   mo_util.o \
   mo_jsb4_forcing.o \
   mo_veg_init.o \
-  mo_spq_init.o \
   mo_hydro_init.o \
   mo_sse_init.o \
   mo_seb_init.o \
@@ -230,7 +226,6 @@ mo_jsb_base.o: \
   mo_phyd_parameters.o \
   mo_dfire_constants.o \
   mo_veg_constants.o \
-  mo_spq_constants.o \
   mo_turb_constants.o \
   mo_sb_constants.o
 
@@ -269,7 +264,6 @@ mo_jsb_tile.o: \
   mo_jsb_varlist.o \
   mo_jsb_lct_class.o \
   mo_jsb_process_class.o \
-  mo_jsb_pool_class.o \
   mo_lnd_bgcm_store.o \
   mo_lnd_bgcm_class.o
 
@@ -288,22 +282,15 @@ mo_jsb_tile_class.o: \
 mo_jsb_vertical_axes.o: \
   mo_jsb_grid_class.o
 
-mo_jsb_pool_class.o: \
-  mo_kind.o \
-  mo_exception.o \
-  mo_util.o \
-  mo_jsb_var_class.o
-
 mo_lnd_bgcm_class.o: \
   mo_kind.o \
-  mo_util.o \
-  mo_jsb_pool_class.o \
   mo_exception.o \
+  mo_util.o \
   mo_jsb_var_class.o
 
 mo_lnd_bgcm_store_class.o: \
   mo_kind.o \
-  mo_jsb_pool_class.o \
+  mo_lnd_bgcm_class.o \
   mo_jsb_var_class.o \
   mo_jsb_varlist.o
 
@@ -313,7 +300,6 @@ mo_lnd_bgcm_store.o: \
   mo_jsb_control.o \
   mo_util.o \
   mo_lnd_bgcm_store_class.o \
-  mo_jsb_pool_class.o \
   mo_lnd_bgcm_class.o
 
 mo_jsb_cqt_class.o: \

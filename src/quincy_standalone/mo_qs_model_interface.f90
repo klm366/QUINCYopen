@@ -48,7 +48,7 @@ CONTAINS
     USE mo_qs_forcing,                    ONLY: forcing_options
     USE mo_jsb_model_class,               ONLY: t_jsb_model
     USE mo_quincy_model_config,           ONLY: QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION    
-    USE mo_jsb_process_class,             ONLY: A2L_, L2A_, SEB_, TURB_, SPQ_, HYDRO_, VEG_, HD_, Q_ASSIMI_, &
+    USE mo_jsb_process_class,             ONLY: A2L_, L2A_, SEB_, TURB_, HYDRO_, VEG_, HD_, Q_ASSIMI_, &
       &                                         Q_PHENO_, SB_, DFIRE_, PHYD_, Q_SYL_, Q_AGR_, &
       &                                         Get_process_name
     USE mo_hsm_class,                     ONLY: t_Message
@@ -70,9 +70,6 @@ CONTAINS
     USE mo_q_veg_update_pools_on_harvest, ONLY: update_pools_on_harvest
     USE mo_q_assimi_interface,            ONLY: update_canopy_fluxes, update_ftranspiration_per_sl, &
       &                                         update_reset_q_assimi_fluxes, update_time_average_q_assimilation
-    USE mo_spq_util,                      ONLY: reset_spq_fluxes
-    USE mo_q_spq_update_turbulence,       ONLY: update_soil_turbulence
-    USE mo_q_spq_update_physics,          ONLY: update_spq_physics
     USE mo_q_sb_rate_modifier,            ONLY: update_sb_rate_modifier
     USE mo_q_sb_ssm_main,                 ONLY: update_sb_simple_model
     USE mo_q_sb_jsm_main,                 ONLY: update_sb_jsm
@@ -115,9 +112,9 @@ CONTAINS
                                                      l_output_as_ascii_text, &      !< TRUE if output to txt, else nc4
                                                      l_output_interval_match        !< TRUE if output may be created at the current timestep
     INTEGER,                    INTENT(in)        :: flux_trans_timestep_out_state  !< possible values: 0, 1, 2, 3; see quincy_qs_model_driver
-    REAL(wp),                   INTENT(in)        :: output_interval_pool_act       !< output period in days; identical for pools and fluxes
-    REAL(wp),                   INTENT(in)        :: elapsed_seconds                !< seconds elapsed since start of this simulation
-    REAL(wp),                   INTENT(in)        :: time_day                       !< displays the 'real simulation time' in days; time_day == 1.0 after one day has passed
+    REAL(lp),                   INTENT(in)        :: output_interval_pool_act       !< output period in days; identical for pools and fluxes
+    REAL(lp),                   INTENT(in)        :: elapsed_seconds                !< seconds elapsed since start of this simulation
+    REAL(lp),                   INTENT(in)        :: time_day                       !< displays the 'real simulation time' in days; time_day == 1.0 after one day has passed
     INTEGER,                    INTENT(in)        :: time_year                      !< displays the 'real simulation time' in years; the 1st year of a simulation == 1 (not zero)
 
     ! ---------------------------
@@ -148,6 +145,12 @@ CONTAINS
     ics  = model%options%ics
     ice  = model%options%ice
     iblk = model%options%iblk
+
+
+    !> 0.9 Preserve soil P pools (no weathering) during spin-up
+    !> Note: in QS model%config%l_spinup is set/modified at runtime, but not read from namelist
+    !>
+    dsl4jsb_Config(SB_)%l_exclude_weathering = model%config%l_spinup
 
     ! ------------------------------------------------------------------------------------------------------------
     ! Note: this is commented out because it would only be required in two cases that are currently not true
@@ -187,9 +190,6 @@ CONTAINS
       !! init/reset fluxes (with/to zero)
       !!
       CALL update_reset_q_assimi_fluxes(tile, model%options)
-      IF (.NOT. model%config%use_soil_phys_jsbach) THEN
-        CALL reset_spq_fluxes (tile, model%options)    ! mo_spq_util
-      END IF
       CALL reset_veg_fluxes (tile, model%options)    ! mo_veg_util
       ! Soil biogeochemisty is only executed for LAND
       IF (model%config%qmodel_id == QLAND) THEN
@@ -251,41 +251,30 @@ CONTAINS
       IF(model%config%qmodel_id == QLAND) THEN
         CALL update_sb_rate_modifier(tile, model%options)        ! LAND ONLY
       ENDIF
-      IF (model%config%use_soil_phys_jsbach) THEN
-        CALL update_surface_radiation (tile, model%options)        ! jsbach RAD_
-        CALL update_q_phenology (tile, model%options)
-        CALL update_snow_and_wet_fraction(tile, model%options)     ! jsbach HYDRO_
-        CALL update_soil_properties(tile, model%options)           ! jsbach HYDRO_
-        CALL update_surface_energy(tile, model%options)            ! jsbach SEB_
-        CALL update_evaporation(tile, model%options)               ! jsbach HYDRO_
-        CALL update_surface_fluxes(tile, model%options)            ! jsbach SEB_
-        CALL update_surface_hydrology(tile, model%options)         ! jsbach HYDRO_
-        CALL update_snow_and_wet_fraction(tile, model%options)     ! jsbach HYDRO_
-        CALL update_soil_and_snow_properties(tile, model%options)  ! jsbach SSE_
-        CALL update_soil_and_snow_temperature(tile, model%options) ! jsbach SSE_
-        CALL update_ftranspiration_per_sl(tile, model%options)     ! quincy Q_ASSIMI_
-        CALL update_soil_hydrology(tile, model%options)            ! jsbach HYDRO_
-        ! CALL update_canopy_cond_unstressed(tile, model%options)    ! jsbach HYDRO_ -- only used with jsbach in icon-land
-        CALL update_water_stress(tile, model%options)              ! jsbach HYDRO_
-        ! CALL update_canopy_cond_stressed(tile, model%options)      ! jsbach HYDRO_ -- only used with jsbach in icon-land
-        ! -----------------------------------------
-        ! only use with quincy in icon-land -------
-        CALL update_radiation_par (tile, model%options)            ! jsbach RAD_
-        CALL update_canopy_fluxes (tile, model%options)            ! quincy Q_ASSIMI_
-        CALL update_humidity_scaling (tile, model%options)         ! jsbach TURB_
-        ! -----------------------------------------
-      END IF
 
-      IF (.NOT. model%config%use_soil_phys_jsbach) THEN
-        CALL update_humidity_scaling (tile, model%options)         ! jsbach TURB_
-        CALL update_soil_turbulence (tile, model%options)          ! quincy SPQ_
-        CALL update_surface_radiation (tile, model%options)        ! jsbach RAD_
-        CALL update_q_phenology (tile, model%options)              ! quincy PHENO_
-        CALL update_radiation_par (tile, model%options)            ! jsbach RAD_
-        CALL update_canopy_fluxes (tile, model%options)            ! quincy Q_ASSIMI_        
-        CALL update_ftranspiration_per_sl(tile, model%options)     ! quincy Q_ASSIMI_
-        CALL update_spq_physics (tile, model%options)              ! quincy SPQ_
-      END IF
+      CALL update_surface_radiation (tile, model%options)        ! jsbach RAD_
+      CALL update_q_phenology (tile, model%options)
+      CALL update_snow_and_wet_fraction(tile, model%options)     ! jsbach HYDRO_
+      CALL update_soil_properties(tile, model%options)           ! jsbach HYDRO_
+      CALL update_surface_energy(tile, model%options)            ! jsbach SEB_
+      CALL update_evaporation(tile, model%options)               ! jsbach HYDRO_
+      CALL update_surface_fluxes(tile, model%options)            ! jsbach SEB_
+      CALL update_surface_hydrology(tile, model%options)         ! jsbach HYDRO_
+      CALL update_snow_and_wet_fraction(tile, model%options)     ! jsbach HYDRO_
+      CALL update_soil_and_snow_properties(tile, model%options)  ! jsbach SSE_
+      CALL update_soil_and_snow_temperature(tile, model%options) ! jsbach SSE_
+      CALL update_ftranspiration_per_sl(tile, model%options)     ! quincy Q_ASSIMI_
+      CALL update_soil_hydrology(tile, model%options)            ! jsbach HYDRO_
+      ! CALL update_canopy_cond_unstressed(tile, model%options)    ! jsbach HYDRO_ -- only used with jsbach in icon-land
+      CALL update_water_stress(tile, model%options)              ! jsbach HYDRO_
+      ! CALL update_canopy_cond_stressed(tile, model%options)      ! jsbach HYDRO_ -- only used with jsbach in icon-land
+
+      ! -----------------------------------------
+      ! only use with quincy in icon-land  @TODO  need update docu ?
+      CALL update_radiation_par (tile, model%options)            ! jsbach RAD_
+      CALL update_canopy_fluxes (tile, model%options)            ! quincy Q_ASSIMI_
+      CALL update_humidity_scaling (tile, model%options)         ! jsbach TURB_
+      ! -----------------------------------------
 
       IF (model%config%qmodel_id == QPLANT .OR. model%config%qmodel_id == QLAND) THEN
         IF (dsl4jsb_Config(PHYD_)%use_plant_hydraulics) THEN
@@ -330,11 +319,9 @@ CONTAINS
       CALL aggregate_roughness (tile, model%options)             ! jsbach (surface_roughness) TURB_
       CALL update_albedo(tile, model%options)                    ! jsbach + quincy RAD_
 
-      IF (model%config%use_soil_phys_jsbach) THEN
-        CALL update_water_balance(tile, model%options)             ! jsbach HYDRO_
-        CALL update_asselin(tile, model%options)                   ! jsbach SEB_ | should always be the last task
-        CALL update_energy_balance(tile, model%options)            ! jsbach SEB_ | is using 't' that is modified in 'update_asselin'
-      END IF
+      CALL update_water_balance(tile, model%options)             ! jsbach HYDRO_
+      CALL update_asselin(tile, model%options)                   ! jsbach SEB_ | should always be the last task
+      CALL update_energy_balance(tile, model%options)            ! jsbach SEB_ | is using 't' that is modified in 'update_asselin'
 
       !! variable accumulation over time - daytime & moving average
       !!
@@ -356,7 +343,7 @@ CONTAINS
         !! the output-routine is called each timestep, hence, output interval is timestep
         !! output litterfall and soilphysics from a static simulation
         IF (model%config%flag_generate_soil_forcing_stat) THEN
-          IF (.NOT. model%config%l_transient_spinup .AND. &
+          IF (.NOT. model%config%l_spinup .AND. &
               & time_year >= model%config%output_start_first_day_year &
               & .AND. time_year <= model%config%output_end_last_day_year) THEN
             CALL write_soil_forcing(tile, model%options, time_day)
@@ -372,7 +359,7 @@ CONTAINS
         !! output litterfall and soilphysics from a transient cruncep-type site-set simulation (for years 1901 to ...)
         IF (model%config%flag_generate_soil_forcing_trans .AND. l_output) THEN
           ! write only after spinup and if not a transient fluxnet/3 diagnostics simulation
-          IF (.NOT. model%config%l_transient_spinup &
+          IF (.NOT. model%config%l_spinup &
               & .AND. .NOT. model%config%fluxnet_type_transient_timestep_output) THEN
             CALL write_soil_forcing(tile, model%options, time_day)
           END IF
@@ -385,7 +372,6 @@ CONTAINS
       !! init/reset fluxes (with/to zero)
       !!
       CALL reset_sb_fluxes            (tile, model%options)   ! mo_sb_util
-      CALL reset_spq_fluxes           (tile, model%options)   ! mo_spq_util
 
       !! tasks that do not change area
       !!

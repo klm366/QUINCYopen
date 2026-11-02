@@ -15,7 +15,7 @@
 !>
 MODULE mo_qs_time_util
 
-  USE mo_kind,               ONLY: wp
+  USE mo_kind,               ONLY: lp
   USE mo_util,               ONLY: int2string
   USE mo_jsb_math_constants, ONLY: eps8
   USE mo_qs_output_txt,      ONLY: lun_sim_runtime_estimate
@@ -75,9 +75,9 @@ CONTAINS
     INTEGER,      INTENT(in)  :: itimestep
     INTEGER,      INTENT(in)  :: ntimestep
     ! ----------------------------------------------------------------------------------------------------- !
-    REAL(wp), SAVE              :: cpu_time_previous = 0.0_wp !< cpu runtime at previous timestep [s]
-    REAL(wp)                    :: cpu_time_now               !< cpu runtime at current timestep [s]
-    REAL(wp)                    :: frac_simulation_completed  !< fraction of completion of the estimated simulation time
+    REAL(lp), SAVE              :: cpu_time_previous = 0.0_lp !< cpu runtime at previous timestep [s]
+    REAL(lp)                    :: cpu_time_now               !< cpu runtime at current timestep [s]
+    REAL(lp)                    :: frac_simulation_completed  !< fraction of completion of the estimated simulation time
     INTEGER                     :: progress_interval_time     !< interval between progress messages [s]
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':calc_and_report_estimated_remaining_simulation_time'
     ! ----------------------------------------------------------------------------------------------------- !
@@ -89,14 +89,14 @@ CONTAINS
     CALL CPU_TIME(cpu_time_now)
     ! report new simulation estimations if a specific amount of time has passed since previous timestep
     IF (cpu_time_now - cpu_time_previous > progress_interval_time) THEN
-      frac_simulation_completed = REAL(itimestep - first_timestep + 1, wp) / REAL(ntimestep - first_timestep + 1, wp)
+      frac_simulation_completed = REAL(itimestep - first_timestep + 1, lp) / REAL(ntimestep - first_timestep + 1, lp)
       ! Avoid division by zero when fraction completed is very low
-      IF (frac_simulation_completed > 0.0_wp) THEN
+      IF (frac_simulation_completed > 0.0_lp) THEN
         WRITE(lun_sim_runtime_estimate, *) &
           & " Elapsed: ",  TRIM(convert_seconds_to_time_string(cpu_time_now)),  &
           & ", remaining: ", TRIM(convert_seconds_to_time_string((cpu_time_now / frac_simulation_completed) &
-          & * (1.0_wp - frac_simulation_completed))), &
-          & ", ", TRIM(int2string(NINT(frac_simulation_completed * 100.0_wp))), "% finished."
+          & * (1.0_lp - frac_simulation_completed))), &
+          & ", ", TRIM(int2string(NINT(frac_simulation_completed * 100.0_lp))), "% finished."
       ENDIF
       ! Save time of current timestep
       cpu_time_previous = cpu_time_now
@@ -108,7 +108,7 @@ CONTAINS
   !> returns a date string hh:mm:ss based on real number value of seconds
   !>
   FUNCTION convert_seconds_to_time_string(sim_run_cputime) result(time_string)
-    REAL(wp), INTENT(in) :: sim_run_cputime   !< time the CPU has spend for the simulation [s]
+    REAL(lp), INTENT(in) :: sim_run_cputime   !< time the CPU has spend for the simulation [s]
     CHARACTER(len=26)    :: time_string       !< hh:mm:ss
     ! ----------------------------------------------------------------------------------------------------- !
     INTEGER           :: loc_sim_run_cputime

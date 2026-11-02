@@ -16,7 +16,7 @@
 MODULE mo_dfire_sf_effects
 #ifndef __NO_JSBACH__
 
-  USE mo_kind,                ONLY: wp
+  USE mo_kind,                ONLY: lp
   USE mo_jsb_control,         ONLY: debug_on
   USE mo_exception,           ONLY: message
 

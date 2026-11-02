@@ -13,7 +13,7 @@
 !>
 MODULE mo_qs_atmland_forcing
 
-  USE mo_kind,                  ONLY: wp
+  USE mo_kind,                  ONLY: lp
   USE mo_util,                  ONLY: int2string, real2string
   USE mo_jsb_time,              ONLY: is_newyear, execute_quincy_sb_accelerator_this_timestep, &
       &                               executed_quincy_sb_accelerator_previous_timestep
@@ -85,7 +85,7 @@ CONTAINS
 
     USE mo_jsb_class,              ONLY: Get_model
     USE mo_quincy_model_config,    ONLY: QLAND, QPLANT, QSOIL, QCANOPY, Q_TEST_CANOPY, Q_TEST_RADIATION
-    USE mo_jsb_process_class,      ONLY: A2L_, SPQ_, HYDRO_, SSE_, VEG_, Q_SYL_
+    USE mo_jsb_process_class,      ONLY: A2L_, HYDRO_, SSE_, VEG_, Q_SYL_
     USE mo_jsb_grid_class,         ONLY: t_jsb_grid, t_jsb_vgrid
     USE mo_jsb_grid,               ONLY: Get_Grid, Get_vgrid
     USE mo_jsb_tile_class,         ONLY: t_jsb_tile_abstract
@@ -98,7 +98,6 @@ CONTAINS
       &                                  frac_vis_swtot_srf, frac_par_swvis_srf
     USE mo_qs_atmland_constants,   ONLY: declination
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Use_config(SPQ_)
     dsl4jsb_Use_config(Q_SYL_)
     dsl4jsb_Use_memory(A2L_)
     dsl4jsb_Use_memory(HYDRO_)
@@ -108,11 +107,11 @@ CONTAINS
     CLASS(t_jsb_tile_abstract), INTENT(inout) :: tile                           !< one tile with data structure for one lct
     INTEGER                   , INTENT(in)    :: ics, ice, nc, iblk             !< info on block, chunk and soil layer number
     INTEGER                   , INTENT(in)    :: timestep                       !< timestep; first timestep of static simulation and simulation after transient spinup is 1
-    REAL(wp)                  , INTENT(in)    :: time                           !< current time in days (not timestep !)
-    REAL(wp)                  , INTENT(in)    :: timestep_prop_day              !< proportion of one day that is simulated with one timestep (dtime/one_day)
-    REAL(wp)                  , INTENT(in)    :: time_day_seconds(:)            !< seconds passed on this day
-    REAL(wp)                  , INTENT(in)    :: dtime                          !< timestep length
-    REAL(wp), OPTIONAL        , INTENT(out)   :: &                 !! these are all variables from a2l memory; with assumed shape VAR(1:nc)
+    REAL(lp)                  , INTENT(in)    :: time                           !< current time in days (not timestep !)
+    REAL(lp)                  , INTENT(in)    :: timestep_prop_day              !< proportion of one day that is simulated with one timestep (dtime/one_day)
+    REAL(lp)                  , INTENT(in)    :: time_day_seconds(:)            !< seconds passed on this day
+    REAL(lp)                  , INTENT(in)    :: dtime                          !< timestep length
+    REAL(lp), OPTIONAL        , INTENT(out)   :: &                 !! these are all variables from a2l memory; with assumed shape VAR(1:nc)
                                       t_air(:)              , &    !< ..
                                       q_air(:)              , &    !< ..
                                       rain(:)               , &    !< ..
@@ -143,14 +142,14 @@ CONTAINS
     INTEGER                          :: nsoil_w                !< number of soil layers as used/defined by the SB_ process
     ! ----------------------------------------------------------------------------------------------------- !
     ! READ() input variables for: land plant canopy and soil (these variable names can differ from column names in forcing files)
-    REAL(wp) ::      sw_srf_down_r,      lw_srf_down_r, t_air_r,    q_air_r,    &
+    REAL(lp) ::      sw_srf_down_r,      lw_srf_down_r, t_air_r,    q_air_r,    &
                      press_srf_r,        rain_r,        snow_r,     wind_air_r, &
                      co2_mixing_ratio_r, co2_dC13_r,    co2_DC14_r,             &
                      nhx_deposition_r,   noy_deposition_r, &   ! variables reading nhx_srf_down & noy_srf_down from the climate forcing file (maybe rename there)
                      nhx_dn15_deposition_r, noy_dn15_deposition_r, & 
                      p_deposition_r, f_n_demand_r, f_p_demand_r 
     ! READ() input variables for: soil
-    REAL(wp) ::      leaf_carbon_r, leaf_nitrogen_r, leaf_phosphorus_r    , &
+    REAL(lp) ::      leaf_carbon_r, leaf_nitrogen_r, leaf_phosphorus_r    , &
                      leaf_dC13_r, leaf_DC14_r, leaf_dN15_r  , &
                      fine_root_carbon_r, fine_root_nitrogen_r, fine_root_phosphorus_r   , &
                      fine_root_dC13_r, fine_root_DC14_r, fine_root_dN15_r , &
@@ -168,8 +167,8 @@ CONTAINS
                      fruit_dC13_r, fruit_DC14_r, fruit_dN15_r , &
                      seed_bed_carbon_r, seed_bed_nitrogen_r, seed_bed_phosphorus_r  , &
                      seed_bed_dC13_r, seed_bed_DC14_r, seed_bed_dN15_r
-    REAL(wp) ::      veg_pool_fine_root_carbon_r
-    REAL(wp), ALLOCATABLE, DIMENSION(:) :: & 
+    REAL(lp) ::      veg_pool_fine_root_carbon_r
+    REAL(lp), ALLOCATABLE, DIMENSION(:) :: & 
                      t_soil_sl_r, &
                      w_soil_sl_r, &
                      percolation_sl_r, &
@@ -177,15 +176,15 @@ CONTAINS
     ! other local variables
     INTEGER                     :: stat                           !< status of I/O (https://software.intel.com/en-us/node/691976)
     INTEGER                     :: lun                            !< logical unit number for file input stream
-    REAL(wp), DIMENSION(nc)     :: sw_toa_down                    !< potential radiation at the top of the atmosphere
-    REAL(wp), DIMENSION(nc)     :: hlp1                           !< dummy variable 
-    REAL(wp)                    :: year                           !< dummy variable
-    REAL(wp)                    :: hour                           !< dummy variable
-    REAL(wp)                    :: time_hlp                       !< dummy variable for soil forcing
-    REAL(wp), SAVE              :: day                            !< read input dummy variable - save value
-    REAL(wp)                    :: doy_old                        !< check for new year (column 2 in input file would change from 365 -> 1)
-    REAL(wp)                    :: doy_new                        !< check for new year (column 2 in input file would change from 365 -> 1)
-    REAL(wp)                    :: lon, lat                       !< lon and lat - required to calculate timestep from daily forcing
+    REAL(lp), DIMENSION(nc)     :: sw_toa_down                    !< potential radiation at the top of the atmosphere
+    REAL(lp), DIMENSION(nc)     :: hlp1                           !< dummy variable 
+    REAL(lp)                    :: year                           !< dummy variable
+    REAL(lp)                    :: hour                           !< dummy variable
+    REAL(lp)                    :: time_hlp                       !< dummy variable for soil forcing
+    REAL(lp), SAVE              :: day                            !< read input dummy variable - save value
+    REAL(lp)                    :: doy_old                        !< check for new year (column 2 in input file would change from 365 -> 1)
+    REAL(lp)                    :: doy_new                        !< check for new year (column 2 in input file would change from 365 -> 1)
+    REAL(lp)                    :: lon, lat                       !< lon and lat - required to calculate timestep from daily forcing
     INTEGER                     :: nlevel_veg   = -1              !< number of levels at the Z-Axis (canopy layer)
     INTEGER                     :: isoil, ic                      !< looping over soil layers or chunk
     INTEGER                     :: nr_years_passed                !< Years passed since the start of the SB_ slow-pool spinup-accelerator (if used)
@@ -198,7 +197,6 @@ CONTAINS
     dsl4jsb_Def_mt2L2D :: veg_litterfall_mt
     dsl4jsb_Def_mt1L2D :: seed_bed_litterfall_mt
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Def_config(SPQ_)
     dsl4jsb_Def_config(Q_SYL_)
     dsl4jsb_Def_memory(HYDRO_)
     dsl4jsb_Def_memory(SSE_)
@@ -240,7 +238,6 @@ CONTAINS
     vgrid_soil_w  => Get_vgrid('soil_depth_water')
     nsoil_w       =  vgrid_soil_w%n_levels
     ! ----------------------------------------------------------------------------------------------------- !
-    dsl4jsb_Get_config(SPQ_)
     dsl4jsb_Get_config(Q_SYL_)
     dsl4jsb_Get_memory(HYDRO_)
     dsl4jsb_Get_memory(SSE_)
@@ -282,32 +279,32 @@ CONTAINS
     dsl4jsb_Get_var2D_onChunk(A2L_, daylength_prev_day)
     ! ----------------------------------------------------------------------------------------------------- !
 
-    doy_old = 0.0_wp  ! doy in the previous timestep, used for detecting a new year
+    doy_old = 0.0_lp  ! doy in the previous timestep, used for detecting a new year
 
     ! give A2L_ variables a value to avoid compiler warning #6843: A dummy argument with an explicit INTENT(OUT) declaration is not given an explicit value
-    ! these variables are declared in quincy_qs_model_driver as: REAL(wp), ALLOCATABLE, DIMENSION(:)
+    ! these variables are declared in quincy_qs_model_driver as: REAL(lp), ALLOCATABLE, DIMENSION(:)
     ! and allocated using 'nc'   ALLOCATE(t_air(nc)) -> i.e. no ics:ice,iblk here !
-    t_air(:)           = 0.0_wp
-    q_air(:)           = 0.0_wp
-    rain(:)            = 0.0_wp
-    snow(:)            = 0.0_wp
-    wind_air(:)        = 0.0_wp
-    wind_10m(:)        = 0.0_wp
-    lw_srf_down(:)     = 0.0_wp
-    swvis_srf_down(:)  = 0.0_wp
-    swnir_srf_down(:)  = 0.0_wp
-    swpar_srf_down(:)  = 0.0_wp
-    fract_par_diffuse(:) = 0.0_wp
-    press_srf(:)         = 0.0_wp
-    cos_zenith_angle(:)      = 0.0_wp
-    co2_mixing_ratio(:)      = 0.0_wp
-    co2_mixing_ratio_C13(:)  = 0.0_wp
-    co2_mixing_ratio_C14(:)  = 0.0_wp
-    nhx_deposition(:)        = 0.0_wp
-    noy_deposition(:)        = 0.0_wp
-    nhx_n15_deposition(:)    = 0.0_wp
-    noy_n15_deposition(:)    = 0.0_wp
-    p_deposition(:)          = 0.0_wp
+    t_air(:)           = 0.0_lp
+    q_air(:)           = 0.0_lp
+    rain(:)            = 0.0_lp
+    snow(:)            = 0.0_lp
+    wind_air(:)        = 0.0_lp
+    wind_10m(:)        = 0.0_lp
+    lw_srf_down(:)     = 0.0_lp
+    swvis_srf_down(:)  = 0.0_lp
+    swnir_srf_down(:)  = 0.0_lp
+    swpar_srf_down(:)  = 0.0_lp
+    fract_par_diffuse(:) = 0.0_lp
+    press_srf(:)         = 0.0_lp
+    cos_zenith_angle(:)      = 0.0_lp
+    co2_mixing_ratio(:)      = 0.0_lp
+    co2_mixing_ratio_C13(:)  = 0.0_lp
+    co2_mixing_ratio_C14(:)  = 0.0_lp
+    nhx_deposition(:)        = 0.0_lp
+    noy_deposition(:)        = 0.0_lp
+    nhx_n15_deposition(:)    = 0.0_lp
+    noy_n15_deposition(:)    = 0.0_lp
+    p_deposition(:)          = 0.0_lp
 
     !! #############################################################################################
     !! LAND PLANT CANOPY
@@ -331,7 +328,7 @@ CONTAINS
       doy_old = day
 
       ! moved up from below because it is required to get timestep from daily forcing if demanded
-      cos_zenith_angle(:)     = MAX(calc_solar_angle(hgrid%lat(1,1), hgrid%lon(1,1), time), 0.0_wp)
+      cos_zenith_angle(:)     = MAX(calc_solar_angle(hgrid%lat(1,1), hgrid%lon(1,1), time), 0.0_lp)
       ! see above the comment "make working globally" ...
       ! ... following that comment here also hgrid%lon(1,1) and hgrid%lat(1,1) is used.
       ! ... However, reading of forcing does not work globally anyway currently!
@@ -370,7 +367,7 @@ CONTAINS
       ! if this flag is set TRUE, check whether the current time step is a new year, if so 
       ! set stat = -1 to indicate "end of file" which invokes the re-reading of the climate forcing input file at line 1
       IF(model%config%flag_climate_forcing_one_year) THEN
-        IF( ABS(doy_old - doy_new - 364.0_wp) < eps8 ) THEN
+        IF( ABS(doy_old - doy_new - 364.0_lp) < eps8 ) THEN
           stat = -1
         END IF
       END IF
@@ -378,7 +375,7 @@ CONTAINS
       ! if transient forcing_mode is enabled, the climate forcing file may be re-read at line 1 when:
       !  a) the spinup forcing period ends and restarts at start-year, and 
       !  b) the spinup has finished
-      IF(model%config%l_transient_spinup_rewind_forcing) THEN
+      IF(model%config%l_spinup_rewind_forcing) THEN
         stat = -1
       END IF
 
@@ -404,10 +401,10 @@ CONTAINS
         ! only if the counter variable has a positive value
         ! it is set to '-1' at the timestep after the 1st year of the simulation has passed
         IF (const_input_timestep_counter(ic) > -eps4) THEN
-          const_input_timestep_counter(ic) = const_input_timestep_counter(ic) + 1.0_wp
+          const_input_timestep_counter(ic) = const_input_timestep_counter(ic) + 1.0_lp
           ! at the timestep after the 1st simulation year has passed
           IF (const_input_timestep_counter(ic) > (one_year * one_day / dtime)) THEN
-            const_input_timestep_counter(ic) = -1._wp
+            const_input_timestep_counter(ic) = -1._lp
             l_timestep_first_year_passed(ic) = .TRUE.
           END IF
         END IF
@@ -439,18 +436,13 @@ CONTAINS
 
       !> 2.3 convert rain <-> snow
       !>
-      ! convert snow to rain, of "snow is disabled"
-      IF (.NOT. dsl4jsb_Config(SPQ_)%flag_snow) THEN
-        rain_r = rain_r + snow_r
-        snow_r = 0.0_wp
-      ELSE
-        ! if "snow is enabled" and the forcing data does not provide information about snowfall
-        ! convert rain to snow below specific threshold of air temperature
-        IF (.NOT. forcing_options%flag_forcing_with_snow_data) THEN
-          IF (t_air_r < rain_as_snow_temp_thresh) THEN
-            snow_r = snow_r + rain_r
-            rain_r = 0.0_wp
-          END IF
+      ! "snow is enabled" by default
+      ! if the forcing data does not provide information about snowfall
+      ! convert rain to snow below specific threshold of air temperature
+      IF (.NOT. forcing_options%flag_forcing_with_snow_data) THEN
+        IF (t_air_r < rain_as_snow_temp_thresh) THEN
+          snow_r = snow_r + rain_r
+          rain_r = 0.0_lp
         END IF
       END IF
 
@@ -464,7 +456,7 @@ CONTAINS
       wind_10m(:)             = wind_air_r
       press_srf(:)            = press_srf_r
       lw_srf_down(:)          = lw_srf_down_r
-      swnir_srf_down(:)       = (1._wp - frac_vis_swtot_srf ) * sw_srf_down_r 
+      swnir_srf_down(:)       = (1._lp - frac_vis_swtot_srf ) * sw_srf_down_r 
       swvis_srf_down(:)       = frac_vis_swtot_srf * sw_srf_down_r 
       swpar_srf_down(:)       = frac_par_swvis_srf * swvis_srf_down(:)
       fract_par_diffuse(:)    = calc_fract_par_diffuse(swnir_srf_down(:) + swvis_srf_down(:), sw_toa_down(:), cos_zenith_angle(:))
@@ -492,7 +484,7 @@ CONTAINS
         ELSE
           hlp1(ic)               = calc_mixing_ratio_C13C12(def_co2_deltaC13)
         END IF
-        co2_mixing_ratio_C13(ic) = co2_mixing_ratio(ic) / (1._wp + 1._wp / hlp1(ic))
+        co2_mixing_ratio_C13(ic) = co2_mixing_ratio(ic) / (1._lp + 1._lp / hlp1(ic))
         ! DC14
         ! if DC14 forcing input is used
         IF (forcing_options%flag_read_DC14) THEN
@@ -512,42 +504,42 @@ CONTAINS
       !>
       SELECT CASE (TRIM(forcing_options%n_deposition_scheme))
       CASE ("none")
-        nhx_deposition(:)   = 0.0_wp
-        noy_deposition(:)   = 0.0_wp
+        nhx_deposition(:)   = 0.0_lp
+        noy_deposition(:)   = 0.0_lp
       CASE ("constant")
         DO ic = 1, nc
           ! if the first simulation year has passed
           IF (const_input_timestep_counter(ic) < -eps4) THEN
-            nhx_deposition(ic)  = nhx_deposition_const(ic) / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
-            noy_deposition(ic)  = noy_deposition_const(ic) / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
+            nhx_deposition(ic)  = nhx_deposition_const(ic) / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
+            noy_deposition(ic)  = noy_deposition_const(ic) / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
           ELSE
-            nhx_deposition(ic)  = nhx_deposition_r         / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
-            noy_deposition(ic)  = noy_deposition_r         / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
+            nhx_deposition(ic)  = nhx_deposition_r         / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
+            noy_deposition(ic)  = noy_deposition_r         / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
           END IF
         END DO
       CASE ("dynamic")
-        nhx_deposition(:)   = nhx_deposition_r / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
-        noy_deposition(:)   = noy_deposition_r / molar_mass_N * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
+        nhx_deposition(:)   = nhx_deposition_r / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
+        noy_deposition(:)   = noy_deposition_r / molar_mass_N * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
       ENDSELECT
-      nhx_n15_deposition(:) = nhx_deposition(:) / ( 1._wp + 1._wp / calc_mixing_ratio_N15N14(0.0_wp)) 
-      noy_n15_deposition(:) = noy_deposition(:) / ( 1._wp + 1._wp / calc_mixing_ratio_N15N14(0.0_wp)) 
+      nhx_n15_deposition(:) = nhx_deposition(:) / ( 1._lp + 1._lp / calc_mixing_ratio_N15N14(0.0_lp)) 
+      noy_n15_deposition(:) = noy_deposition(:) / ( 1._lp + 1._lp / calc_mixing_ratio_N15N14(0.0_lp)) 
 
       !> 3.3 update P deposition forcing data
       !>
       SELECT CASE (TRIM(forcing_options%p_deposition_scheme))
       CASE ("none")
-        p_deposition(:) = 0.0_wp
+        p_deposition(:) = 0.0_lp
       CASE ("constant")
         DO ic = 1, nc
           ! if the first simulation year has passed
           IF (const_input_timestep_counter(ic) < -eps4) THEN
-            p_deposition(ic)  = p_deposition_const(ic) / molar_mass_P * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
+            p_deposition(ic)  = p_deposition_const(ic) / molar_mass_P * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
           ELSE
-            p_deposition(ic)  = p_deposition_r         / molar_mass_P * 1000.0_wp / one_day    ! mg/m2/day -> mumol/m2/sec
+            p_deposition(ic)  = p_deposition_r         / molar_mass_P * 1000.0_lp / one_day    ! mg/m2/day -> mumol/m2/sec
           END IF
         END DO
       CASE ("dynamic")
-        p_deposition(:) = p_deposition_r / molar_mass_P * 1000.0_wp / one_day      ! mg/m2/day -> mumol/m2/sec
+        p_deposition(:) = p_deposition_r / molar_mass_P * 1000.0_lp / one_day      ! mg/m2/day -> mumol/m2/sec
       ENDSELECT
 
       !> 3.4 update daytime_counter and daylength_prev_day
@@ -557,11 +549,11 @@ CONTAINS
       DO ic = 1, nc
         IF (ABS(local_time_day_seconds(ic) - dtime) < eps1) THEN
           daylength_prev_day(ic) = daytime_counter(ic) * dtime
-          daytime_counter(ic) = 0.0_wp
+          daytime_counter(ic) = 0.0_lp
         ENDIF
         IF (swpar_srf_down(ic) > eps8) THEN
           ! count number of daytime values
-          daytime_counter(ic) = daytime_counter(ic) + 1.0_wp
+          daytime_counter(ic) = daytime_counter(ic) + 1.0_lp
         ENDIF
       ENDDO
       ! JN-NOTE: In quincy standalone the current site-level forcing seems to be such that it ALWAYS assumes
@@ -580,7 +572,7 @@ CONTAINS
         END IF
 
         ! Only check at the start of a year and only during spinup
-        IF (is_newyear(model%options%current_datetime, dtime) .AND. (model%config%l_transient_spinup)) THEN
+        IF (is_newyear(model%options%current_datetime, dtime) .AND. (model%config%l_spinup)) THEN
 
           ! There are multiple conditions to be met for the accelerator to be executed:
           ! 1. the accelerator start year has to be passed:
@@ -612,9 +604,9 @@ CONTAINS
       ! Test if we have a stand replacing harvest event (default: no)
       IF(dsl4jsb_Config(Q_SYL_)%active) THEN
         dsl4jsb_Config(Q_SYL_)%flag_stand_harvest_event = .FALSE.
-        ! We only have a stand replacing harvest event after transient spinup, i.e., when l_transient_spinup=FALSE
+        ! We only have a stand replacing harvest event after transient spinup, i.e., when l_spinup=FALSE
         ! and only if it is the start of the stand replacing year
-        IF((is_newyear(model%options%current_datetime, dtime) .AND. (.NOT. model%config%l_transient_spinup) &
+        IF((is_newyear(model%options%current_datetime, dtime) .AND. (.NOT. model%config%l_spinup) &
             & .AND. (dsl4jsb_Config(Q_SYL_)%flag_stand_harvest) &
             & .AND. (forcing_options%forcing_year == dsl4jsb_Config(Q_SYL_)%stand_replacing_year))) THEN
           dsl4jsb_Config(Q_SYL_)%flag_stand_harvest_event = .TRUE.
@@ -687,7 +679,7 @@ CONTAINS
 
       ! if transient forcing_mode is enabled, the climate forcing file may be re-read at line 1 when:
       ! a) the spinup forcing period ends and restarts at start-year, and b) the spinup has finished
-      IF(model%config%l_transient_spinup_rewind_forcing) THEN
+      IF(model%config%l_spinup_rewind_forcing) THEN
         stat = -1
       END IF
 
@@ -729,7 +721,7 @@ CONTAINS
 
       ! if transient forcing_mode is enabled, the climate forcing file may be re-read at line 1 when:
       ! a) the spinup forcing period ends and restarts at start-year, and b) the spinup has finished
-      IF(model%config%l_transient_spinup_rewind_forcing) THEN
+      IF(model%config%l_spinup_rewind_forcing) THEN
         stat = -1
       END IF
 
@@ -749,94 +741,94 @@ CONTAINS
 
       !>2.0 pass values read from file (i.e. scalar values) to ics-ice
       !>
-      veg_litterfall_mt(ix_leaf, ixC, :)     = leaf_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_leaf, ixN, :)   = leaf_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_leaf, ixP, :) = leaf_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_leaf, ixC13, :)   = veg_litterfall_mt(ix_leaf, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_leaf, ixC, :)     = leaf_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_leaf, ixN, :)   = leaf_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_leaf, ixP, :) = leaf_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_leaf, ixC13, :)   = veg_litterfall_mt(ix_leaf, ixC, :) / ( 1._lp + 1._lp / &
                                             calc_mixing_ratio_C13C12(leaf_dC13_r))
       veg_litterfall_mt(ix_leaf, ixC14, :)   = veg_litterfall_mt(ix_leaf, ixC, :) * &
                                             calc_mixing_ratio_C14C(leaf_dC13_r,leaf_DC14_r)
-      veg_litterfall_mt(ix_leaf, ixN15, :) = veg_litterfall_mt(ix_leaf, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_leaf, ixN15, :) = veg_litterfall_mt(ix_leaf, ixN, :) / ( 1._lp + 1._lp / &
                                             calc_mixing_ratio_N15N14(leaf_dN15_r))
 
-      veg_litterfall_mt(ix_fine_root, ixC, :)     = fine_root_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_fine_root, ixN, :)   = fine_root_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_fine_root, ixP, :) = fine_root_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_fine_root, ixC13, :)   = veg_litterfall_mt(ix_fine_root, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_fine_root, ixC, :)     = fine_root_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_fine_root, ixN, :)   = fine_root_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_fine_root, ixP, :) = fine_root_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_fine_root, ixC13, :)   = veg_litterfall_mt(ix_fine_root, ixC, :) / ( 1._lp + 1._lp / &
                                                  calc_mixing_ratio_C13C12(fine_root_dC13_r))
       veg_litterfall_mt(ix_fine_root, ixC14, :)   = veg_litterfall_mt(ix_fine_root, ixC, :) * &
                                                  calc_mixing_ratio_C14C(fine_root_dC13_r,fine_root_DC14_r)
-      veg_litterfall_mt(ix_fine_root, ixN15, :) = veg_litterfall_mt(ix_fine_root, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_fine_root, ixN15, :) = veg_litterfall_mt(ix_fine_root, ixN, :) / ( 1._lp + 1._lp / &
                                                  calc_mixing_ratio_N15N14(fine_root_dN15_r))
 
-      veg_litterfall_mt(ix_coarse_root, ixC, :)     = coarse_root_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_coarse_root, ixN, :)   = coarse_root_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_coarse_root, ixP, :) = coarse_root_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_coarse_root, ixC13, :)   = veg_litterfall_mt(ix_coarse_root, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_coarse_root, ixC, :)     = coarse_root_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_coarse_root, ixN, :)   = coarse_root_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_coarse_root, ixP, :) = coarse_root_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_coarse_root, ixC13, :)   = veg_litterfall_mt(ix_coarse_root, ixC, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_C13C12(coarse_root_dC13_r))
       veg_litterfall_mt(ix_coarse_root, ixC14, :)   = veg_litterfall_mt(ix_coarse_root, ixC, :) * &
                                                    calc_mixing_ratio_C14C(coarse_root_dC13_r,coarse_root_DC14_r)
-      veg_litterfall_mt(ix_coarse_root, ixN15, :) = veg_litterfall_mt(ix_coarse_root, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_coarse_root, ixN15, :) = veg_litterfall_mt(ix_coarse_root, ixN, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_N15N14(coarse_root_dN15_r))
 
-      veg_litterfall_mt(ix_sap_wood, ixC, :)        = sap_wood_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_sap_wood, ixN, :)      = sap_wood_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_sap_wood, ixP, :)    = sap_wood_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_sap_wood, ixC13, :)      = veg_litterfall_mt(ix_sap_wood, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_sap_wood, ixC, :)        = sap_wood_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_sap_wood, ixN, :)      = sap_wood_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_sap_wood, ixP, :)    = sap_wood_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_sap_wood, ixC13, :)      = veg_litterfall_mt(ix_sap_wood, ixC, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_C13C12(sap_wood_dC13_r))
       veg_litterfall_mt(ix_sap_wood, ixC14, :)      = veg_litterfall_mt(ix_sap_wood, ixC, :) * &
                                                    calc_mixing_ratio_C14C(sap_wood_dC13_r,sap_wood_DC14_r)
-      veg_litterfall_mt(ix_sap_wood, ixN15, :)    = veg_litterfall_mt(ix_sap_wood, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_sap_wood, ixN15, :)    = veg_litterfall_mt(ix_sap_wood, ixN, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_N15N14(sap_wood_dN15_r))
 
-      veg_litterfall_mt(ix_heart_wood, ixC, :)      = heart_wood_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_heart_wood, ixN, :)    = heart_wood_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_heart_wood, ixP, :)  = heart_wood_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_heart_wood, ixC13, :)    = veg_litterfall_mt(ix_heart_wood, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_heart_wood, ixC, :)      = heart_wood_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_heart_wood, ixN, :)    = heart_wood_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_heart_wood, ixP, :)  = heart_wood_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_heart_wood, ixC13, :)    = veg_litterfall_mt(ix_heart_wood, ixC, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_C13C12(heart_wood_dC13_r))
       veg_litterfall_mt(ix_heart_wood, ixC14, :)    = veg_litterfall_mt(ix_heart_wood, ixC, :) * &
                                                    calc_mixing_ratio_C14C(heart_wood_dC13_r,heart_wood_DC14_r)
-      veg_litterfall_mt(ix_heart_wood, ixN15, :)  = veg_litterfall_mt(ix_heart_wood, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_heart_wood, ixN15, :)  = veg_litterfall_mt(ix_heart_wood, ixN, :) / ( 1._lp + 1._lp / &
                                                    calc_mixing_ratio_N15N14(heart_wood_dN15_r))
 
-      veg_litterfall_mt(ix_labile, ixC, :)       = labile_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_labile, ixN, :)     = labile_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_labile, ixP, :)   = labile_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_labile, ixC13, :)     = veg_litterfall_mt(ix_labile, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_labile, ixC, :)       = labile_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_labile, ixN, :)     = labile_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_labile, ixP, :)   = labile_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_labile, ixC13, :)     = veg_litterfall_mt(ix_labile, ixC, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_C13C12(labile_dC13_r))
       veg_litterfall_mt(ix_labile, ixC14, :)     = veg_litterfall_mt(ix_labile, ixC, :) * &
                                                 calc_mixing_ratio_C14C(labile_dC13_r,labile_DC14_r)
-      veg_litterfall_mt(ix_labile, ixN15, :)   = veg_litterfall_mt(ix_labile, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_labile, ixN15, :)   = veg_litterfall_mt(ix_labile, ixN, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_N15N14(labile_dN15_r))
 
-      veg_litterfall_mt(ix_reserve, ixC, :)      = reserve_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_reserve, ixN, :)    = reserve_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_reserve, ixP, :)  = reserve_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_reserve, ixC13, :)    = veg_litterfall_mt(ix_reserve, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_reserve, ixC, :)      = reserve_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_reserve, ixN, :)    = reserve_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_reserve, ixP, :)  = reserve_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_reserve, ixC13, :)    = veg_litterfall_mt(ix_reserve, ixC, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_C13C12(reserve_dC13_r))
       veg_litterfall_mt(ix_reserve, ixC14, :)    = veg_litterfall_mt(ix_reserve, ixC, :) * &
                                                 calc_mixing_ratio_C14C(reserve_dC13_r,reserve_DC14_r)
-      veg_litterfall_mt(ix_reserve, ixN15, :)  = veg_litterfall_mt(ix_reserve, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_reserve, ixN15, :)  = veg_litterfall_mt(ix_reserve, ixN, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_N15N14(reserve_dN15_r))
 
-      veg_litterfall_mt(ix_fruit, ixC, :)        = fruit_carbon_r / 1000._wp
-      veg_litterfall_mt(ix_fruit, ixN, :)      = fruit_nitrogen_r / 1000000._wp
-      veg_litterfall_mt(ix_fruit, ixP, :)    = fruit_phosphorus_r / 1000000._wp
-      veg_litterfall_mt(ix_fruit, ixC13, :)      = veg_litterfall_mt(ix_fruit, ixC, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_fruit, ixC, :)        = fruit_carbon_r / 1000._lp
+      veg_litterfall_mt(ix_fruit, ixN, :)      = fruit_nitrogen_r / 1000000._lp
+      veg_litterfall_mt(ix_fruit, ixP, :)    = fruit_phosphorus_r / 1000000._lp
+      veg_litterfall_mt(ix_fruit, ixC13, :)      = veg_litterfall_mt(ix_fruit, ixC, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_C13C12(fruit_dC13_r))
       veg_litterfall_mt(ix_fruit, ixC14, :)      = veg_litterfall_mt(ix_fruit, ixC, :) * &
                                                 calc_mixing_ratio_C14C(fruit_dC13_r,fruit_DC14_r)
-      veg_litterfall_mt(ix_fruit, ixN15, :)    = veg_litterfall_mt(ix_fruit, ixN, :) / ( 1._wp + 1._wp / &
+      veg_litterfall_mt(ix_fruit, ixN15, :)    = veg_litterfall_mt(ix_fruit, ixN, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_N15N14(fruit_dN15_r))
 
-      seed_bed_litterfall_mt(ixC, :)     = seed_bed_carbon_r / 1000._wp
-      seed_bed_litterfall_mt(ixN, :)   = seed_bed_nitrogen_r / 1000000._wp
-      seed_bed_litterfall_mt(ixP, :) = seed_bed_phosphorus_r / 1000000._wp
-      seed_bed_litterfall_mt(ixC13, :)   = seed_bed_litterfall_mt(ixC, :) / ( 1._wp + 1._wp / &
+      seed_bed_litterfall_mt(ixC, :)     = seed_bed_carbon_r / 1000._lp
+      seed_bed_litterfall_mt(ixN, :)   = seed_bed_nitrogen_r / 1000000._lp
+      seed_bed_litterfall_mt(ixP, :) = seed_bed_phosphorus_r / 1000000._lp
+      seed_bed_litterfall_mt(ixC13, :)   = seed_bed_litterfall_mt(ixC, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_C13C12(seed_bed_dC13_r))
       seed_bed_litterfall_mt(ixC14, :)   = seed_bed_litterfall_mt(ixC, :) * &
                                                 calc_mixing_ratio_C14C(seed_bed_dC13_r,seed_bed_DC14_r)
-      seed_bed_litterfall_mt(ixN15, :) = seed_bed_litterfall_mt(ixN, :) / ( 1._wp + 1._wp / &
+      seed_bed_litterfall_mt(ixN15, :) = seed_bed_litterfall_mt(ixN, :) / ( 1._lp + 1._lp / &
                                                 calc_mixing_ratio_N15N14(seed_bed_dN15_r))
 
       DO isoil = 1,nsoil_w
@@ -849,8 +841,8 @@ CONTAINS
 
       nhx_deposition(:)     = nhx_deposition_r
       noy_deposition(:)     = noy_deposition_r
-      nhx_n15_deposition(:) = nhx_deposition(:) / ( 1._wp + 1._wp / calc_mixing_ratio_N15N14(nhx_dn15_deposition_r))
-      noy_n15_deposition(:) = noy_deposition(:) / ( 1._wp + 1._wp / calc_mixing_ratio_N15N14(noy_dn15_deposition_r))
+      nhx_n15_deposition(:) = nhx_deposition(:) / ( 1._lp + 1._lp / calc_mixing_ratio_N15N14(nhx_dn15_deposition_r))
+      noy_n15_deposition(:) = noy_deposition(:) / ( 1._lp + 1._lp / calc_mixing_ratio_N15N14(noy_dn15_deposition_r))
       p_deposition(:)       = p_deposition_r
       f_n_demand(:)         = f_n_demand_r
       f_p_demand(:)         = f_p_demand_r
@@ -1041,13 +1033,13 @@ CONTAINS
 
     ! -------------------------------------------------------------------------------------------------- !
     INTEGER, INTENT(IN)    :: lun                 !< logical unit number for file input stream
-    REAL(wp), INTENT(IN)   :: lon                 !< lon of this site 
-    REAL(wp), INTENT(IN)   :: lat                 !< lat of this site
-    REAL(wp), INTENT(IN)   :: cos_zenith_angle    !< cos zenith angle of this site
-    REAL(wp), INTENT(IN)   :: time                !< real time in days (called 'time_day' in calling routine!)
-    REAL(wp), INTENT(IN)   :: timestep_prop_day   !< proportion of a day that is simulated with one timestep
+    REAL(lp), INTENT(IN)   :: lon                 !< lon of this site 
+    REAL(lp), INTENT(IN)   :: lat                 !< lat of this site
+    REAL(lp), INTENT(IN)   :: cos_zenith_angle    !< cos zenith angle of this site
+    REAL(lp), INTENT(IN)   :: time                !< real time in days (called 'time_day' in calling routine!)
+    REAL(lp), INTENT(IN)   :: timestep_prop_day   !< proportion of a day that is simulated with one timestep
     INTEGER,  INTENT(OUT)  :: stat                !< status of I/O calls of this routine
-    REAL(wp), INTENT(OUT)  :: year, day, hour, &
+    REAL(lp), INTENT(OUT)  :: year, day, hour, &
                               sw_srf_down_r, lw_srf_down_r, &
                               t_air_r, q_air_r, &
                               press_srf_r, &
@@ -1060,13 +1052,13 @@ CONTAINS
     ! -------------------------------------------------------------------------------------------------- !
     CHARACTER(len=*), PARAMETER :: routine = TRIM(modname)//':read_or_calculate_forcing'
 
-    REAL(wp) :: cos_zenith_angle_gt0    !< in contrast to cos_zenith_angle (IN), this one is in [0,1]
-    REAL(wp) :: sat_spec_humidity       !< potentially reduces q_air
-    REAL(wp) :: fract_timestep          !< the current time step expressed as the fraction of the current day
-    REAL(wp) :: precip_r                !< if precip is read instead of snow and rain or/and when reading daily
+    REAL(lp) :: cos_zenith_angle_gt0    !< in contrast to cos_zenith_angle (IN), this one is in [0,1]
+    REAL(lp) :: sat_spec_humidity       !< potentially reduces q_air
+    REAL(lp) :: fract_timestep          !< the current time step expressed as the fraction of the current day
+    REAL(lp) :: precip_r                !< if precip is read instead of snow and rain or/and when reading daily
     LOGICAL  :: l_read_forcing          !< if forcing is read (depends on if timestep or daily and/or new day)
 
-    REAL(wp) :: interp_qair, interp_press, interp_precip, interp_wind
+    REAL(lp) :: interp_qair, interp_press, interp_precip, interp_wind
     ! -------------------------------------------------------------------------------------------------- !
                       
     l_read_forcing = .TRUE.
@@ -1074,7 +1066,7 @@ CONTAINS
       ! In case of daily forcing, forcing only needs to be read if its a new day
       l_read_forcing = .FALSE.
       ! i.e. if this is the first timestep of this day
-      IF ( ABS(time - timestep_prop_day - REAL(FLOOR(time), wp)) < eps4) THEN
+      IF ( ABS(time - timestep_prop_day - REAL(FLOOR(time), lp)) < eps4) THEN
         l_read_forcing = .TRUE.
       ENDIF
     ENDIF
@@ -1152,8 +1144,8 @@ CONTAINS
 
     ! some forcing input units need re-scaling for calculation within QUINCY
     !@todo: why not manipulating the input to have the units expected in QUINCY?
-    press_srf_r = forcing_options%current%pressure * 100._wp       ! hPa -> Pa ?
-    q_air_r     = forcing_options%current%qair / 1000._wp          ! g/g -> g/kg ?
+    press_srf_r = forcing_options%current%pressure * 100._lp       ! hPa -> Pa ?
+    q_air_r     = forcing_options%current%qair / 1000._lp          ! g/g -> g/kg ?
     IF(.NOT. forcing_options%read_precipitation) THEN
       rain_r    = forcing_options%current%rain / one_day           ! mm/day -> mm/s
       snow_r    = forcing_options%current%snow / one_day           ! mm/day -> mm/s
@@ -1166,15 +1158,15 @@ CONTAINS
     IF(forcing_options%is_daily_forcing) THEN
       ! calculate fraction of current day 
       ! (-eps4 to avoid rounding to next integer for last timestep -> if fract_timestep ~ 1.0 )
-      fract_timestep = MIN(1.0_wp, time - REAL(FLOOR(time - eps4), wp))
+      fract_timestep = MIN(1.0_lp, time - REAL(FLOOR(time - eps4), lp))
 
-      IF (forcing_options%yDay%precipitation .NE. -999.0_wp) THEN
+      IF (forcing_options%yDay%precipitation .NE. -999.0_lp) THEN
         ! Interpolate daily values to avoid jumps at midnight
         ! -> solution from OCN -- here applied for an only partially overlapping set of forcing variables
-        interp_qair   = (1.0_wp - fract_timestep) * (forcing_options%yDay%qair / 1000._wp) + fract_timestep * q_air_r
-        interp_precip = (1.0_wp - fract_timestep) * (forcing_options%yDay%precipitation / one_day) + fract_timestep * precip_r
-        interp_press  = (1.0_wp - fract_timestep) * (forcing_options%yDay%pressure * 100._wp) + fract_timestep * press_srf_r
-        interp_wind   = (1.0_wp - fract_timestep) * forcing_options%yDay%wind + fract_timestep * wind_air_r
+        interp_qair   = (1.0_lp - fract_timestep) * (forcing_options%yDay%qair / 1000._lp) + fract_timestep * q_air_r
+        interp_precip = (1.0_lp - fract_timestep) * (forcing_options%yDay%precipitation / one_day) + fract_timestep * precip_r
+        interp_press  = (1.0_lp - fract_timestep) * (forcing_options%yDay%pressure * 100._lp) + fract_timestep * press_srf_r
+        interp_wind   = (1.0_lp - fract_timestep) * forcing_options%yDay%wind + fract_timestep * wind_air_r
       ELSE
         ! initialisation -- first timestep...
         interp_qair   = q_air_r
@@ -1197,10 +1189,10 @@ CONTAINS
       ! compute sw
       !@Note: in ICON-Land/JSB cos_zenith_angle is calculated from the host model (ICON/Echam) in the routine
       !       solar_parameters of the module mo_radiation_parameters: 
-      !       there, cos_mu0 (cosine of the solar zenith angle) is [0,1] (thus set to zero where <= 0.0_wp)
+      !       there, cos_mu0 (cosine of the solar zenith angle) is [0,1] (thus set to zero where <= 0.0_lp)
       cos_zenith_angle_gt0 = cos_zenith_angle
-      IF(cos_zenith_angle <= 0.0_wp) THEN
-        cos_zenith_angle_gt0 = 0.0_wp
+      IF(cos_zenith_angle <= 0.0_lp) THEN
+        cos_zenith_angle_gt0 = 0.0_lp
       ENDIF
       CALL instantly_from_daily_sw(day, lat, cos_zenith_angle_gt0, forcing_options%current%sw, sw_srf_down_r)
 
@@ -1260,66 +1252,66 @@ CONTAINS
 
     IMPLICIT NONE
 
-    REAL(wp), PARAMETER :: rat1 = 14._wp / 24._wp  ! day fraction at which maximum temperature shall occur
-    REAL(wp), PARAMETER :: rat2 = 4._wp / 24._wp   ! minimum length of normal day (as fraction of day)
-    REAL(wp), PARAMETER :: rat3 = 20._wp / 24._wp  ! maximum length of normal day (as fraction of day)
-    REAL(wp), PARAMETER :: rat4 = 2._wp / 24._wp   ! day fraction of dawn times (before sunrise + after sunset), used to set ...
+    REAL(lp), PARAMETER :: rat1 = 14._lp / 24._lp  ! day fraction at which maximum temperature shall occur
+    REAL(lp), PARAMETER :: rat2 = 4._lp / 24._lp   ! minimum length of normal day (as fraction of day)
+    REAL(lp), PARAMETER :: rat3 = 20._lp / 24._lp  ! maximum length of normal day (as fraction of day)
+    REAL(lp), PARAMETER :: rat4 = 2._lp / 24._lp   ! day fraction of dawn times (before sunrise + after sunset), used to set ...
                                                    ! ... temperature of a normal day to T_mean at sunrise-rat4/2 and sunset+rat4/2
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp), INTENT (IN)  :: day              !< current day (in year; i.e. [1.0,365.0]
-    REAL(wp), INTENT (IN)  :: fract_timestep   !< the current time step expressed as the fraction of the current day
-    REAL(wp), INTENT (IN)  :: lon, lat         !< required for solar zenith angle calculation
-    REAL(wp), INTENT (IN)  :: dtemp_min !< minimal temperature at the considered day
-    REAL(wp), INTENT (IN)  :: dtemp_max !< maximal range at that day
-    REAL(wp), INTENT (IN)  :: yDay_last_tair
+    REAL(lp), INTENT (IN)  :: day              !< current day (in year; i.e. [1.0,365.0]
+    REAL(lp), INTENT (IN)  :: fract_timestep   !< the current time step expressed as the fraction of the current day
+    REAL(lp), INTENT (IN)  :: lon, lat         !< required for solar zenith angle calculation
+    REAL(lp), INTENT (IN)  :: dtemp_min !< minimal temperature at the considered day
+    REAL(lp), INTENT (IN)  :: dtemp_max !< maximal range at that day
+    REAL(lp), INTENT (IN)  :: yDay_last_tair
       !< last temperature at previous day (required for interpolation before sunrise to avoid discontinuity)
-    REAL(wp), INTENT (OUT) :: temp      !< estimated temperature for this timestep
+    REAL(lp), INTENT (OUT) :: temp      !< estimated temperature for this timestep
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp) :: pio180             !< conversion factor from degrees to radians ("pi over 180")
-    REAL(wp) :: fract_localtime    !< local time at a particular grid point expressed as the fraction of ...
+    REAL(lp) :: pio180             !< conversion factor from degrees to radians ("pi over 180")
+    REAL(lp) :: fract_localtime    !< local time at a particular grid point expressed as the fraction of ...
                                    !< ... the current day since midnight (mod 1)
-    REAL(wp) :: fract_UTC_offset   !< offset between UTC and local time (depends on longitude)
-    REAL(wp) :: cpds, spds         !< cosine and sine contributions to zenith angle
-    REAL(wp) :: fract_daylight     !< fraction of day between sunrise and sunset
-    REAL(wp) :: fract_since_sunset !< time between current time step and sunset expressed as fraction of day
-    REAL(wp) :: fract_sunrise      !< time of sunrise expressed as fraction of day since midnight
-    REAL(wp) :: fract_sunset       !< time of sunset expressed as fraction of day since midnight
-    REAL(wp) :: temp_sunset        !< temperature at sunset
-    REAL(wp) :: dtemp              !< mean day temperature @todo: code has been replaced: "dusk day temp."?
-    REAL(wp) :: dtran              !< day temperature range: maximum - minimum
-    REAL(wp) :: sd                 !< modulation factor for temperature
-    REAL(wp) :: arg
-    REAL(wp) :: coslat, sinlat, yearday
+    REAL(lp) :: fract_UTC_offset   !< offset between UTC and local time (depends on longitude)
+    REAL(lp) :: cpds, spds         !< cosine and sine contributions to zenith angle
+    REAL(lp) :: fract_daylight     !< fraction of day between sunrise and sunset
+    REAL(lp) :: fract_since_sunset !< time between current time step and sunset expressed as fraction of day
+    REAL(lp) :: fract_sunrise      !< time of sunrise expressed as fraction of day since midnight
+    REAL(lp) :: fract_sunset       !< time of sunset expressed as fraction of day since midnight
+    REAL(lp) :: temp_sunset        !< temperature at sunset
+    REAL(lp) :: dtemp              !< mean day temperature @todo: code has been replaced: "dusk day temp."?
+    REAL(lp) :: dtran              !< day temperature range: maximum - minimum
+    REAL(lp) :: sd                 !< modulation factor for temperature
+    REAL(lp) :: arg
+    REAL(lp) :: coslat, sinlat, yearday
     ! -------------------------------------------------------------------------------------------------- !
     yearday = INT(day)
 
-    pio180 = pi / 180._wp
+    pio180 = pi / 180._lp
 
     coslat = COS(deg2rad * lat)
     sinlat = SIN(deg2rad * lat)
 
-    temp = 0._wp
+    temp = 0._lp
 
     ! JN-NOTE: In quincy standalone the current site-level forcing seems to be such that it ALWAYS assumes
     ! local time and not UTC! Therefore, fract_UTC_offset is not calculated as described below, but set to 1
-    fract_UTC_offset = 1.0_wp
+    fract_UTC_offset = 1.0_lp
     ! ++ IF forcing and output SHOULD be UTC and not local time, fract_UTC_offset would need to be calculated:
     ! (+ but note: cos_zenith_angle for sw calculation would also need to be calculated differently?)
-    ! fract_UTC_offset = lon/360._wp   ! difference between local time and UTC as fraction of a day
+    ! fract_UTC_offset = lon/360._lp   ! difference between local time and UTC as fraction of a day
 
     ! Note: lons in jsbalone (jsb3) and jsb4 standalone in echam env run from 0 to 360, 
     !       but lons in IQ and QS run from 0-180/-180-0
     ! however, this does not to influence the calculation of fract_localtime:
-    fract_localtime = MOD(fract_timestep + fract_UTC_offset + 2._wp, 1._wp) ! local time as fraction of the local day (modulo 1)
+    fract_localtime = MOD(fract_timestep + fract_UTC_offset + 2._lp, 1._lp) ! local time as fraction of the local day (modulo 1)
 
     spds = sinlat*SIN(declination)  ! sine contribution to solar zenith angle
     cpds = coslat*COS(declination)  ! cosine contribution to solar zenith angle
     !@todo: ask TR about this?
     arg = -spds / cpds                  ! faulty?: for cpds=0 arg gets infinite
-    IF (arg > 1._wp) THEN               ! polar night:
-      fract_daylight = 0._wp            ! ... day length is zero
-    ELSEIF (arg < -1._wp) THEN          ! polar day:
-      fract_daylight = 1._wp            ! ... day length is the whole day
+    IF (arg > 1._lp) THEN               ! polar night:
+      fract_daylight = 0._lp            ! ... day length is zero
+    ELSEIF (arg < -1._lp) THEN          ! polar day:
+      fract_daylight = 1._lp            ! ... day length is the whole day
     ELSE                                ! normal day / night:
       fract_daylight = ACOS(arg) / pi   ! ... day length expressed as fraction of the whole day
     ENDIF
@@ -1328,23 +1320,23 @@ CONTAINS
     !! considered dtemp=0.5*(max+min). The night-day turn temperature is adjusted such that the mean
     !! temperature is within 0.05 K of the 0.5*(tmax+tmin) temperature
     IF (fract_daylight >= rat2 ) THEN ! -------- normal day ---------------------------------------------
-      IF(fract_daylight < 0.36_wp)THEN
-        arg = -8.0_wp * (fract_daylight - 0.36_wp) ** 2.0_wp + 0.685_wp
+      IF(fract_daylight < 0.36_lp)THEN
+        arg = -8.0_lp * (fract_daylight - 0.36_lp) ** 2.0_lp + 0.685_lp
       ELSE
-        arg = -0.8_wp * (fract_daylight - 0.36_wp) ** 2.0_wp + 0.685_wp
+        arg = -0.8_lp * (fract_daylight - 0.36_lp) ** 2.0_lp + 0.685_lp
       ENDIF
     ELSE
-      arg = 0.5_wp
+      arg = 0.5_lp
     ENDIF
 
-    dtemp = arg * dtemp_max + (1._wp - arg) * dtemp_min ! The dusk day temperature
-    !dtemp = 0.5_wp*(dtemp_max+dtemp_min) ! The mean day temperature
+    dtemp = arg * dtemp_max + (1._lp - arg) * dtemp_min ! The dusk day temperature
+    !dtemp = 0.5_lp*(dtemp_max+dtemp_min) ! The mean day temperature
     dtran = dtemp_max - dtemp_min        ! temperature range
     IF (fract_daylight >= rat2 .AND. fract_daylight <= rat3) THEN   ! -------- normal day ---------------------------------------------
-      fract_sunrise = 0.5_wp - fract_daylight / 2._wp               ! time of sunrise expressed as fraction of day since midnight
+      fract_sunrise = 0.5_lp - fract_daylight / 2._lp               ! time of sunrise expressed as fraction of day since midnight
       fract_sunset = fract_sunrise + fract_daylight                 ! time of sunset expressed as fraction of day since midnight
       IF (fract_localtime > fract_sunrise .AND. fract_localtime <= fract_sunset) THEN   ! For time steps at daylight ...
-        sd = COS(pi * (fract_localtime - rat1) / (fract_daylight / 2._wp + rat4))       ! ... modulation factor for day-temperature such that
+        sd = COS(pi * (fract_localtime - rat1) / (fract_daylight / 2._lp + rat4))       ! ... modulation factor for day-temperature such that
                                                                                         ! .. temperature is at maximum at rat1 (2 pm) and at average at
                                                                                         ! .. sunrise-rat4/2 and sunset+rat4/2
         IF (sd >= 0) THEN
@@ -1352,20 +1344,20 @@ CONTAINS
         ELSE
           temp = dtemp + sd * (dtemp - dtemp_min)                 ! temperature modulated by temperature range
         ENDIF
-        !temp = dtemp + sd*dtran/2._wp                        ! temperature modulated by temperature range
+        !temp = dtemp + sd*dtran/2._lp                        ! temperature modulated by temperature range
       ELSE                                                    ! For time steps at night ...
-        sd = COS(pi * (fract_sunset - rat1) / (fract_daylight / 2._wp + rat4)) ! modulation factor for temperature at sunset
+        sd = COS(pi * (fract_sunset - rat1) / (fract_daylight / 2._lp + rat4)) ! modulation factor for temperature at sunset
         IF (sd >= 0) THEN
           temp_sunset = dtemp + sd * (dtemp_max - dtemp)                       ! temperature modulated by temperature range
         ELSE
           temp_sunset = dtemp + sd * (dtemp - dtemp_min)                       ! temperature modulated by temperature range
         ENDIF
-        !temp_sunset = dtemp + dtran/2._wp*sd                                   ! temperature at sunset
-        fract_since_sunset = MOD(fract_localtime - fract_sunset + 1._wp, 1._wp) ! day fraction since sunset
+        !temp_sunset = dtemp + dtran/2._lp*sd                                   ! temperature at sunset
+        fract_since_sunset = MOD(fract_localtime - fract_sunset + 1._lp, 1._lp) ! day fraction since sunset
 
         !NEW:
         IF( (fract_localtime > eps8) &
-            & .AND. (fract_localtime < fract_sunrise) .AND. (yDay_last_tair .NE. -999.0_wp)) THEN
+            & .AND. (fract_localtime < fract_sunrise) .AND. (yDay_last_tair .NE. -999.0_lp)) THEN
           ! Night but before sunrise -> needs to account for prev. day temperature
           ! - here: interpolate between this days min and yesterdays last timestep tair
           temp = dtemp_min + (yDay_last_tair - dtemp_min) * ((fract_sunrise - fract_localtime) / fract_sunrise)
@@ -1376,7 +1368,7 @@ CONTAINS
           ! Night after sunset can keep linear interpolation as used in jsb3&4 since we only know the previous
           ! day temperatures, but not the next day temperatures 
           temp = dtemp_min + (temp_sunset - dtemp_min) &
-            & * (1._wp - fract_since_sunset / (1._wp - fract_daylight)) ! linear interpolation
+            & * (1._lp - fract_since_sunset / (1._lp - fract_daylight)) ! linear interpolation
                                                                         ! ... of temperature such that temperature is equal to the mean
                                                                         ! ... temperature at sunset and drops as if the minimum
                                                                         ! ... temperature should be met at sunrise.
@@ -1384,17 +1376,17 @@ CONTAINS
 
         !BEFORE (JSB3&4) - for all .NOT. daylight time steps:
         !temp = dtemp_min+(temp_sunset-dtemp_min) &
-        !  & *(1._wp-fract_since_sunset/(1._wp-fract_daylight))! linear interpolation
+        !  & *(1._lp-fract_since_sunset/(1._lp-fract_daylight))! linear interpolation
                                                             ! ... of temperature such that temperature is equal to the
                                                             ! ... temperature at sunset and drops until the minimum ...
                                                             ! ... temperature is met at sunrise.
       ENDIF
     ELSEIF (fract_daylight > rat3) THEN ! --- long day (close to polar day) ---------------------------------------------------
       ! case is now obsolete  @todo: if so, why is this then still in?
-      sd = COS(pi * (fract_localtime - rat1) / (fract_daylight / 2._wp + rat4)) ! modulation factor for day-temperature such that ...
+      sd = COS(pi * (fract_localtime - rat1) / (fract_daylight / 2._lp + rat4)) ! modulation factor for day-temperature such that ...
                                                                     ! ... temperature is at maximum at rat1 (2 pm) and at average
                                                                     ! ... at sunrise-rat4/2 and sunset+rat4/2
-      temp = dtemp + dtran / 2._wp * sd                             ! temperature modulated by temperature range
+      temp = dtemp + dtran / 2._lp * sd                             ! temperature modulated by temperature range
     ELSE ! ------------------------------- short day (close to polar night) ---------------------------------------------------
       temp = dtemp                                          ! temperature is set to mean temperture at all time steps
     ENDIF
@@ -1410,37 +1402,37 @@ CONTAINS
   !> ... with adaptations
   SUBROUTINE instantly_from_daily_sw(day, lat, cos_zenith_angle_gt0, rad_sw_in, rad_sw)
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp), INTENT(IN)  :: day                  !< current day (in year; i.e. [1.0,365.0]
-    REAL(wp), INTENT(IN)  :: lat                  !< lat of this site
-    REAL(wp), INTENT(IN)  :: cos_zenith_angle_gt0 !< cosine of zenith angle [0,1]
-    REAL(wp), INTENT(IN)  :: rad_sw_in            !< "Rtot": either timestep or daily average total solar shortwave radiation :
+    REAL(lp), INTENT(IN)  :: day                  !< current day (in year; i.e. [1.0,365.0]
+    REAL(lp), INTENT(IN)  :: lat                  !< lat of this site
+    REAL(lp), INTENT(IN)  :: cos_zenith_angle_gt0 !< cosine of zenith angle [0,1]
+    REAL(lp), INTENT(IN)  :: rad_sw_in            !< "Rtot": either timestep or daily average total solar shortwave radiation :
                               !< ... direct+diffuse, 280-3000 nm, (i.e. PAR+NIR) that actually arrives at the bottom [W/m^2]
-    REAL(wp), INTENT(OUT) :: rad_sw               !< timestep sw
+    REAL(lp), INTENT(OUT) :: rad_sw               !< timestep sw
     ! -------------------------------------------------------------------------------------------------- !
     INTEGER  :: day_of_year
-    REAL(wp) :: delta, day_angle, u, v, hh, sinehh, rad_sw_in_corr, K
+    REAL(lp) :: delta, day_angle, u, v, hh, sinehh, rad_sw_in_corr, K
     ! -------------------------------------------------------------------------------------------------- !
     day_of_year = INT(day)
 
-    K = 13750.98708_wp
-    day_angle = 2._wp * pi * (day_of_year + 10._wp) / 365._wp !! ATTENTION: this may be incorrect for paleo situations
+    K = 13750.98708_lp
+    day_angle = 2._lp * pi * (day_of_year + 10._lp) / 365._lp !! ATTENTION: this may be incorrect for paleo situations
     ! today's sum of top of the atmosphere radiation
-    delta = -23.4_wp * pi / 180._wp * COS(day_angle)
+    delta = -23.4_lp * pi / 180._lp * COS(day_angle)
     u = SIN(deg2rad * lat) * SIN(delta)
     v = COS(deg2rad * lat) * COS(delta)
     IF (u .GE. v) THEN
        hh = pi
-    ELSEIF (u .LE. (0._wp - v)) THEN
-       hh = 0.0_wp
+    ELSEIF (u .LE. (0._lp - v)) THEN
+       hh = 0.0_lp
     ELSE
        hh = ACOS(-u / v)
     ENDIF
     sinehh = SIN(hh)
 
     !estimate of noon radiation giving rise to the recorded radiation sum
-    rad_sw_in_corr = 0._wp
-    IF(u * hh + v * sinehh .GT. 1e-5_wp) THEN
-       rad_sw_in_corr = rad_sw_in / (2._wp * (u * hh + v * sinehh) * K) * 86400._wp
+    rad_sw_in_corr = 0._lp
+    IF(u * hh + v * sinehh .GT. 1e-5_lp) THEN
+       rad_sw_in_corr = rad_sw_in / (2._lp * (u * hh + v * sinehh) * K) * 86400._lp
     ENDIF
     rad_sw = rad_sw_in_corr * cos_zenith_angle_gt0
 
@@ -1466,18 +1458,18 @@ CONTAINS
   !>
   SUBROUTINE longwave_from_daily_longwave(longwave_down_daily, Tmin, Tmax, air_temp, timestep_longwave)
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp),INTENT(IN) :: longwave_down_daily          !< daily average downward longwave radiation [W/m^2]
+    REAL(lp),INTENT(IN) :: longwave_down_daily          !< daily average downward longwave radiation [W/m^2]
     ! Note: in jsb all temperature input is in degC but converted in the routine
-    REAL(wp),INTENT(IN) :: Tmin                         !< daily mimimum temperature [K]
-    REAL(wp),INTENT(IN) :: Tmax                         !< daily maximum temperature [K]
-    REAL(wp),INTENT(IN) :: air_temp                     !< air temperature at bottom [K]
-    REAL(wp),INTENT(OUT):: timestep_longwave            !< timestep longwave downward radiation [W/m^2]
+    REAL(lp),INTENT(IN) :: Tmin                         !< daily mimimum temperature [K]
+    REAL(lp),INTENT(IN) :: Tmax                         !< daily maximum temperature [K]
+    REAL(lp),INTENT(IN) :: air_temp                     !< air temperature at bottom [K]
+    REAL(lp),INTENT(OUT):: timestep_longwave            !< timestep longwave downward radiation [W/m^2]
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp) :: dtmp    ! daily average temperature
+    REAL(lp) :: dtmp    ! daily average temperature
     ! -------------------------------------------------------------------------------------------------- !
 
-    dtmp = 0.5_wp * (Tmax + Tmin)
-    timestep_longwave = longwave_down_daily * (air_temp ** 4.0_wp) / (dtmp ** 4.0_wp)      ! lw-radiation flux Eq. (1)
+    dtmp = 0.5_lp * (Tmax + Tmin)
+    timestep_longwave = longwave_down_daily * (air_temp ** 4.0_lp) / (dtmp ** 4.0_lp)      ! lw-radiation flux Eq. (1)
 
   END SUBROUTINE longwave_from_daily_longwave
 
@@ -1503,18 +1495,18 @@ CONTAINS
 
     USE mo_jsb_physical_constants,    ONLY: rain_as_snow_temp_thresh
     ! -------------------------------------------------------------------------------------------------- !
-    REAL(wp),INTENT(IN) :: precip_r          !< daily average precipitation [mm/s]
-    REAL(wp),INTENT(IN) :: t_air_r           !< timestep temperature [K]
-    REAL(wp),INTENT(OUT):: rain_r            !< timestep rain [mm/s]
-    REAL(wp),INTENT(OUT):: snow_r            !< timestep snow [mm/s]
+    REAL(lp),INTENT(IN) :: precip_r          !< daily average precipitation [mm/s]
+    REAL(lp),INTENT(IN) :: t_air_r           !< timestep temperature [K]
+    REAL(lp),INTENT(OUT):: rain_r            !< timestep rain [mm/s]
+    REAL(lp),INTENT(OUT):: snow_r            !< timestep snow [mm/s]
     ! -------------------------------------------------------------------------------------------------- !
 
     IF(t_air_r .GT. rain_as_snow_temp_thresh) THEN
       rain_r = precip_r
-      snow_r = 0.0_wp
+      snow_r = 0.0_lp
     ELSE 
       snow_r = precip_r
-      rain_r = 0.0_wp
+      rain_r = 0.0_lp
     ENDIF
 
   END SUBROUTINE snow_and_rain_from_precip

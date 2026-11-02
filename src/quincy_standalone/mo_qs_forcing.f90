@@ -32,17 +32,17 @@ MODULE mo_qs_forcing
   !! 
   !-----------------------------------------------------------------------------------------------------
   TYPE t_forcing_variables
-    REAL(wp)          :: tair   ! timestep forcing
-    REAL(wp)          :: tmin   ! daily forcing
-    REAL(wp)          :: tmax   ! daily forcing
-    REAL(wp)          :: qair
-    REAL(wp)          :: sw
-    REAL(wp)          :: lw
-    REAL(wp)          :: rain
-    REAL(wp)          :: snow
-    REAL(wp)          :: precipitation
-    REAL(wp)          :: pressure
-    REAL(wp)          :: wind
+    REAL(lp)          :: tair   ! timestep forcing
+    REAL(lp)          :: tmin   ! daily forcing
+    REAL(lp)          :: tmax   ! daily forcing
+    REAL(lp)          :: qair
+    REAL(lp)          :: sw
+    REAL(lp)          :: lw
+    REAL(lp)          :: rain
+    REAL(lp)          :: snow
+    REAL(lp)          :: precipitation
+    REAL(lp)          :: pressure
+    REAL(lp)          :: wind
   END TYPE t_forcing_variables
 
   TYPE t_forcing_options
@@ -70,14 +70,14 @@ MODULE mo_qs_forcing
     ! read from forcing files
     INTEGER           :: forcing_year
     INTEGER           :: forcing_doy
-    REAL(wp)          :: forcing_hour       ! e.g. 0, 0.5, 1.0, 1.5, ... 23.5  for 30 min timesteps
-    REAL(wp)          :: last_timestep_tair
-    REAL(wp)          :: co2_mixing_ratio
-    REAL(wp)          :: co2_dC13
-    REAL(wp)          :: co2_dC14
-    REAL(wp)          :: nhx_srf_down
-    REAL(wp)          :: noy_srf_down
-    REAL(wp)          :: p_srf_down
+    REAL(lp)          :: forcing_hour       ! e.g. 0, 0.5, 1.0, 1.5, ... 23.5  for 30 min timesteps
+    REAL(lp)          :: last_timestep_tair
+    REAL(lp)          :: co2_mixing_ratio
+    REAL(lp)          :: co2_dC13
+    REAL(lp)          :: co2_dC14
+    REAL(lp)          :: nhx_srf_down
+    REAL(lp)          :: noy_srf_down
+    REAL(lp)          :: p_srf_down
 
     TYPE(t_forcing_variables) :: current
     TYPE(t_forcing_variables) :: yDay
@@ -228,21 +228,21 @@ CONTAINS
     !! 
     forcing_options%forcing_year          = 0
     forcing_options%forcing_doy           = 0
-    forcing_options%forcing_hour          = 0.0_wp
+    forcing_options%forcing_hour          = 0.0_lp
 
-    forcing_options%yDay%tair             = -999.0_wp
-    forcing_options%last_timestep_tair    = -999.0_wp
+    forcing_options%yDay%tair             = -999.0_lp
+    forcing_options%last_timestep_tair    = -999.0_lp
 
-    forcing_options%current%sw            = -999.0_wp
-    forcing_options%current%lw            = -999.0_wp
-    forcing_options%current%tmin          = -999.0_wp
-    forcing_options%current%tmax          = -999.0_wp
-    forcing_options%current%qair          = -999.0_wp
-    forcing_options%current%wind          = -999.0_wp
-    forcing_options%current%rain          = -999.0_wp
-    forcing_options%current%snow          = -999.0_wp
-    forcing_options%current%precipitation = -999.0_wp
-    forcing_options%current%pressure      = -999.0_wp
+    forcing_options%current%sw            = -999.0_lp
+    forcing_options%current%lw            = -999.0_lp
+    forcing_options%current%tmin          = -999.0_lp
+    forcing_options%current%tmax          = -999.0_lp
+    forcing_options%current%qair          = -999.0_lp
+    forcing_options%current%wind          = -999.0_lp
+    forcing_options%current%rain          = -999.0_lp
+    forcing_options%current%snow          = -999.0_lp
+    forcing_options%current%precipitation = -999.0_lp
+    forcing_options%current%pressure      = -999.0_lp
 
     !> 4.0 output info about settings to logfile
     !>
@@ -267,7 +267,7 @@ CONTAINS
     ! ---------------------------
     ! 0.1 InOut
     CLASS(t_forcing_options), INTENT(inout)  :: this 
-    REAL(wp)                , INTENT(in)     :: dtime
+    REAL(lp)                , INTENT(in)     :: dtime
     ! ---------------------------
     ! 0.2 Local
     INTEGER                               :: timesteps   
@@ -280,7 +280,7 @@ CONTAINS
       CASE('y') ! years
         timesteps = NINT(this%simulation_length_number * one_year   * one_day / dtime)
       CASE('w') ! weeks
-        timesteps = NINT(this%simulation_length_number * 7.0_wp     * one_day / dtime)
+        timesteps = NINT(this%simulation_length_number * 7.0_lp     * one_day / dtime)
       CASE('d') ! days
         timesteps = NINT(this%simulation_length_number              * one_day / dtime)
       CASE DEFAULT
@@ -316,8 +316,8 @@ CONTAINS
     ! ---------------------------
     ! 0.1 InOut
     CHARACTER(len=*)  ,INTENT(in) :: output_interval_pool
-    REAL(wp)          ,INTENT(in) :: dtime                  !< timestep length
-    REAL(wp)                      :: interval_number        !< number output
+    REAL(lp)          ,INTENT(in) :: dtime                  !< timestep length
+    REAL(lp)                      :: interval_number        !< number output
 
 
 
@@ -325,17 +325,17 @@ CONTAINS
     !!
     SELECT CASE(output_interval_pool)
       CASE('none')
-        interval_number = 0.0_wp
+        interval_number = 0.0_lp
       CASE('timestep')
         interval_number = dtime/one_day  ! length of one time step as advanced in 'time' 
       CASE('daily')
-        interval_number = 1.0_wp
+        interval_number = 1.0_lp
       CASE('weekly')
-        interval_number = 7.0_wp
+        interval_number = 7.0_lp
       CASE('monthly')
-        interval_number = 30.0_wp
+        interval_number = 30.0_lp
       CASE('yearly')
-        interval_number = 365.0_wp
+        interval_number = 365.0_lp
     END SELECT
   END FUNCTION calc_output_time_interval_pool
 

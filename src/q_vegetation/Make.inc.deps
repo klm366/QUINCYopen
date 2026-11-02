@@ -20,6 +20,7 @@ mo_q_veg_interface.o: \
   mo_jsb_tile_class.o \
   mo_jsb_task_class.o \
   mo_jsb_process_class.o \
+  mo_quincy_model_config.o \
   mo_veg_util.o \
   mo_q_veg_turnover.o \
   mo_q_veg_dynamics.o \
@@ -50,7 +51,6 @@ mo_veg_memory_class.o: \
   mo_jsb_cqt_class.o \
   mo_jsb_memory_class.o \
   mo_jsb_var_class.o \
-  mo_jsb_pool_class.o \
   mo_jsb_lct_class.o \
   mo_jsb_varlist.o \
   mo_jsb_io.o \
