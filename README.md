@@ -14,8 +14,8 @@
 * This QUINCY model version is running standlone driven by external forcing at site-level.
 
 * Model documentation is available at:
-  * https://docs.icon-model.org/land/land.html
   * https://jsbach.gitlab-pages.dkrz.de/jsbach
+  * https://docs.icon-model.org/2026.10/documentation/land/land.html#quincy
 
 * Please use HTTPS for cloning the repository
 * Compile the QUINCY model with `./compile_quincy.sh`
